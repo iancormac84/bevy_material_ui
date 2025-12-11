@@ -1,0 +1,305 @@
+//! Material Design 3 Card component
+//!
+//! Cards contain content and actions about a single subject.
+//! Reference: <https://m3.material.io/components/cards/overview>
+
+use bevy::prelude::*;
+
+use crate::{
+    elevation::Elevation,
+    theme::MaterialTheme,
+    tokens::{CornerRadius, Spacing},
+};
+
+/// Plugin for the card component
+pub struct CardPlugin;
+
+impl Plugin for CardPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_message::<CardClickEvent>()
+            .add_systems(Update, (card_interaction_system, card_style_system));
+    }
+}
+
+/// Card variants
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum CardVariant {
+    /// Elevated card - Has shadow elevation
+    #[default]
+    Elevated,
+    /// Filled card - Has filled background
+    Filled,
+    /// Outlined card - Has border outline
+    Outlined,
+}
+
+/// Material card component
+#[derive(Component)]
+pub struct MaterialCard {
+    /// Card variant
+    pub variant: CardVariant,
+    /// Whether the card is clickable/interactive
+    pub clickable: bool,
+    /// Whether the card is draggable
+    pub draggable: bool,
+    /// Interaction states
+    pub pressed: bool,
+    pub hovered: bool,
+}
+
+impl MaterialCard {
+    /// Create a new card
+    pub fn new() -> Self {
+        Self {
+            variant: CardVariant::default(),
+            clickable: false,
+            draggable: false,
+            pressed: false,
+            hovered: false,
+        }
+    }
+
+    /// Set the card variant
+    pub fn with_variant(mut self, variant: CardVariant) -> Self {
+        self.variant = variant;
+        self
+    }
+
+    /// Make the card clickable
+    pub fn clickable(mut self) -> Self {
+        self.clickable = true;
+        self
+    }
+
+    /// Make the card draggable
+    pub fn draggable(mut self) -> Self {
+        self.draggable = true;
+        self
+    }
+
+    /// Get the background color
+    pub fn background_color(&self, theme: &MaterialTheme) -> Color {
+        match self.variant {
+            CardVariant::Elevated => theme.surface_container_low,
+            CardVariant::Filled => theme.surface_container_highest,
+            CardVariant::Outlined => theme.surface,
+        }
+    }
+
+    /// Get the border color
+    pub fn border_color(&self, theme: &MaterialTheme) -> Color {
+        match self.variant {
+            CardVariant::Outlined => theme.outline_variant,
+            _ => Color::NONE,
+        }
+    }
+
+    /// Get the elevation for this card
+    pub fn elevation(&self) -> Elevation {
+        match self.variant {
+            CardVariant::Elevated => {
+                if self.pressed || self.draggable && self.pressed {
+                    Elevation::Level2
+                } else if self.hovered {
+                    Elevation::Level2
+                } else {
+                    Elevation::Level1
+                }
+            }
+            CardVariant::Filled | CardVariant::Outlined => {
+                if self.clickable && (self.pressed || self.hovered) {
+                    Elevation::Level1
+                } else {
+                    Elevation::Level0
+                }
+            }
+        }
+    }
+
+    /// Get state layer opacity
+    pub fn state_layer_opacity(&self) -> f32 {
+        if !self.clickable {
+            return 0.0;
+        }
+        
+        if self.pressed {
+            0.12
+        } else if self.hovered {
+            0.08
+        } else {
+            0.0
+        }
+    }
+}
+
+impl Default for MaterialCard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Event when card is clicked
+#[derive(Event, bevy::prelude::Message)]
+pub struct CardClickEvent {
+    pub entity: Entity,
+}
+
+/// System to handle card interactions
+fn card_interaction_system(
+    mut interaction_query: Query<
+        (Entity, &Interaction, &mut MaterialCard),
+        (Changed<Interaction>, With<MaterialCard>),
+    >,
+    mut click_events: MessageWriter<CardClickEvent>,
+) {
+    for (entity, interaction, mut card) in interaction_query.iter_mut() {
+        if !card.clickable {
+            continue;
+        }
+
+        match *interaction {
+            Interaction::Pressed => {
+                card.pressed = true;
+                card.hovered = false;
+                click_events.write(CardClickEvent { entity });
+            }
+            Interaction::Hovered => {
+                card.pressed = false;
+                card.hovered = true;
+            }
+            Interaction::None => {
+                card.pressed = false;
+                card.hovered = false;
+            }
+        }
+    }
+}
+
+/// System to update card styles
+fn card_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    mut cards: Query<
+        (&MaterialCard, &mut BackgroundColor, &mut BorderColor),
+        Changed<MaterialCard>,
+    >,
+) {
+    let Some(theme) = theme else { return };
+
+    for (card, mut bg_color, mut border_color) in cards.iter_mut() {
+        *bg_color = BackgroundColor(card.background_color(&theme));
+        *border_color = BorderColor::all(card.border_color(&theme));
+    }
+}
+
+/// Builder for cards
+pub struct CardBuilder {
+    card: MaterialCard,
+    width: Option<Val>,
+    height: Option<Val>,
+    padding: f32,
+}
+
+impl CardBuilder {
+    /// Create a new card builder
+    pub fn new() -> Self {
+        Self {
+            card: MaterialCard::new(),
+            width: None,
+            height: None,
+            padding: Spacing::LARGE,
+        }
+    }
+
+    /// Set the variant
+    pub fn variant(mut self, variant: CardVariant) -> Self {
+        self.card.variant = variant;
+        self
+    }
+
+    /// Make elevated card
+    pub fn elevated(self) -> Self {
+        self.variant(CardVariant::Elevated)
+    }
+
+    /// Make filled card
+    pub fn filled(self) -> Self {
+        self.variant(CardVariant::Filled)
+    }
+
+    /// Make outlined card
+    pub fn outlined(self) -> Self {
+        self.variant(CardVariant::Outlined)
+    }
+
+    /// Make clickable
+    pub fn clickable(mut self) -> Self {
+        self.card.clickable = true;
+        self
+    }
+
+    /// Make draggable
+    pub fn draggable(mut self) -> Self {
+        self.card.draggable = true;
+        self
+    }
+
+    /// Set width
+    pub fn width(mut self, width: Val) -> Self {
+        self.width = Some(width);
+        self
+    }
+
+    /// Set height
+    pub fn height(mut self, height: Val) -> Self {
+        self.height = Some(height);
+        self
+    }
+
+    /// Set padding
+    pub fn padding(mut self, padding: f32) -> Self {
+        self.padding = padding;
+        self
+    }
+
+    /// Build the card bundle
+    pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
+        let bg_color = self.card.background_color(theme);
+        let border_color = self.card.border_color(theme);
+        let border_width = if self.card.variant == CardVariant::Outlined {
+            1.0
+        } else {
+            0.0
+        };
+        let _is_clickable = self.card.clickable;
+
+        let mut node = Node {
+            padding: UiRect::all(Val::Px(self.padding)),
+            border: UiRect::all(Val::Px(border_width)),
+            flex_direction: FlexDirection::Column,
+            ..default()
+        };
+
+        if let Some(w) = self.width {
+            node.width = w;
+        }
+        if let Some(h) = self.height {
+            node.height = h;
+        }
+
+        let bundle = (
+            self.card,
+            node,
+            BackgroundColor(bg_color),
+            BorderColor::all(border_color),
+            BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+        );
+
+        bundle
+    }
+}
+
+impl Default for CardBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}

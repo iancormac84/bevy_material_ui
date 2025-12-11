@@ -1,0 +1,46 @@
+[package]
+name = "bevy_material_ui"
+version = "0.1.0"
+edition = "2021"
+authors = ["Edgar H. Sanchez"]
+description = "Material Design 3 UI components for Bevy game engine"
+license = "Apache-2.0"
+repository = "https://github.com/edgarhsanchez/m2iab_games"
+keywords = ["bevy", "ui", "material-design", "gamedev"]
+categories = ["game-development", "gui", "rendering"]
+readme = "README.md"
+
+[dependencies]
+# Bevy Game Engine - Latest version
+bevy = "0.17.3"
+
+[dev-dependencies]
+# No dynamic_linking to avoid Windows linker limit issues
+
+[[example]]
+name = "showcase"
+path = "examples/showcase.rs"
+
+[[example]]
+name = "button_demo"
+path = "examples/button_demo.rs"
+
+[[example]]
+name = "slider_demo"
+path = "examples/slider_demo.rs"
+
+[[example]]
+name = "switch_demo"
+path = "examples/switch_demo.rs"
+
+[[example]]
+name = "textfield_demo"
+path = "examples/textfield_demo.rs"
+
+[[example]]
+name = "card_demo"
+path = "examples/card_demo.rs"
+
+[[example]]
+name = "list_demo"
+path = "examples/list_demo.rs"

@@ -1,0 +1,292 @@
+//! Material Design 3 Dialog component
+//!
+//! Dialogs inform users about a task and can contain critical information.
+//! Reference: <https://m3.material.io/components/dialogs/overview>
+
+use bevy::prelude::*;
+
+use crate::{
+    elevation::Elevation,
+    theme::MaterialTheme,
+    tokens::{CornerRadius, Spacing},
+};
+
+/// Plugin for the dialog component
+pub struct DialogPlugin;
+
+impl Plugin for DialogPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_message::<DialogOpenEvent>()
+            .add_message::<DialogCloseEvent>()
+            .add_message::<DialogConfirmEvent>()
+            .add_systems(Update, dialog_visibility_system);
+    }
+}
+
+/// Dialog types
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum DialogType {
+    /// Basic dialog with title and content
+    #[default]
+    Basic,
+    /// Full-screen dialog
+    FullScreen,
+}
+
+/// Material dialog component
+#[derive(Component)]
+pub struct MaterialDialog {
+    /// Dialog type
+    pub dialog_type: DialogType,
+    /// Whether the dialog is currently open
+    pub open: bool,
+    /// Dialog title
+    pub title: Option<String>,
+    /// Dialog icon
+    pub icon: Option<String>,
+    /// Whether clicking the scrim closes the dialog
+    pub dismiss_on_scrim_click: bool,
+    /// Whether pressing Escape closes the dialog
+    pub dismiss_on_escape: bool,
+}
+
+impl MaterialDialog {
+    /// Create a new dialog
+    pub fn new() -> Self {
+        Self {
+            dialog_type: DialogType::default(),
+            open: false,
+            title: None,
+            icon: None,
+            dismiss_on_scrim_click: true,
+            dismiss_on_escape: true,
+        }
+    }
+
+    /// Set the dialog type
+    pub fn with_type(mut self, dialog_type: DialogType) -> Self {
+        self.dialog_type = dialog_type;
+        self
+    }
+
+    /// Set the title
+    pub fn title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    /// Set the icon
+    pub fn icon(mut self, icon: impl Into<String>) -> Self {
+        self.icon = Some(icon.into());
+        self
+    }
+
+    /// Set initial open state
+    pub fn open(mut self, open: bool) -> Self {
+        self.open = open;
+        self
+    }
+
+    /// Disable scrim click dismissal
+    pub fn no_scrim_dismiss(mut self) -> Self {
+        self.dismiss_on_scrim_click = false;
+        self
+    }
+
+    /// Disable escape key dismissal
+    pub fn no_escape_dismiss(mut self) -> Self {
+        self.dismiss_on_escape = false;
+        self
+    }
+
+    /// Get the surface color
+    pub fn surface_color(&self, theme: &MaterialTheme) -> Color {
+        theme.surface_container_high
+    }
+
+    /// Get the scrim color
+    pub fn scrim_color(&self, theme: &MaterialTheme) -> Color {
+        theme.scrim.with_alpha(0.32)
+    }
+
+    /// Get the title color
+    pub fn title_color(&self, theme: &MaterialTheme) -> Color {
+        theme.on_surface
+    }
+
+    /// Get the content color
+    pub fn content_color(&self, theme: &MaterialTheme) -> Color {
+        theme.on_surface_variant
+    }
+
+    /// Get the icon color
+    pub fn icon_color(&self, theme: &MaterialTheme) -> Color {
+        theme.secondary
+    }
+
+    /// Get the elevation
+    pub fn elevation(&self) -> Elevation {
+        Elevation::Level3
+    }
+}
+
+impl Default for MaterialDialog {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Event to open a dialog
+#[derive(Event, bevy::prelude::Message)]
+pub struct DialogOpenEvent {
+    pub entity: Entity,
+}
+
+/// Event when dialog is closed
+#[derive(Event, bevy::prelude::Message)]
+pub struct DialogCloseEvent {
+    pub entity: Entity,
+    /// Whether it was dismissed (scrim/escape) vs confirmed
+    pub dismissed: bool,
+}
+
+/// Event when dialog action is confirmed
+#[derive(Event, bevy::prelude::Message)]
+pub struct DialogConfirmEvent {
+    pub entity: Entity,
+}
+
+/// Dialog dimensions
+pub const DIALOG_MIN_WIDTH: f32 = 280.0;
+pub const DIALOG_MAX_WIDTH: f32 = 560.0;
+
+/// System to handle dialog visibility
+fn dialog_visibility_system(
+    mut dialogs: Query<(&MaterialDialog, &mut Node), Changed<MaterialDialog>>,
+) {
+    for (dialog, mut node) in dialogs.iter_mut() {
+        node.display = if dialog.open {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+}
+
+/// Builder for dialogs
+pub struct DialogBuilder {
+    dialog: MaterialDialog,
+}
+
+impl DialogBuilder {
+    /// Create a new dialog builder
+    pub fn new() -> Self {
+        Self {
+            dialog: MaterialDialog::new(),
+        }
+    }
+
+    /// Set dialog type
+    pub fn dialog_type(mut self, dialog_type: DialogType) -> Self {
+        self.dialog.dialog_type = dialog_type;
+        self
+    }
+
+    /// Make full-screen dialog
+    pub fn full_screen(self) -> Self {
+        self.dialog_type(DialogType::FullScreen)
+    }
+
+    /// Set title
+    pub fn title(mut self, title: impl Into<String>) -> Self {
+        self.dialog.title = Some(title.into());
+        self
+    }
+
+    /// Set icon
+    pub fn icon(mut self, icon: impl Into<String>) -> Self {
+        self.dialog.icon = Some(icon.into());
+        self
+    }
+
+    /// Start open
+    pub fn open(mut self) -> Self {
+        self.dialog.open = true;
+        self
+    }
+
+    /// Disable scrim dismissal
+    pub fn no_scrim_dismiss(mut self) -> Self {
+        self.dialog.dismiss_on_scrim_click = false;
+        self
+    }
+
+    /// Disable escape dismissal
+    pub fn no_escape_dismiss(mut self) -> Self {
+        self.dialog.dismiss_on_escape = false;
+        self
+    }
+
+    /// Build the dialog bundle
+    pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
+        let bg_color = self.dialog.surface_color(theme);
+        let is_full_screen = self.dialog.dialog_type == DialogType::FullScreen;
+
+        (
+            self.dialog,
+            Node {
+                display: Display::None, // Hidden by default
+                position_type: PositionType::Absolute,
+                width: if is_full_screen { Val::Percent(100.0) } else { Val::Auto },
+                height: if is_full_screen { Val::Percent(100.0) } else { Val::Auto },
+                min_width: if is_full_screen { Val::Auto } else { Val::Px(DIALOG_MIN_WIDTH) },
+                max_width: if is_full_screen { Val::Auto } else { Val::Px(DIALOG_MAX_WIDTH) },
+                padding: UiRect::all(Val::Px(Spacing::EXTRA_LARGE)),
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(bg_color),
+            BorderRadius::all(Val::Px(if is_full_screen { 0.0 } else { CornerRadius::EXTRA_LARGE })),
+        )
+    }
+}
+
+impl Default for DialogBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Marker for dialog scrim overlay
+#[derive(Component)]
+pub struct DialogScrim;
+
+/// Marker for dialog headline/title
+#[derive(Component)]
+pub struct DialogHeadline;
+
+/// Marker for dialog content area
+#[derive(Component)]
+pub struct DialogContent;
+
+/// Marker for dialog actions area
+#[derive(Component)]
+pub struct DialogActions;
+
+/// Helper to create a dialog scrim
+pub fn create_dialog_scrim(theme: &MaterialTheme) -> impl Bundle {
+    (
+        DialogScrim,
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        BackgroundColor(theme.scrim.with_alpha(0.32)),
+    )
+}

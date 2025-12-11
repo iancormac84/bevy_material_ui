@@ -1,0 +1,426 @@
+//! # Bevy Material UI
+//!
+//! Material Design 3 UI components for the Bevy game engine.
+//!
+//! This library provides a comprehensive set of UI components following
+//! [Material Design 3](https://m3.material.io/) guidelines, implemented
+//! as Bevy ECS components and systems.
+//!
+//! ## Features
+//!
+//! - **Theme System**: Complete MD3 color scheme with light/dark mode support
+//! - **Components**: Button, Card, Checkbox, Dialog, Divider, FAB, List, Menu,
+//!   Progress, Radio, Ripple, Select, Slider, Switch, Tabs, TextField
+//! - **Accessibility**: Built-in support for focus rings
+//! - **Customization**: Token-based styling system for easy theming
+//!
+//! ## Quick Start
+//!
+//! ```rust,no_run
+//! use bevy::prelude::*;
+//! use bevy_material_ui::prelude::*;
+//!
+//! fn main() {
+//!     App::new()
+//!         .add_plugins(DefaultPlugins)
+//!         .add_plugins(MaterialUiPlugin)
+//!         .add_systems(Startup, setup)
+//!         .run();
+//! }
+//!
+//! fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+//!     commands.spawn(Camera2d);
+//!     
+//!     // Create a filled button
+//!     commands.spawn(
+//!         MaterialButtonBuilder::new("Click Me")
+//!             .filled()
+//!             .build(&theme)
+//!     );
+//! }
+//! ```
+//!
+//! ## Architecture
+//!
+//! This library follows patterns from the official Material Design implementations:
+//! - [material-web](https://github.com/material-components/material-web)
+//! - [material-components-flutter](https://github.com/material-components/material-components-flutter)
+
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
+
+use bevy::prelude::*;
+
+// ============================================================================
+// Core modules
+// ============================================================================
+
+/// Theme and color system based on Material Design 3
+pub mod theme;
+
+/// HCT color space and dynamic color generation
+pub mod color;
+
+/// Material Symbols icon system
+pub mod icons;
+
+/// Typography scale definitions
+pub mod typography;
+
+/// Spacing, corner radius, duration, and easing tokens
+pub mod tokens;
+
+/// Elevation and shadow utilities
+pub mod elevation;
+
+/// Focus ring component for accessibility
+pub mod focus;
+
+/// Ripple effect component for touch feedback
+pub mod ripple;
+
+// ============================================================================
+// Component modules
+// ============================================================================
+
+/// Button components (filled, outlined, text, elevated, tonal)
+pub mod button;
+
+/// Icon button component
+pub mod icon_button;
+
+/// Floating Action Button (FAB) component
+pub mod fab;
+
+/// Card components (elevated, filled, outlined)
+pub mod card;
+
+/// Checkbox component
+pub mod checkbox;
+
+/// Radio button component
+pub mod radio;
+
+/// Switch/toggle component
+pub mod switch;
+
+/// Slider component
+pub mod slider;
+
+/// Text field components (filled, outlined)
+pub mod text_field;
+
+/// Progress indicators (linear and circular)
+pub mod progress;
+
+/// Dialog component
+pub mod dialog;
+
+/// List and list item components
+pub mod list;
+
+/// Menu and menu item components
+pub mod menu;
+
+/// Tabs component
+pub mod tabs;
+
+/// Divider component
+pub mod divider;
+
+/// Select/dropdown component
+pub mod select;
+
+/// Adaptive layout utilities (window size classes)
+pub mod adaptive;
+
+/// Motion and animation utilities
+pub mod motion;
+
+/// Snackbar component for brief messages
+pub mod snackbar;
+
+/// Chip components for filters, actions, and tags
+pub mod chip;
+
+/// App bar components (top and bottom)
+pub mod app_bar;
+
+/// Badge component for notifications
+pub mod badge;
+
+/// Tooltip component for contextual help
+pub mod tooltip;
+
+/// Scroll container for scrollable content
+pub mod scroll;
+
+// ============================================================================
+// Prelude
+// ============================================================================
+
+/// Prelude module for convenient imports
+pub mod prelude {
+    // Core
+    pub use crate::theme::{ColorScheme, MaterialTheme};
+    pub use crate::typography::Typography;
+    pub use crate::tokens::{CornerRadius, Duration, Easing, Spacing};
+    pub use crate::elevation::{Elevation, ElevationShadow};
+    pub use crate::focus::{FocusGained, FocusLost, Focusable, FocusPlugin, FocusRing};
+    pub use crate::ripple::{Ripple, RippleHost, RipplePlugin, SpawnRipple};
+
+    // Color System
+    pub use crate::color::{Hct, TonalPalette, MaterialColorScheme};
+
+    // Icons
+    pub use crate::icons::{
+        MaterialIcon, IconBundle, IconStyle, IconWeight, IconGrade, IconOpticalSize,
+        MaterialIconFont, MaterialIconsPlugin, MATERIAL_SYMBOLS_FONT_PATH,
+        icon_by_name,
+    };
+
+    // Button
+    pub use crate::button::{
+        ButtonClickEvent, ButtonPlugin, ButtonVariant, MaterialButton, MaterialButtonBuilder,
+        spawn_material_button,
+    };
+
+    // Icon Button
+    pub use crate::icon_button::{
+        IconButtonBuilder, IconButtonClickEvent, IconButtonPlugin, IconButtonVariant,
+        MaterialIconButton, ICON_BUTTON_SIZE, ICON_SIZE,
+    };
+
+    // FAB
+    pub use crate::fab::{
+        FabBuilder, FabClickEvent, FabColor, FabPlugin, FabSize, MaterialFab,
+    };
+
+    // Card
+    pub use crate::card::{
+        CardBuilder, CardClickEvent, CardPlugin, CardVariant, MaterialCard,
+    };
+
+    // Checkbox
+    pub use crate::checkbox::{
+        CheckboxBuilder, CheckboxChangeEvent, CheckboxPlugin, CheckboxState, MaterialCheckbox,
+        CHECKBOX_SIZE, CHECKBOX_TOUCH_TARGET,
+    };
+
+    // Radio
+    pub use crate::radio::{
+        RadioBuilder, RadioChangeEvent, RadioGroup, RadioPlugin, MaterialRadio,
+        RADIO_DOT_SIZE, RADIO_SIZE, RADIO_TOUCH_TARGET,
+    };
+
+    // Switch
+    pub use crate::switch::{
+        SwitchBuilder, SwitchChangeEvent, SwitchHandle, SwitchPlugin, MaterialSwitch,
+        SWITCH_HANDLE_SIZE_PRESSED, SWITCH_HANDLE_SIZE_SELECTED, SWITCH_HANDLE_SIZE_UNSELECTED,
+        SWITCH_TRACK_HEIGHT, SWITCH_TRACK_WIDTH,
+    };
+
+    // Slider
+    pub use crate::slider::{
+        SliderActiveTrack, SliderBuilder, SliderChangeEvent, SliderHandle, SliderLabel,
+        SliderPlugin, SliderTrack, MaterialSlider,
+        SLIDER_HANDLE_SIZE, SLIDER_HANDLE_SIZE_PRESSED, SLIDER_LABEL_HEIGHT,
+        SLIDER_TICK_SIZE, SLIDER_TRACK_HEIGHT, SLIDER_TRACK_HEIGHT_ACTIVE,
+    };
+
+    // Text Field
+    pub use crate::text_field::{
+        TextFieldBuilder, TextFieldChangeEvent, TextFieldInput, TextFieldLabel,
+        TextFieldPlugin, TextFieldSubmitEvent, TextFieldSupportingText, TextFieldVariant,
+        MaterialTextField, TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
+    };
+
+    // Progress
+    pub use crate::progress::{
+        CircularProgressBuilder, LinearProgressBuilder, MaterialCircularProgress,
+        MaterialLinearProgress, ProgressIndicator, ProgressMode, ProgressPlugin,
+        ProgressTrack, ProgressVariant, CIRCULAR_PROGRESS_SIZE,
+        CIRCULAR_PROGRESS_TRACK_WIDTH, LINEAR_PROGRESS_HEIGHT,
+    };
+
+    // Dialog
+    pub use crate::dialog::{
+        DialogActions, DialogBuilder, DialogCloseEvent, DialogConfirmEvent, DialogContent,
+        DialogHeadline, DialogOpenEvent, DialogPlugin, DialogScrim, DialogType,
+        MaterialDialog, create_dialog_scrim, DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
+    };
+
+    // List
+    pub use crate::list::{
+        ListBuilder, ListDivider, ListItemBody, ListItemBuilder, ListItemClickEvent,
+        ListItemLeading, ListItemTrailing, ListItemVariant, ListPlugin, MaterialList,
+        MaterialListItem, ScrollableList, create_list_divider,
+    };
+
+    // Menu
+    pub use crate::menu::{
+        MenuAnchor, MenuBuilder, MenuCloseEvent, MenuDivider, MenuItemBuilder,
+        MenuItemSelectEvent, MenuOpenEvent, MenuPlugin, MaterialMenu, MaterialMenuItem,
+        create_menu_divider, MENU_ITEM_HEIGHT, MENU_MAX_WIDTH, MENU_MIN_WIDTH,
+    };
+
+    // Tabs
+    pub use crate::tabs::{
+        TabBuilder, TabChangeEvent, TabIndicator, TabVariant, TabsBuilder, TabsPlugin,
+        MaterialTab, MaterialTabs, create_tab_indicator,
+        TAB_HEIGHT_PRIMARY, TAB_HEIGHT_PRIMARY_ICON_ONLY, TAB_HEIGHT_SECONDARY,
+        TAB_INDICATOR_HEIGHT,
+    };
+
+    // Divider
+    pub use crate::divider::{
+        DividerBuilder, DividerVariant, MaterialDivider,
+        horizontal_divider, inset_divider, vertical_divider,
+        DIVIDER_INSET, DIVIDER_THICKNESS,
+    };
+
+    // Select
+    pub use crate::select::{
+        SelectBuilder, SelectChangeEvent, SelectDropdown, SelectOption, SelectOptionItem,
+        SelectPlugin, SelectVariant, MaterialSelect, SELECT_HEIGHT, SELECT_OPTION_HEIGHT,
+    };
+
+    // Adaptive Layout
+    pub use crate::adaptive::{
+        WindowWidthClass, WindowHeightClass, WindowSizeClass, WindowSizeClassPlugin,
+        WindowSizeClassChanged,
+    };
+
+    // Motion
+    pub use crate::motion::{
+        AnimatedValue, MotionPlugin, SpringConfig, StateLayer,
+        ease_emphasized, ease_emphasized_accelerate, ease_emphasized_decelerate,
+        ease_standard, ease_standard_accelerate, ease_standard_decelerate,
+    };
+
+    // Snackbar
+    pub use crate::snackbar::{
+        Snackbar, SnackbarAnimationState, SnackbarBuilder, SnackbarPlugin,
+        SnackbarQueue, spawn_snackbar, SNACKBAR_MAX_WIDTH,
+    };
+
+    // Chip
+    pub use crate::chip::{
+        ChipBuilder, ChipClickEvent, ChipDeleteEvent, ChipPlugin, ChipVariant,
+        MaterialChip, CHIP_HEIGHT,
+    };
+
+    // App Bar
+    pub use crate::app_bar::{
+        AppBarPlugin, BottomAppBarBuilder, BottomAppBar, TopAppBar,
+        TopAppBarBuilder, TopAppBarVariant, TOP_APP_BAR_HEIGHT_LARGE,
+        TOP_APP_BAR_HEIGHT_MEDIUM, TOP_APP_BAR_HEIGHT_SMALL, BOTTOM_APP_BAR_HEIGHT,
+    };
+
+    // Badge
+    pub use crate::badge::{
+        BadgeBuilder, BadgePlugin, MaterialBadge,
+        BADGE_SIZE_LARGE, BADGE_SIZE_SMALL,
+    };
+
+    // Tooltip
+    pub use crate::tooltip::{
+        RichTooltip, Tooltip, TooltipAnimationState, TooltipPlugin, TooltipPosition,
+        TooltipText, TooltipTrigger, TooltipTriggerBuilder, TooltipVariant,
+        spawn_rich_tooltip, spawn_tooltip, TOOLTIP_DELAY_DEFAULT, TOOLTIP_DELAY_SHORT,
+        TOOLTIP_HEIGHT_PLAIN, TOOLTIP_MAX_WIDTH, TOOLTIP_OFFSET,
+    };
+
+    // Scroll Container
+    pub use crate::scroll::{
+        ScrollContainer, ScrollContainerBuilder, ScrollContent, ScrollDirection, ScrollPlugin,
+        ScrollbarTrackVertical, ScrollbarThumbVertical, ScrollbarTrackHorizontal, ScrollbarThumbHorizontal,
+        spawn_scrollbars,
+    };
+
+    // Main plugin
+    pub use crate::MaterialUiPlugin;
+}
+
+// ============================================================================
+// Main Plugin
+// ============================================================================
+
+/// Main plugin that adds all Material UI functionality to your Bevy app.
+///
+/// This plugin will:
+/// - Initialize the Material theme resource
+/// - Add component plugins for all components
+/// - Set up the focus and ripple systems
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::MaterialUiPlugin;
+///
+/// App::new()
+///     .add_plugins(DefaultPlugins)
+///     .add_plugins(MaterialUiPlugin)
+///     .run();
+/// ```
+pub struct MaterialUiPlugin;
+
+impl Plugin for MaterialUiPlugin {
+    fn build(&self, app: &mut App) {
+        // Initialize theme resource
+        app.init_resource::<theme::MaterialTheme>();
+
+        // Core plugins
+        app.add_plugins((
+            focus::FocusPlugin,
+            ripple::RipplePlugin,
+            icons::icon::IconPlugin,
+            icons::MaterialIconsPlugin,
+        ));
+
+        // Component plugins
+        app.add_plugins((
+            button::ButtonPlugin,
+            icon_button::IconButtonPlugin,
+            fab::FabPlugin,
+            card::CardPlugin,
+            checkbox::CheckboxPlugin,
+            radio::RadioPlugin,
+            switch::SwitchPlugin,
+            slider::SliderPlugin,
+            text_field::TextFieldPlugin,
+            progress::ProgressPlugin,
+            dialog::DialogPlugin,
+            list::ListPlugin,
+            menu::MenuPlugin,
+            tabs::TabsPlugin,
+            select::SelectPlugin,
+        ));
+
+        // New component plugins
+        app.add_plugins((
+            motion::MotionPlugin,
+            snackbar::SnackbarPlugin,
+            chip::ChipPlugin,
+            app_bar::AppBarPlugin,
+            badge::BadgePlugin,
+            tooltip::TooltipPlugin,
+            scroll::ScrollPlugin,
+        ));
+
+        // Adaptive layout
+        app.add_plugins(adaptive::WindowSizeClassPlugin);
+    }
+}
+
+/// A plugin group that adds Material UI plugins in stages.
+/// Use this if you want more control over which plugins are added.
+pub struct MaterialUiPlugins;
+
+impl PluginGroup for MaterialUiPlugins {
+    fn build(self) -> bevy::app::PluginGroupBuilder {
+        bevy::app::PluginGroupBuilder::start::<Self>()
+            .add(MaterialUiPlugin)
+    }
+}

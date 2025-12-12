@@ -2,14 +2,17 @@
 //!
 //! Chips help people enter information, make selections, filter content, or trigger actions.
 //! They can show multiple interactive elements together in the same area.
+//! This module leverages native `BoxShadow` for elevated chip shadows.
 //!
 //! Reference: <https://m3.material.io/components/chips/overview>
 
 use bevy::prelude::*;
+use bevy::ui::BoxShadow;
 
 use crate::{
+    elevation::Elevation,
     ripple::RippleHost,
-    theme::MaterialTheme,
+    theme::{blend_state_layer, MaterialTheme},
     tokens::Spacing,
 };
 
@@ -20,7 +23,7 @@ impl Plugin for ChipPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<ChipClickEvent>()
             .add_message::<ChipDeleteEvent>()
-            .add_systems(Update, (chip_interaction_system, chip_style_system));
+            .add_systems(Update, (chip_interaction_system, chip_style_system, chip_shadow_system));
     }
 }
 
@@ -72,6 +75,21 @@ pub enum ChipElevation {
     Flat,
     /// Elevated chip (with shadow)
     Elevated,
+}
+
+impl ChipElevation {
+    /// Convert chip elevation to Material Elevation for BoxShadow
+    pub fn to_elevation(&self) -> Elevation {
+        match self {
+            ChipElevation::Flat => Elevation::Level0,
+            ChipElevation::Elevated => Elevation::Level1,
+        }
+    }
+
+    /// Convert to native BoxShadow
+    pub fn to_box_shadow(&self) -> BoxShadow {
+        self.to_elevation().to_box_shadow()
+    }
 }
 
 // ============================================================================
@@ -183,19 +201,33 @@ impl MaterialChip {
         self
     }
 
-    /// Get the background color
+    /// Get the background color with state layer applied
     pub fn background_color(&self, theme: &MaterialTheme) -> Color {
         if self.disabled {
             return theme.on_surface.with_alpha(0.12);
         }
 
-        match (self.variant, self.selected, self.elevation) {
+        let base = match (self.variant, self.selected, self.elevation) {
             // Selected filter chips have secondary container background
             (ChipVariant::Filter, true, _) => theme.secondary_container,
             // Elevated chips have surface container low
             (_, _, ChipElevation::Elevated) => theme.surface_container_low,
             // Flat chips are transparent
             _ => Color::NONE,
+        };
+        
+        // Apply state layer
+        let state_opacity = self.state_layer_opacity();
+        let state_color = self.state_layer_color(theme);
+        if state_opacity > 0.0 {
+            if base == Color::NONE {
+                // For transparent backgrounds, just show the state layer
+                state_color.with_alpha(state_opacity)
+            } else {
+                blend_state_layer(base, state_color, state_opacity)
+            }
+        } else {
+            base
         }
     }
 
@@ -244,6 +276,19 @@ impl MaterialChip {
         match (self.variant, self.selected) {
             (ChipVariant::Filter, true) => theme.on_secondary_container,
             _ => theme.on_surface_variant,
+        }
+    }
+    
+    /// Get the state layer opacity
+    fn state_layer_opacity(&self) -> f32 {
+        if self.disabled {
+            0.0
+        } else if self.pressed {
+            0.12
+        } else if self.hovered {
+            0.08
+        } else {
+            0.0
         }
     }
 }
@@ -361,11 +406,12 @@ impl ChipBuilder {
         self
     }
 
-    /// Build the chip bundle
+    /// Build the chip bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.chip.background_color(theme);
         let outline_color = self.chip.outline_color(theme);
         let has_outline = outline_color != Color::NONE;
+        let elevation = self.chip.elevation;
 
         let padding_left = if self.chip.has_leading_icon {
             CHIP_PADDING_WITH_ICON
@@ -400,6 +446,8 @@ impl ChipBuilder {
             BackgroundColor(bg_color),
             BorderColor::all(outline_color),
             BorderRadius::all(Val::Px(CHIP_HEIGHT / 2.0)), // Pill shape
+            // Native Bevy 0.17 shadow support
+            elevation.to_box_shadow(),
         )
     }
 }
@@ -560,6 +608,15 @@ fn chip_style_system(
     for (chip, mut bg_color, mut border_color) in chips.iter_mut() {
         *bg_color = BackgroundColor(chip.background_color(&theme));
         *border_color = BorderColor::all(chip.outline_color(&theme));
+    }
+}
+
+/// System to update chip shadows using native BoxShadow
+fn chip_shadow_system(
+    mut chips: Query<(&MaterialChip, &mut BoxShadow), Changed<MaterialChip>>,
+) {
+    for (chip, mut shadow) in chips.iter_mut() {
+        *shadow = chip.elevation.to_box_shadow();
     }
 }
 

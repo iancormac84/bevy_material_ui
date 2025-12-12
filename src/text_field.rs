@@ -31,23 +31,76 @@ pub enum TextFieldVariant {
     Outlined,
 }
 
+/// End icon mode - determines the trailing icon behavior
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum EndIconMode {
+    /// No end icon
+    #[default]
+    None,
+    /// Password visibility toggle (eye icon)
+    PasswordToggle,
+    /// Clear text button (X icon) - visible when field has content
+    ClearText,
+    /// Dropdown menu indicator (arrow down)
+    DropdownMenu,
+    /// Custom icon with custom behavior
+    Custom,
+}
+
+/// Input type for the text field
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum InputType {
+    /// Regular text input
+    #[default]
+    Text,
+    /// Password input (obscured by default)
+    Password,
+    /// Email address input
+    Email,
+    /// Numeric input
+    Number,
+    /// Phone number input
+    Phone,
+    /// URL input
+    Url,
+    /// Multi-line text input
+    Multiline,
+}
+
 /// Material text field component
+/// 
+/// Matches properties from Material Android TextInputLayout:
+/// - Box background mode (filled/outlined)
+/// - Box stroke width and colors
+/// - Box corner radii
+/// - Hint/label with animation
+/// - Prefix/suffix text
+/// - Helper text and error text
+/// - Counter with max length
+/// - Start/end icons with modes
+/// - Placeholder text
 #[derive(Component)]
 pub struct MaterialTextField {
     /// Text field variant
     pub variant: TextFieldVariant,
     /// Current text value
     pub value: String,
-    /// Placeholder/hint text
+    /// Placeholder/hint text (shown when empty and unfocused)
     pub placeholder: String,
-    /// Label text
+    /// Label text (floats above when focused/has content)
     pub label: Option<String>,
-    /// Supporting text below the field
+    /// Supporting text below the field (helper text)
     pub supporting_text: Option<String>,
+    /// Prefix text (displayed before input, e.g., "$")
+    pub prefix_text: Option<String>,
+    /// Suffix text (displayed after input, e.g., "kg")
+    pub suffix_text: Option<String>,
     /// Leading icon
     pub leading_icon: Option<String>,
     /// Trailing icon
     pub trailing_icon: Option<String>,
+    /// End icon mode (determines trailing icon behavior)
+    pub end_icon_mode: EndIconMode,
     /// Whether the field is disabled
     pub disabled: bool,
     /// Whether the field has an error
@@ -56,10 +109,24 @@ pub struct MaterialTextField {
     pub error_text: Option<String>,
     /// Maximum character count (None = unlimited)
     pub max_length: Option<usize>,
+    /// Whether to show character counter
+    pub counter_enabled: bool,
     /// Whether the field is focused
     pub focused: bool,
     /// Whether the field has content
     pub has_content: bool,
+    /// Whether hint animation is enabled
+    pub hint_animation_enabled: bool,
+    /// Password visibility (for password toggle mode)
+    pub password_visible: bool,
+    /// Box stroke width (default, in px)
+    pub box_stroke_width: f32,
+    /// Box stroke width when focused (in px)
+    pub box_stroke_width_focused: f32,
+    /// Custom box corner radius (if None, uses theme default)
+    pub box_corner_radius: Option<f32>,
+    /// Input type (affects keyboard and visibility)
+    pub input_type: InputType,
 }
 
 impl MaterialTextField {
@@ -71,14 +138,24 @@ impl MaterialTextField {
             placeholder: String::new(),
             label: None,
             supporting_text: None,
+            prefix_text: None,
+            suffix_text: None,
             leading_icon: None,
             trailing_icon: None,
+            end_icon_mode: EndIconMode::default(),
             disabled: false,
             error: false,
             error_text: None,
             max_length: None,
+            counter_enabled: false,
             focused: false,
             has_content: false,
+            hint_animation_enabled: true,
+            password_visible: false,
+            box_stroke_width: 1.0,
+            box_stroke_width_focused: 2.0,
+            box_corner_radius: None,
+            input_type: InputType::default(),
         }
     }
 
@@ -125,6 +202,12 @@ impl MaterialTextField {
         self
     }
 
+    /// Set end icon mode (PASSWORD_TOGGLE, CLEAR_TEXT, DROPDOWN_MENU, etc.)
+    pub fn end_icon_mode(mut self, mode: EndIconMode) -> Self {
+        self.end_icon_mode = mode;
+        self
+    }
+
     /// Set disabled state
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
@@ -148,6 +231,115 @@ impl MaterialTextField {
     pub fn max_length(mut self, max: usize) -> Self {
         self.max_length = Some(max);
         self
+    }
+
+    /// Enable character counter
+    pub fn counter_enabled(mut self, enabled: bool) -> Self {
+        self.counter_enabled = enabled;
+        self
+    }
+
+    /// Set prefix text (displayed before input, e.g., "$")
+    pub fn prefix_text(mut self, text: impl Into<String>) -> Self {
+        self.prefix_text = Some(text.into());
+        self
+    }
+
+    /// Set suffix text (displayed after input, e.g., "kg")
+    pub fn suffix_text(mut self, text: impl Into<String>) -> Self {
+        self.suffix_text = Some(text.into());
+        self
+    }
+
+    /// Set input type
+    pub fn input_type(mut self, input_type: InputType) -> Self {
+        self.input_type = input_type;
+        // Auto-enable password toggle for password fields
+        if matches!(input_type, InputType::Password) && matches!(self.end_icon_mode, EndIconMode::None) {
+            self.end_icon_mode = EndIconMode::PasswordToggle;
+        }
+        self
+    }
+
+    /// Set box stroke width
+    pub fn box_stroke_width(mut self, width: f32) -> Self {
+        self.box_stroke_width = width;
+        self
+    }
+
+    /// Set box stroke width when focused
+    pub fn box_stroke_width_focused(mut self, width: f32) -> Self {
+        self.box_stroke_width_focused = width;
+        self
+    }
+
+    /// Set custom box corner radius
+    pub fn box_corner_radius(mut self, radius: f32) -> Self {
+        self.box_corner_radius = Some(radius);
+        self
+    }
+
+    /// Set hint animation enabled
+    pub fn hint_animation_enabled(mut self, enabled: bool) -> Self {
+        self.hint_animation_enabled = enabled;
+        self
+    }
+
+    /// Get current character count for counter display
+    pub fn character_count(&self) -> usize {
+        self.value.chars().count()
+    }
+
+    /// Get counter text (e.g., "5 / 100")
+    pub fn counter_text(&self) -> String {
+        if let Some(max) = self.max_length {
+            format!("{} / {}", self.character_count(), max)
+        } else {
+            format!("{}", self.character_count())
+        }
+    }
+
+    /// Check if character limit is exceeded
+    pub fn is_counter_overflow(&self) -> bool {
+        if let Some(max) = self.max_length {
+            self.character_count() > max
+        } else {
+            false
+        }
+    }
+
+    /// Get effective stroke width based on focus state
+    pub fn effective_stroke_width(&self) -> f32 {
+        if self.focused {
+            self.box_stroke_width_focused
+        } else {
+            self.box_stroke_width
+        }
+    }
+
+    /// Toggle password visibility (for password toggle mode)
+    pub fn toggle_password_visibility(&mut self) {
+        self.password_visible = !self.password_visible;
+    }
+
+    /// Check if input should be obscured (password field with visibility off)
+    pub fn should_obscure_input(&self) -> bool {
+        matches!(self.input_type, InputType::Password) && !self.password_visible
+    }
+
+    /// Get the effective trailing icon based on end icon mode
+    pub fn effective_trailing_icon(&self) -> Option<&str> {
+        match self.end_icon_mode {
+            EndIconMode::None => self.trailing_icon.as_deref(),
+            EndIconMode::PasswordToggle => {
+                Some(if self.password_visible { "\u{E8F4}" } else { "\u{E8F5}" }) // visibility / visibility_off
+            }
+            EndIconMode::ClearText => {
+                if self.has_content { Some("\u{E5CD}") } else { None } // close icon
+            }
+            EndIconMode::DropdownMenu => Some("\u{E5C5}"), // arrow_drop_down
+            EndIconMode::Custom => self.trailing_icon.as_deref(),
+        }
     }
 
     /// Get the container color (for filled variant)

@@ -6,6 +6,8 @@
 //! Reference: <https://m3.material.io/components/tooltips/overview>
 
 use bevy::prelude::*;
+use bevy::picking::Pickable;
+use bevy::ui::UiGlobalTransform;
 
 use crate::{
     motion::{ease_standard_decelerate, ease_standard_accelerate},
@@ -13,17 +15,40 @@ use crate::{
     tokens::{CornerRadius, Duration, Spacing},
 };
 
+/// Marker component for the tooltip overlay container
+#[derive(Component)]
+pub struct TooltipOverlay;
+
 /// Plugin for the tooltip component
 pub struct TooltipPlugin;
 
 impl Plugin for TooltipPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            tooltip_hover_system,
-            tooltip_animation_system,
-            tooltip_position_system,
-        ));
+        app.add_systems(Startup, setup_tooltip_overlay)
+            .add_systems(Update, (
+                tooltip_hover_system,
+                tooltip_animation_system,
+                tooltip_position_system,
+            ));
     }
+}
+
+/// Setup the tooltip overlay container at startup
+fn setup_tooltip_overlay(mut commands: Commands) {
+    commands.spawn((
+        TooltipOverlay,
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            top: Val::Px(0.0),
+            left: Val::Px(0.0),
+            ..default()
+        },
+        GlobalZIndex(1000),
+        // Make it not pickable so it doesn't block clicks
+        Pickable::IGNORE,
+    ));
 }
 
 // ============================================================================
@@ -315,7 +340,56 @@ impl TooltipTriggerBuilder {
 // Helper Functions
 // ============================================================================
 
-/// Spawn a plain tooltip
+/// Spawn a plain tooltip as a child of the overlay
+fn spawn_tooltip_on_overlay(
+    commands: &mut Commands,
+    theme: &MaterialTheme,
+    tooltip: Tooltip,
+    overlay: Entity,
+) -> Entity {
+    let text = tooltip.text.clone();
+    let text_color = tooltip.text_color(theme);
+    let bg_color = tooltip.background_color(theme);
+
+    let tooltip_entity = commands
+        .spawn((
+            tooltip,
+            Node {
+                position_type: PositionType::Absolute,
+                min_height: Val::Px(TOOLTIP_HEIGHT_PLAIN),
+                max_width: Val::Px(TOOLTIP_MAX_WIDTH),
+                padding: UiRect::axes(Val::Px(TOOLTIP_PADDING_PLAIN), Val::Px(4.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                // Start offscreen - position system will update
+                top: Val::Px(-1000.0),
+                left: Val::Px(-1000.0),
+                ..default()
+            },
+            BackgroundColor(bg_color),
+            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            Pickable::IGNORE, // Don't block clicks
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                TooltipText,
+                Text::new(text),
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
+                TextColor(text_color),
+            ));
+        })
+        .id();
+    
+    // Add tooltip as child of overlay
+    commands.entity(overlay).add_child(tooltip_entity);
+    
+    tooltip_entity
+}
+
+/// Spawn a plain tooltip (standalone, for manual use)
 pub fn spawn_tooltip(
     commands: &mut Commands,
     theme: &MaterialTheme,
@@ -335,7 +409,9 @@ pub fn spawn_tooltip(
                 padding: UiRect::axes(Val::Px(TOOLTIP_PADDING_PLAIN), Val::Px(4.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                // Initial position will be set by position system
+                // Start offscreen - position system will update
+                top: Val::Px(-1000.0),
+                left: Val::Px(-1000.0),
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -410,8 +486,15 @@ fn tooltip_hover_system(
     theme: Option<Res<MaterialTheme>>,
     mut triggers: Query<(Entity, &Interaction, &mut TooltipTrigger)>,
     mut tooltips: Query<&mut Tooltip>,
+    overlay_query: Query<Entity, With<TooltipOverlay>>,
 ) {
     let Some(theme) = theme else { return };
+    
+    // Try to get the overlay entity - silently skip if not available yet
+    let mut overlay_iter = overlay_query.iter();
+    let Some(overlay_entity) = overlay_iter.next() else {
+        return;
+    };
 
     for (entity, interaction, mut trigger) in triggers.iter_mut() {
         match *interaction {
@@ -427,7 +510,7 @@ fn tooltip_hover_system(
                 if trigger.hover_time >= trigger.delay && trigger.tooltip_entity.is_none() {
                     let tooltip = Tooltip::new(&trigger.text, entity)
                         .with_position(trigger.position);
-                    let tooltip_entity = spawn_tooltip(&mut commands, &theme, tooltip);
+                    let tooltip_entity = spawn_tooltip_on_overlay(&mut commands, &theme, tooltip, overlay_entity);
                     trigger.tooltip_entity = Some(tooltip_entity);
                 }
             }
@@ -491,36 +574,90 @@ fn tooltip_animation_system(
 
 /// System to position tooltips relative to their anchors
 fn tooltip_position_system(
-    mut tooltips: Query<(&Tooltip, &mut Node)>,
-    anchors: Query<(&GlobalTransform, &ComputedNode)>,
+    mut tooltips: Query<(&Tooltip, &mut Node, &ComputedNode)>,
+    anchors: Query<(&UiGlobalTransform, &ComputedNode)>,
+    overlay_query: Query<(&UiGlobalTransform, &ComputedNode), With<TooltipOverlay>>,
+    windows: Query<&Window>,
 ) {
-    for (tooltip, mut node) in tooltips.iter_mut() {
-        if let Ok((transform, computed)) = anchors.get(tooltip.anchor) {
-            let anchor_pos = transform.translation();
-            let anchor_size = computed.size();
+    // Get window scale factor
+    let scale_factor = windows
+        .iter()
+        .next()
+        .map(|w| w.scale_factor())
+        .unwrap_or(1.0);
 
-            let (top, left) = match tooltip.position {
-                TooltipPosition::Top => (
-                    anchor_pos.y - TOOLTIP_OFFSET - TOOLTIP_HEIGHT_PLAIN,
-                    anchor_pos.x + anchor_size.x / 2.0,
-                ),
-                TooltipPosition::Bottom => (
-                    anchor_pos.y + anchor_size.y + TOOLTIP_OFFSET,
-                    anchor_pos.x + anchor_size.x / 2.0,
-                ),
-                TooltipPosition::Left => (
-                    anchor_pos.y + anchor_size.y / 2.0 - TOOLTIP_HEIGHT_PLAIN / 2.0,
-                    anchor_pos.x - TOOLTIP_OFFSET,
-                ),
-                TooltipPosition::Right => (
-                    anchor_pos.y + anchor_size.y / 2.0 - TOOLTIP_HEIGHT_PLAIN / 2.0,
-                    anchor_pos.x + anchor_size.x + TOOLTIP_OFFSET,
-                ),
-            };
-
-            node.top = Val::Px(top);
-            node.left = Val::Px(left);
+    // Get overlay's position and size to calculate offset
+    // UiGlobalTransform gives CENTER of element, so we need to adjust
+    let (overlay_center, overlay_size) = overlay_query
+        .iter()
+        .next()
+        .map(|(t, c)| (t.translation, c.size()))
+        .unwrap_or((Vec2::ZERO, Vec2::ZERO));
+    
+    // Calculate overlay's top-left corner
+    let overlay_top_left = overlay_center - overlay_size / 2.0;
+    
+    for (tooltip, mut node, tooltip_computed) in tooltips.iter_mut() {
+        let Ok((anchor_transform, anchor_computed)) = anchors.get(tooltip.anchor) else {
+            continue;
+        };
+        
+        let scale = scale_factor as f32;
+        
+        // Both UiGlobalTransform and ComputedNode.size() are in physical pixels
+        let anchor_center_physical = anchor_transform.translation;
+        let anchor_size_physical = anchor_computed.size();
+        
+        // Skip if anchor has no size yet (not laid out)
+        if anchor_size_physical.x <= 0.0 || anchor_size_physical.y <= 0.0 {
+            continue;
         }
+        
+        // Calculate anchor's top-left corner in physical pixels
+        let anchor_top_left_physical = anchor_center_physical - anchor_size_physical / 2.0;
+        
+        // Tooltip size is also in physical pixels
+        let tooltip_size_physical = tooltip_computed.size();
+        let tooltip_width_physical = if tooltip_size_physical.x > 0.0 { 
+            tooltip_size_physical.x 
+        } else { 
+            TOOLTIP_MAX_WIDTH * scale / 2.0 
+        };
+        let tooltip_height_physical = if tooltip_size_physical.y > 0.0 { 
+            tooltip_size_physical.y 
+        } else { 
+            TOOLTIP_HEIGHT_PLAIN * scale 
+        };
+        
+        // Offset in physical pixels
+        let offset_physical = TOOLTIP_OFFSET * scale;
+
+        // Calculate tooltip position in physical pixels
+        let (screen_top_physical, screen_left_physical) = match tooltip.position {
+            TooltipPosition::Top => (
+                anchor_top_left_physical.y - offset_physical - tooltip_height_physical,
+                anchor_top_left_physical.x + (anchor_size_physical.x - tooltip_width_physical) / 2.0,
+            ),
+            TooltipPosition::Bottom => (
+                anchor_top_left_physical.y + anchor_size_physical.y + offset_physical,
+                anchor_top_left_physical.x + (anchor_size_physical.x - tooltip_width_physical) / 2.0,
+            ),
+            TooltipPosition::Left => (
+                anchor_top_left_physical.y + (anchor_size_physical.y - tooltip_height_physical) / 2.0,
+                anchor_top_left_physical.x - offset_physical - tooltip_width_physical,
+            ),
+            TooltipPosition::Right => (
+                anchor_top_left_physical.y + (anchor_size_physical.y - tooltip_height_physical) / 2.0,
+                anchor_top_left_physical.x + anchor_size_physical.x + offset_physical,
+            ),
+        };
+
+        // Convert to logical pixels for Node positioning (divide by scale)
+        let top = (screen_top_physical - overlay_top_left.y) / scale;
+        let left = (screen_left_physical - overlay_top_left.x) / scale;
+
+        node.top = Val::Px(top);
+        node.left = Val::Px(left);
     }
 }
 
@@ -569,5 +706,64 @@ mod tests {
         assert_eq!(rich.title, Some("Title".to_string()));
         assert_eq!(rich.supporting_text, "Supporting text");
         assert_eq!(rich.action, Some("Learn more".to_string()));
+    }
+
+    #[test]
+    fn test_tooltip_all_positions() {
+        let positions = [
+            (TooltipPosition::Top, "top"),
+            (TooltipPosition::Bottom, "bottom"),
+            (TooltipPosition::Left, "left"),
+            (TooltipPosition::Right, "right"),
+        ];
+        
+        for (pos, _name) in positions {
+            let trigger = TooltipTrigger::new("Test").with_position(pos);
+            assert_eq!(trigger.position, pos);
+        }
+    }
+
+    #[test]
+    fn test_tooltip_builder() {
+        let trigger = TooltipTriggerBuilder::new("Hover me")
+            .position(TooltipPosition::Right)
+            .delay(0.25)
+            .build();
+        
+        assert_eq!(trigger.text, "Hover me");
+        assert_eq!(trigger.position, TooltipPosition::Right);
+        assert!((trigger.delay - 0.25).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_tooltip_variant_defaults() {
+        let trigger = TooltipTrigger::new("Plain tooltip");
+        assert_eq!(trigger.variant, TooltipVariant::Plain);
+        
+        let rich_trigger = TooltipTrigger::new("Rich tooltip").rich();
+        assert_eq!(rich_trigger.variant, TooltipVariant::Rich);
+    }
+
+    #[test]
+    fn test_tooltip_chainable_methods() {
+        let trigger = TooltipTrigger::new("Test")
+            .top()
+            .with_delay(0.1);
+        assert_eq!(trigger.position, TooltipPosition::Top);
+        
+        let trigger = TooltipTrigger::new("Test")
+            .bottom()
+            .with_delay(0.2);
+        assert_eq!(trigger.position, TooltipPosition::Bottom);
+        
+        let trigger = TooltipTrigger::new("Test")
+            .left()
+            .with_delay(0.3);
+        assert_eq!(trigger.position, TooltipPosition::Left);
+        
+        let trigger = TooltipTrigger::new("Test")
+            .right()
+            .with_delay(0.4);
+        assert_eq!(trigger.position, TooltipPosition::Right);
     }
 }

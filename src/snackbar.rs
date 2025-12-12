@@ -2,12 +2,16 @@
 //!
 //! Snackbars provide brief messages about app processes at the bottom of the screen.
 //! They can contain an optional action.
+//! This module leverages native `BoxShadow` for elevation shadows.
 //!
 //! Reference: <https://m3.material.io/components/snackbar/overview>
 
 use bevy::prelude::*;
+use bevy::picking::Pickable;
 
 use crate::{
+    elevation::Elevation,
+    icons::{MaterialIconFont, ICON_CLOSE},
     motion::{ease_standard_decelerate, ease_standard_accelerate},
     theme::MaterialTheme,
     tokens::{CornerRadius, Duration, Spacing},
@@ -27,8 +31,32 @@ impl Plugin for SnackbarPlugin {
                 snackbar_animation_system,
                 snackbar_timeout_system,
                 snackbar_action_system,
+                snackbar_close_system,
+                snackbar_cleanup_system,
             ));
     }
+}
+
+// ============================================================================
+// Types
+// ============================================================================
+
+/// Snackbar position on screen
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum SnackbarPosition {
+    /// Bottom center (default Material Design position)
+    #[default]
+    BottomCenter,
+    /// Bottom left
+    BottomLeft,
+    /// Bottom right
+    BottomRight,
+    /// Top center
+    TopCenter,
+    /// Top left
+    TopLeft,
+    /// Top right
+    TopRight,
 }
 
 // ============================================================================
@@ -46,6 +74,8 @@ pub struct ShowSnackbar {
     pub duration: Option<f32>,
     /// Whether this snackbar can be dismissed by swiping
     pub dismissible: bool,
+    /// Position on screen
+    pub position: SnackbarPosition,
 }
 
 impl ShowSnackbar {
@@ -56,6 +86,7 @@ impl ShowSnackbar {
             action: None,
             duration: None,
             dismissible: true,
+            position: SnackbarPosition::default(),
         }
     }
 
@@ -66,6 +97,7 @@ impl ShowSnackbar {
             action: Some(action.into()),
             duration: None,
             dismissible: true,
+            position: SnackbarPosition::default(),
         }
     }
 
@@ -79,6 +111,37 @@ impl ShowSnackbar {
     pub fn dismissible(mut self, dismissible: bool) -> Self {
         self.dismissible = dismissible;
         self
+    }
+    
+    /// Set position
+    pub fn position(mut self, position: SnackbarPosition) -> Self {
+        self.position = position;
+        self
+    }
+    
+    /// Position at bottom left
+    pub fn bottom_left(self) -> Self {
+        self.position(SnackbarPosition::BottomLeft)
+    }
+    
+    /// Position at bottom right
+    pub fn bottom_right(self) -> Self {
+        self.position(SnackbarPosition::BottomRight)
+    }
+    
+    /// Position at top center
+    pub fn top_center(self) -> Self {
+        self.position(SnackbarPosition::TopCenter)
+    }
+    
+    /// Position at top left
+    pub fn top_left(self) -> Self {
+        self.position(SnackbarPosition::TopLeft)
+    }
+    
+    /// Position at top right
+    pub fn top_right(self) -> Self {
+        self.position(SnackbarPosition::TopRight)
     }
 }
 
@@ -123,6 +186,8 @@ pub struct Snackbar {
     pub duration: f32,
     /// Whether dismissible
     pub dismissible: bool,
+    /// Position on screen
+    pub position: SnackbarPosition,
     /// Current animation state
     pub animation_state: SnackbarAnimationState,
     /// Time remaining before auto-dismiss
@@ -162,6 +227,7 @@ impl Snackbar {
             action: event.action.clone(),
             duration: event.duration.unwrap_or(Self::DEFAULT_DURATION),
             dismissible: event.dismissible,
+            position: event.position,
             animation_state: SnackbarAnimationState::Entering,
             time_remaining: event.duration.unwrap_or(Self::DEFAULT_DURATION),
             animation_progress: 0.0,
@@ -190,9 +256,17 @@ pub struct SnackbarAction;
 #[derive(Component)]
 pub struct SnackbarMessage;
 
+/// Marker for snackbar close button
+#[derive(Component)]
+pub struct SnackbarCloseButton;
+
 /// Snackbar host - container that holds snackbars
 #[derive(Component)]
 pub struct SnackbarHost;
+
+/// Tracks the default position for snackbars in this host
+#[derive(Component, Clone, Copy)]
+pub struct SnackbarHostPosition(pub SnackbarPosition);
 
 // ============================================================================
 // Dimensions
@@ -217,19 +291,74 @@ pub const SNACKBAR_MARGIN_BOTTOM: f32 = 16.0;
 pub struct SnackbarHostBuilder;
 
 impl SnackbarHostBuilder {
-    /// Build the snackbar host
+    /// Build the snackbar host - full screen overlay for positioning snackbars
+    /// By default positions at bottom center
     pub fn build() -> impl Bundle {
+        Self::build_with_position(SnackbarPosition::BottomCenter)
+    }
+    
+    /// Build the snackbar host with a specific default position
+    pub fn build_with_position(position: SnackbarPosition) -> impl Bundle {
+        // For Column flex direction:
+        // - justify_content controls vertical (main axis) - FlexEnd = bottom, FlexStart = top
+        // - align_items controls horizontal (cross axis) - Center = centered, FlexStart = left, FlexEnd = right
+        let (justify, align, flex_direction, padding) = match position {
+            SnackbarPosition::BottomCenter => (
+                JustifyContent::FlexEnd,  // Bottom
+                AlignItems::Center,       // Horizontally centered
+                FlexDirection::Column,
+                UiRect::bottom(Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+            ),
+            SnackbarPosition::BottomLeft => (
+                JustifyContent::FlexEnd,  // Bottom
+                AlignItems::FlexStart,    // Left
+                FlexDirection::Column,
+                UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+            ),
+            SnackbarPosition::BottomRight => (
+                JustifyContent::FlexEnd,  // Bottom
+                AlignItems::FlexEnd,      // Right
+                FlexDirection::Column,
+                UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+            ),
+            SnackbarPosition::TopCenter => (
+                JustifyContent::FlexStart, // Top
+                AlignItems::Center,        // Horizontally centered
+                FlexDirection::Column,
+                UiRect::top(Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+            ),
+            SnackbarPosition::TopLeft => (
+                JustifyContent::FlexStart, // Top
+                AlignItems::FlexStart,     // Left
+                FlexDirection::Column,
+                UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+            ),
+            SnackbarPosition::TopRight => (
+                JustifyContent::FlexStart, // Top
+                AlignItems::FlexEnd,       // Right
+                FlexDirection::Column,
+                UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+            ),
+        };
+        
         (
             SnackbarHost,
+            SnackbarHostPosition(position),
             Node {
                 position_type: PositionType::Absolute,
-                bottom: Val::Px(SNACKBAR_MARGIN_BOTTOM),
+                top: Val::Px(0.0),
+                bottom: Val::Px(0.0),
                 left: Val::Px(0.0),
                 right: Val::Px(0.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
+                flex_direction,
+                justify_content: justify,
+                align_items: align,
+                padding,
                 ..default()
             },
+            // Make it not block mouse events on the overlay itself
+            Pickable::IGNORE,
+            GlobalZIndex(999),
         )
     }
 }
@@ -248,6 +377,7 @@ impl SnackbarBuilder {
                 action: None,
                 duration: Snackbar::DEFAULT_DURATION,
                 dismissible: true,
+                position: SnackbarPosition::default(),
                 animation_state: SnackbarAnimationState::Entering,
                 time_remaining: Snackbar::DEFAULT_DURATION,
                 animation_progress: 0.0,
@@ -283,7 +413,7 @@ impl SnackbarBuilder {
         self.duration(Snackbar::INDEFINITE)
     }
 
-    /// Build the snackbar bundle
+    /// Build the snackbar bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = theme.inverse_surface;
 
@@ -302,6 +432,8 @@ impl SnackbarBuilder {
             },
             BackgroundColor(bg_color),
             BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            // Native Bevy 0.17 shadow support (MD3 snackbars are Level 3 elevation)
+            Elevation::Level3.to_box_shadow(),
         )
     }
 }
@@ -310,18 +442,19 @@ impl SnackbarBuilder {
 // Helper Functions
 // ============================================================================
 
-/// Spawn a snackbar entity
+/// Spawn a snackbar entity as a child of the host
 pub fn spawn_snackbar(
     commands: &mut Commands,
     theme: &MaterialTheme,
     event: &ShowSnackbar,
-    _host: Entity,
+    host: Entity,
+    icon_font: Option<&MaterialIconFont>,
 ) -> Entity {
     let snackbar = Snackbar::from_event(event);
     let message = snackbar.message.clone();
     let action = snackbar.action.clone();
 
-    commands
+    let snackbar_entity = commands
         .spawn((
             snackbar,
             Node {
@@ -333,12 +466,14 @@ pub fn spawn_snackbar(
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
-                // Start off-screen for animation
-                bottom: Val::Px(-SNACKBAR_HEIGHT_SINGLE - SNACKBAR_MARGIN_BOTTOM),
                 ..default()
             },
+            Transform::default(),  // Required for animation system
             BackgroundColor(theme.inverse_surface),
             BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            // Native Bevy 0.17 shadow support
+            Elevation::Level3.to_box_shadow(),
+            GlobalZIndex(1000), // Ensure snackbar is on top
         ))
         .with_children(|parent| {
             // Message text
@@ -378,8 +513,45 @@ pub fn spawn_snackbar(
                     ));
                 });
             }
+            
+            // Close button (X icon) - always shown for easy dismissal
+            let close_text = ICON_CLOSE.to_string();
+            let close_font = icon_font.map(|f| f.0.clone());
+            let inverse_on_surface = theme.inverse_on_surface;
+            parent.spawn((
+                SnackbarCloseButton,
+                Button,
+                Node {
+                    width: Val::Px(32.0),
+                    height: Val::Px(32.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::left(Val::Px(Spacing::SMALL)),
+                    ..default()
+                },
+                BackgroundColor(Color::NONE),
+            ))
+            .with_children(move |btn| {
+                let mut text_font = TextFont {
+                    font_size: 20.0,
+                    ..default()
+                };
+                if let Some(font) = close_font {
+                    text_font.font = font;
+                }
+                btn.spawn((
+                    Text::new(close_text),
+                    text_font,
+                    TextColor(inverse_on_surface),
+                ));
+            });
         })
-        .id()
+        .id();
+    
+    // Make the snackbar a child of the host for proper z-ordering
+    commands.entity(host).add_children(&[snackbar_entity]);
+    
+    snackbar_entity
 }
 
 // ============================================================================
@@ -391,8 +563,9 @@ fn snackbar_queue_system(
     mut commands: Commands,
     mut events: MessageReader<ShowSnackbar>,
     theme: Option<Res<MaterialTheme>>,
+    icon_font: Option<Res<MaterialIconFont>>,
     mut queue: ResMut<SnackbarQueue>,
-    hosts: Query<Entity, With<SnackbarHost>>,
+    mut hosts: Query<(Entity, &mut Node, &mut SnackbarHostPosition), With<SnackbarHost>>,
     snackbars: Query<&Snackbar>,
 ) {
     let Some(theme) = theme else { return };
@@ -413,9 +586,59 @@ fn snackbar_queue_system(
 
     // Show next snackbar if queue has items and we can show
     if can_show && !queue.queue.is_empty() {
-        if let Some(event) = queue.queue.first() {
-            if let Some(host) = hosts.iter().next() {
-                let entity = spawn_snackbar(&mut commands, &theme, event, host);
+        if let Some(event) = queue.queue.first().cloned() {
+            if let Some((host, mut host_node, mut host_pos)) = hosts.iter_mut().next() {
+                // Update host layout if position changed
+                if host_pos.0 != event.position {
+                    host_pos.0 = event.position;
+                    // For Column flex direction:
+                    // - justify_content controls vertical (main axis) - FlexEnd = bottom, FlexStart = top
+                    // - align_items controls horizontal (cross axis) - Center = centered, FlexStart = left, FlexEnd = right
+                    let (justify, align, flex_direction, padding) = match event.position {
+                        SnackbarPosition::BottomCenter => (
+                            JustifyContent::FlexEnd,  // Bottom
+                            AlignItems::Center,       // Horizontally centered
+                            FlexDirection::Column,
+                            UiRect::bottom(Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                        ),
+                        SnackbarPosition::BottomLeft => (
+                            JustifyContent::FlexEnd,  // Bottom
+                            AlignItems::FlexStart,    // Left
+                            FlexDirection::Column,
+                            UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                        ),
+                        SnackbarPosition::BottomRight => (
+                            JustifyContent::FlexEnd,  // Bottom
+                            AlignItems::FlexEnd,      // Right
+                            FlexDirection::Column,
+                            UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                        ),
+                        SnackbarPosition::TopCenter => (
+                            JustifyContent::FlexStart, // Top
+                            AlignItems::Center,        // Horizontally centered
+                            FlexDirection::Column,
+                            UiRect::top(Val::Px(SNACKBAR_MARGIN_BOTTOM)),
+                        ),
+                        SnackbarPosition::TopLeft => (
+                            JustifyContent::FlexStart, // Top
+                            AlignItems::FlexStart,     // Left
+                            FlexDirection::Column,
+                            UiRect::new(Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+                        ),
+                        SnackbarPosition::TopRight => (
+                            JustifyContent::FlexStart, // Top
+                            AlignItems::FlexEnd,       // Right
+                            FlexDirection::Column,
+                            UiRect::new(Val::Auto, Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Px(SNACKBAR_MARGIN_BOTTOM), Val::Auto),
+                        ),
+                    };
+                    host_node.justify_content = justify;
+                    host_node.align_items = align;
+                    host_node.flex_direction = flex_direction;
+                    host_node.padding = padding;
+                }
+                
+                let entity = spawn_snackbar(&mut commands, &theme, &event, host, icon_font.as_deref());
                 queue.active = Some(entity);
                 queue.queue.remove(0);
             }
@@ -423,12 +646,12 @@ fn snackbar_queue_system(
     }
 }
 
-/// System to animate snackbars
+/// System to animate snackbars using transform for slide animation
 fn snackbar_animation_system(
     time: Res<Time>,
-    mut snackbars: Query<(&mut Snackbar, &mut Node)>,
+    mut snackbars: Query<(&mut Snackbar, &mut Transform)>,
 ) {
-    for (mut snackbar, mut node) in snackbars.iter_mut() {
+    for (mut snackbar, mut transform) in snackbars.iter_mut() {
         let dt = time.delta_secs();
 
         match snackbar.animation_state {
@@ -439,13 +662,15 @@ fn snackbar_animation_system(
                     snackbar.animation_state = SnackbarAnimationState::Visible;
                 }
 
-                // Slide up animation
+                // Slide animation using transform
                 let progress = ease_standard_decelerate(snackbar.animation_progress);
                 let offset = (1.0 - progress) * (SNACKBAR_HEIGHT_SINGLE + SNACKBAR_MARGIN_BOTTOM);
-                node.bottom = Val::Px(-offset);
+                // Positive Y moves down in UI coordinates, so we use positive offset for bottom snackbars
+                transform.translation.y = -offset;
             }
             SnackbarAnimationState::Visible => {
-                // No animation needed
+                // Ensure fully visible
+                transform.translation.y = 0.0;
             }
             SnackbarAnimationState::Exiting => {
                 snackbar.animation_progress -= dt / Duration::MEDIUM2;
@@ -454,10 +679,10 @@ fn snackbar_animation_system(
                     snackbar.animation_state = SnackbarAnimationState::Dismissed;
                 }
 
-                // Slide down animation
+                // Slide animation using transform
                 let progress = ease_standard_accelerate(snackbar.animation_progress);
                 let offset = (1.0 - progress) * (SNACKBAR_HEIGHT_SINGLE + SNACKBAR_MARGIN_BOTTOM);
-                node.bottom = Val::Px(-offset);
+                transform.translation.y = -offset;
             }
             SnackbarAnimationState::Dismissed => {
                 // Will be cleaned up
@@ -492,6 +717,19 @@ fn snackbar_timeout_system(
     }
 }
 
+/// System to despawn snackbars that have completed their exit animation
+fn snackbar_cleanup_system(
+    mut commands: Commands,
+    snackbars: Query<(Entity, &Snackbar)>,
+) {
+    for (entity, snackbar) in snackbars.iter() {
+        if snackbar.is_dismissed() {
+            // In Bevy 0.17, despawn() removes the entity and all children via ChildOf relationship
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
 /// System to handle snackbar action clicks
 fn snackbar_action_system(
     interactions: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<SnackbarAction>)>,
@@ -508,6 +746,32 @@ fn snackbar_action_system(
                     });
                 }
                 snackbar.dismiss();
+            }
+        }
+    }
+}
+
+/// System to handle snackbar close button clicks
+fn snackbar_close_system(
+    interactions: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<SnackbarCloseButton>)>,
+    mut snackbars: Query<&mut Snackbar>,
+) {
+    for (interaction, child_of) in interactions.iter() {
+        #[cfg(debug_assertions)]
+        bevy::log::debug!("Snackbar close button interaction: {:?}", interaction);
+        
+        if *interaction == Interaction::Pressed {
+            let parent_entity = child_of.parent();
+            #[cfg(debug_assertions)]
+            bevy::log::debug!("Snackbar close button pressed, looking for parent: {:?}", parent_entity);
+            
+            if let Ok(mut snackbar) = snackbars.get_mut(parent_entity) {
+                #[cfg(debug_assertions)]
+                bevy::log::info!("Dismissing snackbar via close button");
+                snackbar.dismiss();
+            } else {
+                #[cfg(debug_assertions)]
+                bevy::log::warn!("Could not find snackbar parent entity: {:?}", parent_entity);
             }
         }
     }
@@ -554,5 +818,24 @@ mod tests {
         assert_eq!(event.message, "Hello");
         assert_eq!(event.duration, Some(5.0));
         assert!(!event.dismissible);
+    }
+
+    #[test]
+    fn test_snackbar_close_button_marker() {
+        // Verify SnackbarCloseButton can be created as a marker component
+        let _close_button = SnackbarCloseButton;
+        // The marker is used to identify close buttons in the UI hierarchy
+    }
+
+    #[test]
+    fn test_snackbar_double_dismiss() {
+        // Test that dismissing twice doesn't cause issues
+        let mut snackbar = Snackbar::from_event(&ShowSnackbar::message("Test"));
+        snackbar.dismiss();
+        assert_eq!(snackbar.animation_state, SnackbarAnimationState::Exiting);
+        
+        // Second dismiss should not change state
+        snackbar.dismiss();
+        assert_eq!(snackbar.animation_state, SnackbarAnimationState::Exiting);
     }
 }

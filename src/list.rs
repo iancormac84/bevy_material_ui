@@ -8,7 +8,7 @@ use bevy::ui::ScrollPosition;
 
 use crate::{
     ripple::RippleHost,
-    theme::MaterialTheme,
+    theme::{blend_state_layer, MaterialTheme},
     tokens::Spacing,
 };
 
@@ -18,7 +18,7 @@ pub struct ListPlugin;
 impl Plugin for ListPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<ListItemClickEvent>()
-            .add_systems(Update, (list_item_interaction_system, list_item_style_system));
+            .add_systems(Update, (list_item_interaction_system, list_item_style_system, list_item_text_style_system));
     }
 }
 
@@ -151,12 +151,25 @@ impl MaterialListItem {
         self
     }
 
-    /// Get the background color
+    /// Get the background color with state layer applied
     pub fn background_color(&self, theme: &MaterialTheme) -> Color {
-        if self.selected {
+        let base = if self.selected {
             theme.secondary_container
         } else {
             Color::NONE
+        };
+        
+        // Apply state layer
+        let state_opacity = self.state_layer_opacity();
+        if state_opacity > 0.0 {
+            let state_color = theme.on_surface;
+            if base == Color::NONE {
+                state_color.with_alpha(state_opacity)
+            } else {
+                blend_state_layer(base, state_color, state_opacity)
+            }
+        } else {
+            base
         }
     }
 
@@ -247,6 +260,44 @@ fn list_item_style_system(
 
     for (item, mut bg_color) in items.iter_mut() {
         *bg_color = BackgroundColor(item.background_color(&theme));
+    }
+}
+
+/// System to update list item text colors when item state changes
+fn list_item_text_style_system(
+    theme: Option<Res<MaterialTheme>>,
+    changed_items: Query<(&MaterialListItem, &Children), Changed<MaterialListItem>>,
+    mut headline_texts: Query<&mut TextColor, With<ListItemHeadline>>,
+    mut supporting_texts: Query<&mut TextColor, (With<ListItemSupportingText>, Without<ListItemHeadline>)>,
+    children_query: Query<&Children>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (item, children) in changed_items.iter() {
+        let headline_color = item.headline_color(&theme);
+        let supporting_color = item.supporting_text_color(&theme);
+        
+        // Update direct children
+        for child in children.iter() {
+            if let Ok(mut text_color) = headline_texts.get_mut(child) {
+                *text_color = TextColor(headline_color);
+            }
+            if let Ok(mut text_color) = supporting_texts.get_mut(child) {
+                *text_color = TextColor(supporting_color);
+            }
+            
+            // Check nested children (for body containers)
+            if let Ok(grandchildren) = children_query.get(child) {
+                for grandchild in grandchildren.iter() {
+                    if let Ok(mut text_color) = headline_texts.get_mut(grandchild) {
+                        *text_color = TextColor(headline_color);
+                    }
+                    if let Ok(mut text_color) = supporting_texts.get_mut(grandchild) {
+                        *text_color = TextColor(supporting_color);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -441,6 +492,14 @@ pub struct ListItemLeading;
 /// Marker for content/body area
 #[derive(Component)]
 pub struct ListItemBody;
+
+/// Marker for headline text in list item
+#[derive(Component)]
+pub struct ListItemHeadline;
+
+/// Marker for supporting text in list item
+#[derive(Component)]
+pub struct ListItemSupportingText;
 
 /// Marker for trailing content area
 #[derive(Component)]

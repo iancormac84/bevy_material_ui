@@ -1,9 +1,12 @@
 //! Material Design 3 Menu component
 //!
 //! Menus display a list of choices on a temporary surface.
+//! This module leverages native `BoxShadow` for elevation shadows.
+//!
 //! Reference: <https://m3.material.io/components/menus/overview>
 
 use bevy::prelude::*;
+use bevy::ui::BoxShadow;
 
 use crate::{
     elevation::Elevation,
@@ -20,7 +23,12 @@ impl Plugin for MenuPlugin {
         app.add_message::<MenuOpenEvent>()
             .add_message::<MenuCloseEvent>()
             .add_message::<MenuItemSelectEvent>()
-            .add_systems(Update, (menu_visibility_system, menu_item_interaction_system, menu_item_style_system));
+            .add_systems(Update, (
+                menu_visibility_system,
+                menu_shadow_system,
+                menu_item_interaction_system,
+                menu_item_style_system,
+            ));
     }
 }
 
@@ -234,6 +242,20 @@ fn menu_visibility_system(
     }
 }
 
+/// System to update menu shadows using native BoxShadow
+fn menu_shadow_system(
+    mut menus: Query<(&MaterialMenu, &mut BoxShadow), Changed<MaterialMenu>>,
+) {
+    for (menu, mut shadow) in menus.iter_mut() {
+        // Only show shadow when menu is open
+        if menu.open {
+            *shadow = menu.elevation().to_box_shadow();
+        } else {
+            *shadow = BoxShadow::default();
+        }
+    }
+}
+
 /// System to handle menu item interactions
 fn menu_item_interaction_system(
     mut interaction_query: Query<
@@ -318,7 +340,7 @@ impl MenuBuilder {
         self
     }
 
-    /// Build the menu bundle
+    /// Build the menu bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.menu.surface_color(theme);
 
@@ -335,6 +357,8 @@ impl MenuBuilder {
             },
             BackgroundColor(bg_color),
             BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            // Native Bevy 0.17 shadow support (starts hidden since menu is closed)
+            BoxShadow::default(),
         )
     }
 }

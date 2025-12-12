@@ -2,12 +2,19 @@
 //!
 //! Cards contain content and actions about a single subject.
 //! Reference: <https://m3.material.io/components/cards/overview>
+//!
+//! ## Bevy 0.17 Improvements
+//! 
+//! This module now leverages:
+//! - Native `BoxShadow` for elevation shadows
+//! - Modern bundle patterns
 
 use bevy::prelude::*;
+use bevy::ui::BoxShadow;
 
 use crate::{
     elevation::Elevation,
-    theme::MaterialTheme,
+    theme::{blend_state_layer, MaterialTheme},
     tokens::{CornerRadius, Spacing},
 };
 
@@ -17,7 +24,11 @@ pub struct CardPlugin;
 impl Plugin for CardPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<CardClickEvent>()
-            .add_systems(Update, (card_interaction_system, card_style_system));
+            .add_systems(Update, (
+                card_interaction_system,
+                card_style_system,
+                card_shadow_system,
+            ));
     }
 }
 
@@ -77,12 +88,20 @@ impl MaterialCard {
         self
     }
 
-    /// Get the background color
+    /// Get the background color with state layer applied
     pub fn background_color(&self, theme: &MaterialTheme) -> Color {
-        match self.variant {
+        let base = match self.variant {
             CardVariant::Elevated => theme.surface_container_low,
             CardVariant::Filled => theme.surface_container_highest,
             CardVariant::Outlined => theme.surface,
+        };
+        
+        // Apply state layer for clickable cards
+        let state_opacity = self.state_layer_opacity();
+        if state_opacity > 0.0 {
+            blend_state_layer(base, theme.on_surface, state_opacity)
+        } else {
+            base
         }
     }
 
@@ -191,7 +210,31 @@ fn card_style_system(
     }
 }
 
+/// System to update card shadows using Bevy's native BoxShadow
+fn card_shadow_system(
+    mut cards: Query<
+        (&MaterialCard, &mut BoxShadow),
+        Changed<MaterialCard>,
+    >,
+) {
+    for (card, mut box_shadow) in cards.iter_mut() {
+        let elevation = card.elevation();
+        *box_shadow = elevation.to_box_shadow();
+    }
+}
+
 /// Builder for cards
+/// 
+/// ## Example with Bevy 0.17's native shadows:
+/// 
+/// ```ignore
+/// commands.spawn((
+///     CardBuilder::new().elevated().build(&theme),
+///     children![
+///         (Text::new("Card Title"), TextFont { font_size: 20.0, ..default() }),
+///     ],
+/// ));
+/// ```
 pub struct CardBuilder {
     card: MaterialCard,
     width: Option<Val>,
@@ -261,7 +304,7 @@ impl CardBuilder {
         self
     }
 
-    /// Build the card bundle
+    /// Build the card bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.card.background_color(theme);
         let border_color = self.card.border_color(theme);
@@ -270,7 +313,7 @@ impl CardBuilder {
         } else {
             0.0
         };
-        let _is_clickable = self.card.clickable;
+        let elevation = self.card.elevation();
 
         let mut node = Node {
             padding: UiRect::all(Val::Px(self.padding)),
@@ -286,15 +329,48 @@ impl CardBuilder {
             node.height = h;
         }
 
-        let bundle = (
+        (
             self.card,
             node,
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
             BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
-        );
+            // Native Bevy 0.17 shadow support
+            elevation.to_box_shadow(),
+        )
+    }
 
-        bundle
+    /// Build the card bundle without shadow
+    pub fn build_without_shadow(self, theme: &MaterialTheme) -> impl Bundle {
+        let bg_color = self.card.background_color(theme);
+        let border_color = self.card.border_color(theme);
+        let border_width = if self.card.variant == CardVariant::Outlined {
+            1.0
+        } else {
+            0.0
+        };
+
+        let mut node = Node {
+            padding: UiRect::all(Val::Px(self.padding)),
+            border: UiRect::all(Val::Px(border_width)),
+            flex_direction: FlexDirection::Column,
+            ..default()
+        };
+
+        if let Some(w) = self.width {
+            node.width = w;
+        }
+        if let Some(h) = self.height {
+            node.height = h;
+        }
+
+        (
+            self.card,
+            node,
+            BackgroundColor(bg_color),
+            BorderColor::all(border_color),
+            BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+        )
     }
 }
 

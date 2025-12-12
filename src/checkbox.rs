@@ -594,30 +594,242 @@ impl SpawnCheckbox for Commands<'_, '_> {
 mod tests {
     use super::*;
 
+    // ============================================================================
+    // CheckboxState Tests
+    // ============================================================================
+
     #[test]
-    fn test_checkbox_state_toggle() {
+    fn test_checkbox_state_default() {
+        assert_eq!(CheckboxState::default(), CheckboxState::Unchecked);
+    }
+
+    #[test]
+    fn test_checkbox_state_toggle_unchecked_to_checked() {
         assert_eq!(CheckboxState::Unchecked.toggle(), CheckboxState::Checked);
+    }
+
+    #[test]
+    fn test_checkbox_state_toggle_checked_to_unchecked() {
         assert_eq!(CheckboxState::Checked.toggle(), CheckboxState::Unchecked);
+    }
+
+    #[test]
+    fn test_checkbox_state_toggle_indeterminate_to_checked() {
         assert_eq!(CheckboxState::Indeterminate.toggle(), CheckboxState::Checked);
     }
 
     #[test]
-    fn test_checkbox_state_icon() {
-        assert!(CheckboxState::Unchecked.icon().is_none());
-        assert_eq!(CheckboxState::Checked.icon(), Some(ICON_CHECK));
-        assert_eq!(CheckboxState::Indeterminate.icon(), Some(ICON_REMOVE));
+    fn test_checkbox_state_is_checked() {
+        assert!(!CheckboxState::Unchecked.is_checked());
+        assert!(CheckboxState::Checked.is_checked());
+        assert!(!CheckboxState::Indeterminate.is_checked());
     }
 
     #[test]
-    fn test_checkbox_builder() {
-        let checkbox = CheckboxBuilder::new()
+    fn test_checkbox_state_is_indeterminate() {
+        assert!(!CheckboxState::Unchecked.is_indeterminate());
+        assert!(!CheckboxState::Checked.is_indeterminate());
+        assert!(CheckboxState::Indeterminate.is_indeterminate());
+    }
+
+    #[test]
+    fn test_checkbox_state_icon_unchecked() {
+        assert!(CheckboxState::Unchecked.icon().is_none());
+    }
+
+    #[test]
+    fn test_checkbox_state_icon_checked() {
+        assert_eq!(CheckboxState::Checked.icon(), Some(ICON_CHECK));
+    }
+
+    #[test]
+    fn test_checkbox_state_icon_indeterminate() {
+        assert_eq!(CheckboxState::Indeterminate.icon(), Some(ICON_REMOVE));
+    }
+
+    // ============================================================================
+    // MaterialCheckbox Tests
+    // ============================================================================
+
+    #[test]
+    fn test_checkbox_new_defaults() {
+        let checkbox = MaterialCheckbox::new();
+        assert_eq!(checkbox.state, CheckboxState::Unchecked);
+        assert!(!checkbox.disabled);
+        assert!(!checkbox.error);
+        assert!(!checkbox.pressed);
+        assert!(!checkbox.hovered);
+        assert_eq!(checkbox.animation_progress, 1.0);
+        assert!(!checkbox.animating);
+    }
+
+    #[test]
+    fn test_checkbox_with_state_checked() {
+        let checkbox = MaterialCheckbox::new().with_state(CheckboxState::Checked);
+        assert_eq!(checkbox.state, CheckboxState::Checked);
+        assert_eq!(checkbox.previous_state, CheckboxState::Checked);
+    }
+
+    #[test]
+    fn test_checkbox_with_state_indeterminate() {
+        let checkbox = MaterialCheckbox::new().with_state(CheckboxState::Indeterminate);
+        assert_eq!(checkbox.state, CheckboxState::Indeterminate);
+        assert_eq!(checkbox.previous_state, CheckboxState::Indeterminate);
+    }
+
+    #[test]
+    fn test_checkbox_checked_method() {
+        let checkbox = MaterialCheckbox::new().checked();
+        assert_eq!(checkbox.state, CheckboxState::Checked);
+        assert_eq!(checkbox.previous_state, CheckboxState::Checked);
+    }
+
+    #[test]
+    fn test_checkbox_indeterminate_method() {
+        let checkbox = MaterialCheckbox::new().indeterminate();
+        assert_eq!(checkbox.state, CheckboxState::Indeterminate);
+        assert_eq!(checkbox.previous_state, CheckboxState::Indeterminate);
+    }
+
+    #[test]
+    fn test_checkbox_disabled() {
+        let checkbox = MaterialCheckbox::new().disabled(true);
+        assert!(checkbox.disabled);
+
+        let checkbox = MaterialCheckbox::new().disabled(false);
+        assert!(!checkbox.disabled);
+    }
+
+    #[test]
+    fn test_checkbox_error() {
+        let checkbox = MaterialCheckbox::new().error(true);
+        assert!(checkbox.error);
+
+        let checkbox = MaterialCheckbox::new().error(false);
+        assert!(!checkbox.error);
+    }
+
+    #[test]
+    fn test_checkbox_builder_chain() {
+        let checkbox = MaterialCheckbox::new()
             .checked()
             .disabled(true)
-            .error(true)
-            .build();
+            .error(true);
         
         assert!(checkbox.state.is_checked());
         assert!(checkbox.disabled);
         assert!(checkbox.error);
+    }
+
+    #[test]
+    fn test_checkbox_start_animation() {
+        let mut checkbox = MaterialCheckbox::new();
+        assert_eq!(checkbox.state, CheckboxState::Unchecked);
+        
+        checkbox.start_animation(CheckboxState::Checked);
+        
+        assert_eq!(checkbox.state, CheckboxState::Checked);
+        assert_eq!(checkbox.previous_state, CheckboxState::Unchecked);
+        assert_eq!(checkbox.animation_progress, 0.0);
+        assert!(checkbox.animating);
+    }
+
+    #[test]
+    fn test_checkbox_start_animation_same_state() {
+        let mut checkbox = MaterialCheckbox::new().checked();
+        let original_progress = checkbox.animation_progress;
+        
+        // Animating to same state should not start animation
+        checkbox.start_animation(CheckboxState::Checked);
+        
+        assert_eq!(checkbox.animation_progress, original_progress);
+        assert!(!checkbox.animating);
+    }
+
+    // ============================================================================
+    // CheckboxBuilder Tests
+    // ============================================================================
+
+    #[test]
+    fn test_checkbox_builder_new_defaults() {
+        let checkbox = CheckboxBuilder::new().build();
+        assert_eq!(checkbox.state, CheckboxState::Unchecked);
+        assert!(!checkbox.disabled);
+        assert!(!checkbox.error);
+    }
+
+    #[test]
+    fn test_checkbox_builder_state() {
+        let checkbox = CheckboxBuilder::new()
+            .state(CheckboxState::Indeterminate)
+            .build();
+        assert_eq!(checkbox.state, CheckboxState::Indeterminate);
+        assert_eq!(checkbox.previous_state, CheckboxState::Indeterminate);
+    }
+
+    #[test]
+    fn test_checkbox_builder_checked() {
+        let checkbox = CheckboxBuilder::new().checked().build();
+        assert_eq!(checkbox.state, CheckboxState::Checked);
+    }
+
+    #[test]
+    fn test_checkbox_builder_indeterminate() {
+        let checkbox = CheckboxBuilder::new().indeterminate().build();
+        assert_eq!(checkbox.state, CheckboxState::Indeterminate);
+    }
+
+    #[test]
+    fn test_checkbox_builder_disabled() {
+        let checkbox = CheckboxBuilder::new().disabled(true).build();
+        assert!(checkbox.disabled);
+    }
+
+    #[test]
+    fn test_checkbox_builder_error() {
+        let checkbox = CheckboxBuilder::new().error(true).build();
+        assert!(checkbox.error);
+    }
+
+    #[test]
+    fn test_checkbox_builder_full_chain() {
+        let checkbox = CheckboxBuilder::new()
+            .state(CheckboxState::Checked)
+            .disabled(true)
+            .error(true)
+            .build();
+        
+        assert_eq!(checkbox.state, CheckboxState::Checked);
+        assert!(checkbox.disabled);
+        assert!(checkbox.error);
+    }
+
+    // ============================================================================
+    // Constants Tests
+    // ============================================================================
+
+    #[test]
+    fn test_checkbox_size_constant() {
+        assert_eq!(CHECKBOX_SIZE, 18.0);
+    }
+
+    #[test]
+    fn test_checkbox_touch_target_constant() {
+        assert_eq!(CHECKBOX_TOUCH_TARGET, 48.0);
+    }
+
+    #[test]
+    fn test_checkbox_border_width_constant() {
+        assert_eq!(CHECKBOX_BORDER_WIDTH, 2.0);
+    }
+
+    #[test]
+    fn test_checkbox_corner_radius_constant() {
+        assert_eq!(CHECKBOX_CORNER_RADIUS, 2.0);
+    }
+
+    #[test]
+    fn test_touch_target_larger_than_checkbox() {
+        assert!(CHECKBOX_TOUCH_TARGET > CHECKBOX_SIZE);
     }
 }

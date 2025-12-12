@@ -3,7 +3,7 @@
 //! Tests for Motion, Snackbar, Chip, App Bar, Badge, and Tooltip components.
 
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::snackbar::ShowSnackbar;
+use bevy_material_ui::snackbar::{ShowSnackbar, SnackbarPosition};
 use bevy_material_ui::chip::MaterialChip;
 use bevy_material_ui::app_bar::TopAppBar;
 use bevy_material_ui::badge::MaterialBadge;
@@ -103,11 +103,13 @@ mod snackbar_tests {
             action: Some("Undo".to_string()),
             duration: Some(5.0),
             dismissible: true,
+            position: SnackbarPosition::BottomCenter,
         };
         
         assert_eq!(event.message, "Test message");
         assert_eq!(event.action, Some("Undo".to_string()));
         assert_eq!(event.duration, Some(5.0));
+        assert_eq!(event.position, SnackbarPosition::BottomCenter);
     }
 
     #[test]
@@ -150,6 +152,45 @@ mod snackbar_tests {
     fn test_snackbar_max_width_constant() {
         // MD3 spec: max width for snackbar
         assert!(SNACKBAR_MAX_WIDTH > 200.0);
+    }
+
+    #[test]
+    fn test_snackbar_close_button_marker() {
+        // Verify the SnackbarCloseButton marker is a unit struct
+        use bevy_material_ui::snackbar::SnackbarCloseButton;
+        let _marker = SnackbarCloseButton;
+        // If this compiles, the component exists
+    }
+
+    #[test]
+    fn test_show_snackbar_builder_chain() {
+        let event = ShowSnackbar::with_action("Network Error", "Retry")
+            .duration(6.0)
+            .position(SnackbarPosition::TopCenter)
+            .dismissible(true);
+        
+        assert_eq!(event.message, "Network Error");
+        assert_eq!(event.action, Some("Retry".to_string()));
+        assert_eq!(event.duration, Some(6.0));
+        assert_eq!(event.position, SnackbarPosition::TopCenter);
+        assert!(event.dismissible);
+    }
+
+    #[test]
+    fn test_snackbar_all_positions() {
+        let positions = [
+            SnackbarPosition::BottomCenter,
+            SnackbarPosition::BottomLeft,
+            SnackbarPosition::BottomRight,
+            SnackbarPosition::TopCenter,
+            SnackbarPosition::TopLeft,
+            SnackbarPosition::TopRight,
+        ];
+        
+        for pos in positions {
+            let event = ShowSnackbar::message("Test").position(pos);
+            assert_eq!(event.position, pos);
+        }
     }
 }
 

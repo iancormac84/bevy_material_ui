@@ -7,7 +7,7 @@ use bevy::prelude::*;
 
 use crate::{
     ripple::RippleHost,
-    theme::MaterialTheme,
+    theme::{blend_state_layer, MaterialTheme},
     tokens::CornerRadius,
 };
 
@@ -92,7 +92,7 @@ impl MaterialIconButton {
         self
     }
 
-    /// Get the background color
+    /// Get the background color with state layer applied
     pub fn background_color(&self, theme: &MaterialTheme) -> Color {
         if self.disabled {
             return match self.variant {
@@ -104,7 +104,7 @@ impl MaterialIconButton {
             };
         }
 
-        match self.variant {
+        let base = match self.variant {
             IconButtonVariant::Standard => Color::NONE,
             IconButtonVariant::Filled => {
                 if self.selected {
@@ -127,6 +127,32 @@ impl MaterialIconButton {
                     Color::NONE
                 }
             }
+        };
+        
+        // Apply state layer
+        let state_opacity = self.state_layer_opacity();
+        if state_opacity > 0.0 {
+            let state_color = self.icon_color(theme);
+            if base == Color::NONE {
+                state_color.with_alpha(state_opacity)
+            } else {
+                blend_state_layer(base, state_color, state_opacity)
+            }
+        } else {
+            base
+        }
+    }
+    
+    /// Get the state layer opacity
+    fn state_layer_opacity(&self) -> f32 {
+        if self.disabled {
+            0.0
+        } else if self.pressed {
+            0.12
+        } else if self.hovered {
+            0.08
+        } else {
+            0.0
         }
     }
 

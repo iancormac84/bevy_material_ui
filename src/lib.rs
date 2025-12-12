@@ -161,12 +161,16 @@ pub mod scroll;
 
 /// Prelude module for convenient imports
 pub mod prelude {
+    // Re-export Bevy UI types for convenience
+    pub use bevy::ui::{BoxShadow, ShadowStyle, Outline};
+    pub use bevy::ui::{BackgroundGradient, BorderGradient, Gradient, LinearGradient, RadialGradient, ConicGradient, ColorStop};
+
     // Core
     pub use crate::theme::{ColorScheme, MaterialTheme};
     pub use crate::typography::Typography;
     pub use crate::tokens::{CornerRadius, Duration, Easing, Spacing};
     pub use crate::elevation::{Elevation, ElevationShadow};
-    pub use crate::focus::{FocusGained, FocusLost, Focusable, FocusPlugin, FocusRing};
+    pub use crate::focus::{FocusGained, FocusLost, Focusable, FocusPlugin, FocusRing, create_native_focus_outline};
     pub use crate::ripple::{Ripple, RippleHost, RipplePlugin, SpawnRipple};
 
     // Color System
@@ -182,7 +186,7 @@ pub mod prelude {
     // Button
     pub use crate::button::{
         ButtonClickEvent, ButtonPlugin, ButtonVariant, MaterialButton, MaterialButtonBuilder,
-        spawn_material_button,
+        spawn_material_button, material_button_bundle,
     };
 
     // Icon Button
@@ -253,8 +257,9 @@ pub mod prelude {
     // List
     pub use crate::list::{
         ListBuilder, ListDivider, ListItemBody, ListItemBuilder, ListItemClickEvent,
-        ListItemLeading, ListItemTrailing, ListItemVariant, ListPlugin, MaterialList,
-        MaterialListItem, ScrollableList, create_list_divider,
+        ListItemHeadline, ListItemLeading, ListItemSupportingText, ListItemTrailing,
+        ListItemVariant, ListPlugin, MaterialList, MaterialListItem, ScrollableList,
+        create_list_divider,
     };
 
     // Menu
@@ -300,8 +305,9 @@ pub mod prelude {
 
     // Snackbar
     pub use crate::snackbar::{
-        Snackbar, SnackbarAnimationState, SnackbarBuilder, SnackbarPlugin,
-        SnackbarQueue, spawn_snackbar, SNACKBAR_MAX_WIDTH,
+        Snackbar, SnackbarAnimationState, SnackbarBuilder, SnackbarHostBuilder,
+        SnackbarPlugin, SnackbarPosition, SnackbarQueue, spawn_snackbar, 
+        ShowSnackbar, DismissSnackbar, SnackbarActionEvent, SNACKBAR_MAX_WIDTH,
     };
 
     // Chip

@@ -2,13 +2,18 @@
 //!
 //! FABs represent the primary action on a screen.
 //! Reference: <https://m3.material.io/components/floating-action-button/overview>
+//!
+//! ## Bevy 0.17 Improvements
+//! 
+//! This module now leverages native `BoxShadow` for elevation shadows.
 
 use bevy::prelude::*;
+use bevy::ui::BoxShadow;
 
 use crate::{
     elevation::Elevation,
     ripple::RippleHost,
-    theme::MaterialTheme,
+    theme::{blend_state_layer, MaterialTheme},
     tokens::{CornerRadius, Spacing},
 };
 
@@ -18,7 +23,11 @@ pub struct FabPlugin;
 impl Plugin for FabPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<FabClickEvent>()
-            .add_systems(Update, (fab_interaction_system, fab_style_system));
+            .add_systems(Update, (
+                fab_interaction_system,
+                fab_style_system,
+                fab_shadow_system,
+            ));
     }
 }
 
@@ -133,13 +142,33 @@ impl MaterialFab {
         self
     }
 
-    /// Get the background color
+    /// Get the background color with state layer applied
     pub fn background_color(&self, theme: &MaterialTheme) -> Color {
-        match self.color {
+        let base = match self.color {
             FabColor::Primary => theme.primary_container,
             FabColor::Surface => theme.surface_container_high,
             FabColor::Secondary => theme.secondary_container,
             FabColor::Tertiary => theme.tertiary_container,
+        };
+        
+        // Apply state layer
+        let state_opacity = self.state_layer_opacity();
+        if state_opacity > 0.0 {
+            let state_color = self.content_color(theme);
+            blend_state_layer(base, state_color, state_opacity)
+        } else {
+            base
+        }
+    }
+    
+    /// Get the state layer opacity
+    fn state_layer_opacity(&self) -> f32 {
+        if self.pressed {
+            0.12
+        } else if self.hovered {
+            0.08
+        } else {
+            0.0
         }
     }
 
@@ -223,6 +252,16 @@ fn fab_style_system(
     }
 }
 
+/// System to update FAB shadows using native BoxShadow
+fn fab_shadow_system(
+    mut fabs: Query<(&MaterialFab, &mut BoxShadow), Changed<MaterialFab>>,
+) {
+    for (fab, mut box_shadow) in fabs.iter_mut() {
+        let elevation = fab.elevation();
+        *box_shadow = elevation.to_box_shadow();
+    }
+}
+
 /// Builder for FABs
 pub struct FabBuilder {
     fab: MaterialFab,
@@ -285,12 +324,13 @@ impl FabBuilder {
         self
     }
 
-    /// Build the FAB bundle
+    /// Build the FAB bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.fab.background_color(theme);
         let size = self.fab.size.size();
         let corner_radius = self.fab.size.corner_radius();
         let is_extended = self.fab.is_extended();
+        let elevation = self.fab.elevation();
 
         (
             self.fab,
@@ -312,6 +352,8 @@ impl FabBuilder {
             },
             BackgroundColor(bg_color),
             BorderRadius::all(Val::Px(corner_radius)),
+            // Native Bevy 0.17 shadow support
+            elevation.to_box_shadow(),
         )
     }
 }

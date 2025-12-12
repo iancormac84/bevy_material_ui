@@ -2,8 +2,12 @@
 //!
 //! Elevation creates visual separation between surfaces using shadows and tonal color.
 //! Reference: <https://m3.material.io/styles/elevation/overview>
+//!
+//! This module now leverages Bevy 0.17's native `BoxShadow` component for rendering
+//! Material Design elevation shadows.
 
 use bevy::prelude::*;
+use bevy::ui::{BoxShadow, ShadowStyle, Val};
 
 /// Elevation levels in Material Design 3
 #[derive(Debug, Clone, Copy, PartialEq, Default, Component)]
@@ -93,9 +97,42 @@ impl Elevation {
             Elevation::Level5 => Elevation::Level4,
         }
     }
+
+    /// Convert this elevation to a Bevy `BoxShadow` component
+    /// 
+    /// This leverages Bevy 0.17's native shadow rendering for better performance.
+    pub fn to_box_shadow(&self) -> BoxShadow {
+        if *self == Elevation::Level0 {
+            return BoxShadow::default();
+        }
+
+        BoxShadow::new(
+            Color::srgba(0.0, 0.0, 0.0, self.shadow_opacity()),
+            Val::Px(0.0),
+            Val::Px(self.shadow_offset_y()),
+            Val::Px(0.0),
+            Val::Px(self.shadow_blur()),
+        )
+    }
+
+    /// Create a `ShadowStyle` for this elevation level
+    /// 
+    /// Useful when you need more control over the shadow styling.
+    pub fn to_shadow_style(&self) -> ShadowStyle {
+        ShadowStyle {
+            color: Color::srgba(0.0, 0.0, 0.0, self.shadow_opacity()),
+            x_offset: Val::Px(0.0),
+            y_offset: Val::Px(self.shadow_offset_y()),
+            spread_radius: Val::Px(0.0),
+            blur_radius: Val::Px(self.shadow_blur()),
+        }
+    }
 }
 
 /// Shadow styling based on elevation
+/// 
+/// **Note**: Consider using `Elevation::to_box_shadow()` for native Bevy shadow rendering,
+/// which offers better performance. This struct is retained for backwards compatibility.
 #[derive(Debug, Clone)]
 pub struct ElevationShadow {
     /// Shadow color

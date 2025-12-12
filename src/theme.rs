@@ -302,3 +302,29 @@ pub enum StateLayer {
     /// Dragged state (16% opacity)
     Dragged,
 }
+
+/// Blend a state layer color over a base color with given opacity
+/// 
+/// This is a standalone helper function for applying MD3 state layers.
+/// The state layer is a semi-transparent overlay of the content/state color.
+/// 
+/// # Arguments
+/// * `base` - The base background color
+/// * `state_layer_color` - The color of the state layer (usually "on" color like on_primary)
+/// * `opacity` - The opacity of the state layer (0.08 for hover, 0.12 for pressed)
+pub fn blend_state_layer(base: Color, state_layer_color: Color, opacity: f32) -> Color {
+    if opacity <= 0.0 {
+        return base;
+    }
+    
+    let base_linear = base.to_linear();
+    let layer_linear = state_layer_color.to_linear();
+    
+    // Alpha blending: result = base * (1 - opacity) + layer * opacity
+    Color::linear_rgba(
+        base_linear.red * (1.0 - opacity) + layer_linear.red * opacity,
+        base_linear.green * (1.0 - opacity) + layer_linear.green * opacity,
+        base_linear.blue * (1.0 - opacity) + layer_linear.blue * opacity,
+        base_linear.alpha,
+    )
+}

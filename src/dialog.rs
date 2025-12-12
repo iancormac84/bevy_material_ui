@@ -1,9 +1,12 @@
 //! Material Design 3 Dialog component
 //!
 //! Dialogs inform users about a task and can contain critical information.
+//! This module leverages native `BoxShadow` for elevation shadows.
+//!
 //! Reference: <https://m3.material.io/components/dialogs/overview>
 
 use bevy::prelude::*;
+use bevy::ui::BoxShadow;
 
 use crate::{
     elevation::Elevation,
@@ -19,7 +22,7 @@ impl Plugin for DialogPlugin {
         app.add_message::<DialogOpenEvent>()
             .add_message::<DialogCloseEvent>()
             .add_message::<DialogConfirmEvent>()
-            .add_systems(Update, dialog_visibility_system);
+            .add_systems(Update, (dialog_visibility_system, dialog_shadow_system));
     }
 }
 
@@ -173,6 +176,20 @@ fn dialog_visibility_system(
     }
 }
 
+/// System to update dialog shadows using native BoxShadow
+fn dialog_shadow_system(
+    mut dialogs: Query<(&MaterialDialog, &mut BoxShadow), Changed<MaterialDialog>>,
+) {
+    for (dialog, mut shadow) in dialogs.iter_mut() {
+        // Only show shadow when dialog is open
+        if dialog.open {
+            *shadow = dialog.elevation().to_box_shadow();
+        } else {
+            *shadow = BoxShadow::default();
+        }
+    }
+}
+
 /// Builder for dialogs
 pub struct DialogBuilder {
     dialog: MaterialDialog,
@@ -227,7 +244,7 @@ impl DialogBuilder {
         self
     }
 
-    /// Build the dialog bundle
+    /// Build the dialog bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.dialog.surface_color(theme);
         let is_full_screen = self.dialog.dialog_type == DialogType::FullScreen;
@@ -247,6 +264,8 @@ impl DialogBuilder {
             },
             BackgroundColor(bg_color),
             BorderRadius::all(Val::Px(if is_full_screen { 0.0 } else { CornerRadius::EXTRA_LARGE })),
+            // Native Bevy 0.17 shadow support (starts hidden since dialog is closed)
+            BoxShadow::default(),
         )
     }
 }

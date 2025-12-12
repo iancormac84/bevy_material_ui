@@ -289,3 +289,190 @@ impl Default for SwitchBuilder {
 /// Marker component for the switch handle
 #[derive(Component)]
 pub struct SwitchHandle;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ============================================================================
+    // MaterialSwitch Tests
+    // ============================================================================
+
+    #[test]
+    fn test_switch_new_defaults() {
+        let switch = MaterialSwitch::new();
+        assert!(!switch.selected);
+        assert!(!switch.disabled);
+        assert!(!switch.with_icon);
+        assert_eq!(switch.animation_progress, 0.0);
+        assert!(!switch.pressed);
+        assert!(!switch.hovered);
+    }
+
+    #[test]
+    fn test_switch_default_trait() {
+        let switch = MaterialSwitch::default();
+        assert!(!switch.selected);
+        assert!(!switch.disabled);
+    }
+
+    #[test]
+    fn test_switch_selected_true() {
+        let switch = MaterialSwitch::new().selected(true);
+        assert!(switch.selected);
+        assert_eq!(switch.animation_progress, 1.0);
+    }
+
+    #[test]
+    fn test_switch_selected_false() {
+        let switch = MaterialSwitch::new().selected(false);
+        assert!(!switch.selected);
+        assert_eq!(switch.animation_progress, 0.0);
+    }
+
+    #[test]
+    fn test_switch_disabled() {
+        let switch = MaterialSwitch::new().disabled(true);
+        assert!(switch.disabled);
+        
+        let switch = MaterialSwitch::new().disabled(false);
+        assert!(!switch.disabled);
+    }
+
+    #[test]
+    fn test_switch_with_icon() {
+        let switch = MaterialSwitch::new().with_icon();
+        assert!(switch.with_icon);
+    }
+
+    #[test]
+    fn test_switch_handle_size_unselected() {
+        let switch = MaterialSwitch::new();
+        assert_eq!(switch.handle_size(), SWITCH_HANDLE_SIZE_UNSELECTED);
+    }
+
+    #[test]
+    fn test_switch_handle_size_selected() {
+        let switch = MaterialSwitch::new().selected(true);
+        assert_eq!(switch.handle_size(), SWITCH_HANDLE_SIZE_SELECTED);
+    }
+
+    #[test]
+    fn test_switch_handle_size_with_icon() {
+        let switch = MaterialSwitch::new().with_icon();
+        assert_eq!(switch.handle_size(), SWITCH_HANDLE_SIZE_SELECTED);
+    }
+
+    #[test]
+    fn test_switch_handle_size_pressed() {
+        let mut switch = MaterialSwitch::new();
+        switch.pressed = true;
+        assert_eq!(switch.handle_size(), SWITCH_HANDLE_SIZE_PRESSED);
+    }
+
+    #[test]
+    fn test_switch_handle_position_off() {
+        let switch = MaterialSwitch::new().selected(false);
+        assert_eq!(switch.handle_position(), 0.0);
+    }
+
+    #[test]
+    fn test_switch_handle_position_on() {
+        let switch = MaterialSwitch::new().selected(true);
+        assert_eq!(switch.handle_position(), 1.0);
+    }
+
+    #[test]
+    fn test_switch_builder_chain() {
+        let switch = MaterialSwitch::new()
+            .selected(true)
+            .disabled(false)
+            .with_icon();
+        
+        assert!(switch.selected);
+        assert!(!switch.disabled);
+        assert!(switch.with_icon);
+    }
+
+    // ============================================================================
+    // SwitchBuilder Tests
+    // ============================================================================
+
+    #[test]
+    fn test_switch_builder_new() {
+        let builder = SwitchBuilder::new();
+        assert!(!builder.switch.selected);
+        assert!(!builder.switch.disabled);
+    }
+
+    #[test]
+    fn test_switch_builder_default() {
+        let builder = SwitchBuilder::default();
+        assert!(!builder.switch.selected);
+    }
+
+    #[test]
+    fn test_switch_builder_selected() {
+        let builder = SwitchBuilder::new().selected(true);
+        assert!(builder.switch.selected);
+        assert_eq!(builder.switch.animation_progress, 1.0);
+    }
+
+    #[test]
+    fn test_switch_builder_disabled() {
+        let builder = SwitchBuilder::new().disabled(true);
+        assert!(builder.switch.disabled);
+    }
+
+    #[test]
+    fn test_switch_builder_with_icon() {
+        let builder = SwitchBuilder::new().with_icon();
+        assert!(builder.switch.with_icon);
+    }
+
+    #[test]
+    fn test_switch_builder_full_chain() {
+        let builder = SwitchBuilder::new()
+            .selected(true)
+            .disabled(false)
+            .with_icon();
+        
+        assert!(builder.switch.selected);
+        assert!(!builder.switch.disabled);
+        assert!(builder.switch.with_icon);
+    }
+
+    // ============================================================================
+    // Constants Tests
+    // ============================================================================
+
+    #[test]
+    fn test_switch_track_width() {
+        assert_eq!(SWITCH_TRACK_WIDTH, 52.0);
+    }
+
+    #[test]
+    fn test_switch_track_height() {
+        assert_eq!(SWITCH_TRACK_HEIGHT, 32.0);
+    }
+
+    #[test]
+    fn test_switch_handle_sizes() {
+        assert_eq!(SWITCH_HANDLE_SIZE_UNSELECTED, 16.0);
+        assert_eq!(SWITCH_HANDLE_SIZE_SELECTED, 24.0);
+        assert_eq!(SWITCH_HANDLE_SIZE_PRESSED, 28.0);
+    }
+
+    #[test]
+    fn test_switch_handle_size_ordering() {
+        // Pressed should be largest, then selected, then unselected
+        assert!(SWITCH_HANDLE_SIZE_PRESSED > SWITCH_HANDLE_SIZE_SELECTED);
+        assert!(SWITCH_HANDLE_SIZE_SELECTED > SWITCH_HANDLE_SIZE_UNSELECTED);
+    }
+
+    #[test]
+    fn test_switch_track_dimensions() {
+        // Track should be wider than tall
+        assert!(SWITCH_TRACK_WIDTH > SWITCH_TRACK_HEIGHT);
+    }
+}

@@ -13,6 +13,7 @@ readme = "README.md"
 [dependencies]
 # Bevy Game Engine - Latest version
 bevy = "0.17.3"
+serde_json = "1.0"
 
 [dev-dependencies]
 # No dynamic_linking to avoid Windows linker limit issues

@@ -357,3 +357,111 @@ pub struct ProgressTrack;
 /// Marker for progress indicator bar
 #[derive(Component)]
 pub struct ProgressIndicator;
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn progress indicators as children
+/// 
+/// This trait provides a clean API for spawning progress indicators within UI hierarchies.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_linear_progress(&theme, 0.5);
+///     children.spawn_indeterminate_progress(&theme);
+///     children.spawn_circular_progress(&theme, 0.75);
+/// });
+/// ```
+pub trait SpawnProgressChild {
+    /// Spawn a linear progress indicator with determinate progress
+    fn spawn_linear_progress(&mut self, theme: &MaterialTheme, progress: f32);
+    
+    /// Spawn an indeterminate linear progress indicator
+    fn spawn_indeterminate_progress(&mut self, theme: &MaterialTheme);
+    
+    /// Spawn a circular progress indicator with determinate progress
+    fn spawn_circular_progress(&mut self, theme: &MaterialTheme, progress: f32);
+    
+    /// Spawn an indeterminate circular progress indicator
+    fn spawn_indeterminate_circular_progress(&mut self, theme: &MaterialTheme);
+    
+    /// Spawn a linear progress indicator with full builder control
+    fn spawn_linear_progress_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: LinearProgressBuilder,
+    );
+    
+    /// Spawn a circular progress indicator with full builder control
+    fn spawn_circular_progress_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: CircularProgressBuilder,
+    );
+}
+
+impl SpawnProgressChild for ChildSpawnerCommands<'_> {
+    fn spawn_linear_progress(&mut self, theme: &MaterialTheme, progress: f32) {
+        self.spawn_linear_progress_with(
+            theme,
+            LinearProgressBuilder::new().progress(progress),
+        );
+    }
+    
+    fn spawn_indeterminate_progress(&mut self, theme: &MaterialTheme) {
+        self.spawn_linear_progress_with(
+            theme,
+            LinearProgressBuilder::new().indeterminate(),
+        );
+    }
+    
+    fn spawn_circular_progress(&mut self, theme: &MaterialTheme, progress: f32) {
+        self.spawn_circular_progress_with(
+            theme,
+            CircularProgressBuilder::new().progress(progress),
+        );
+    }
+    
+    fn spawn_indeterminate_circular_progress(&mut self, theme: &MaterialTheme) {
+        self.spawn_circular_progress_with(
+            theme,
+            CircularProgressBuilder::new().indeterminate(),
+        );
+    }
+    
+    fn spawn_linear_progress_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: LinearProgressBuilder,
+    ) {
+        let progress_value = builder.progress.progress;
+        let indicator_color = builder.progress.indicator_color(theme);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|container| {
+                // Progress indicator fill
+                container.spawn((
+                    ProgressIndicator,
+                    Node {
+                        width: Val::Percent(progress_value * 100.0),
+                        height: Val::Percent(100.0),
+                        ..default()
+                    },
+                    BackgroundColor(indicator_color),
+                    BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                ));
+            });
+    }
+    
+    fn spawn_circular_progress_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: CircularProgressBuilder,
+    ) {
+        // Circular progress is typically rendered with custom drawing
+        // For now, just spawn the container component
+        self.spawn(builder.build(theme));
+    }
+}

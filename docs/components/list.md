@@ -13,124 +13,96 @@ Material Design 3 list component with selection support.
 
 ```rust
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::list::{ListBuilder, ListItemBuilder};
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
-    ListBuilder::new()
-        .add_item(ListItemBuilder::new("Item 1"))
-        .add_item(ListItemBuilder::new("Item 2"))
-        .add_item(ListItemBuilder::new("Item 3"))
-        .spawn(&mut commands, &theme);
+    commands
+        .spawn(ListBuilder::new().build())
+        .with_children(|list| {
+            list.spawn_list_item(&theme, "Item 1", None::<String>);
+            list.spawn_list_item(&theme, "Item 2", None::<String>);
+            list.spawn_list_item(&theme, "Item 3", None::<String>);
+        });
 }
 ```
 
 ## With Supporting Text
 
 ```rust
-ListBuilder::new()
-    .add_item(
-        ListItemBuilder::new("Primary Text")
-            .supporting_text("Secondary supporting text")
-    )
-    .add_item(
-        ListItemBuilder::new("Another Item")
-            .supporting_text("More details here")
-    )
-    .spawn(&mut commands, &theme);
+commands
+    .spawn(ListBuilder::new().build())
+    .with_children(|list| {
+        list.spawn_list_item(&theme, "Primary Text", Some("Secondary supporting text"));
+        list.spawn_list_item(&theme, "Another Item", Some("More details here"));
+    });
 ```
 
 ## With Icons
 
 ```rust
-ListBuilder::new()
-    .add_item(
-        ListItemBuilder::new("Settings")
-            .leading_icon(ICON_SETTINGS)
-    )
-    .add_item(
-        ListItemBuilder::new("Account")
-            .leading_icon(ICON_PERSON)
-            .trailing_icon(ICON_ARROW_FORWARD)
-    )
-    .spawn(&mut commands, &theme);
+commands
+    .spawn(ListBuilder::new().build())
+    .with_children(|list| {
+        list.spawn_list_item_with(
+            &theme,
+            ListItemBuilder::new("Settings").leading_icon(ICON_SETTINGS),
+        );
+        list.spawn_list_item_with(
+            &theme,
+            ListItemBuilder::new("Account")
+                .leading_icon(ICON_PERSON)
+                .trailing_icon(ICON_ARROW_FORWARD),
+        );
+    });
 ```
 
 ## With Avatars
 
 ```rust
-ListBuilder::new()
-    .add_item(
-        ListItemBuilder::new("John Doe")
-            .avatar("assets/avatars/john.png")
-            .supporting_text("john@example.com")
-    )
-    .spawn(&mut commands, &theme);
+// Avatars/images are not built into `ListItemBuilder` yet.
+// Use a custom leading child (e.g. an `ImageNode`) inside the list item.
 ```
 
 ## With Dividers
 
 ```rust
-ListBuilder::new()
-    .with_dividers()
-    .add_item(ListItemBuilder::new("Item 1"))
-    .add_item(ListItemBuilder::new("Item 2"))
-    .spawn(&mut commands, &theme);
+commands
+    .spawn(ListBuilder::new().build())
+    .with_children(|list| {
+        list.spawn_list_item(&theme, "Item 1", None::<String>);
+        list.spawn_list_divider(&theme, false);
+        list.spawn_list_item(&theme, "Item 2", None::<String>);
+    });
 ```
 
 ## Scrollable List
 
 ```rust
-ListBuilder::new()
-    .scrollable()
-    .max_height(300.0)
-    .add_item(ListItemBuilder::new("Item 1"))
-    // ... many items
-    .spawn(&mut commands, &theme);
+commands
+    .spawn(ListBuilder::new().max_height(300.0).build_scrollable())
+    .with_children(|list| {
+        list.spawn_list_item(&theme, "Item 1", None::<String>);
+        // ... many items
+    });
 ```
 
 ## Selection Modes
 
-### Single Select
+Selection is handled by the library. Set the mode on the list:
 
 ```rust
-// Resource to track selection state
-#[derive(Resource)]
-struct ListSelectionState {
-    mode: ListSelectionMode,
-    selected: Vec<Entity>,
-}
+commands
+    .spawn(ListBuilder::new().selection_mode(ListSelectionMode::Single).build())
+    .with_children(|list| {
+        list.spawn_list_item(&theme, "One", None::<String>);
+        list.spawn_list_item(&theme, "Two", None::<String>);
+    });
 
-// Handle selection
-fn handle_list_selection(
-    items: Query<(Entity, &Interaction), (With<SelectableListItem>, Changed<Interaction>)>,
-    mut selection: ResMut<ListSelectionState>,
-) {
-    for (entity, interaction) in items.iter() {
-        if *interaction == Interaction::Pressed {
-            selection.selected.clear();
-            selection.selected.push(entity);
-        }
-    }
-}
-```
-
-### Multi Select
-
-```rust
-fn handle_multi_selection(
-    items: Query<(Entity, &Interaction), (With<SelectableListItem>, Changed<Interaction>)>,
-    mut selection: ResMut<ListSelectionState>,
-) {
-    for (entity, interaction) in items.iter() {
-        if *interaction == Interaction::Pressed {
-            if let Some(pos) = selection.selected.iter().position(|e| *e == entity) {
-                selection.selected.remove(pos); // Deselect
-            } else {
-                selection.selected.push(entity); // Select
-            }
-        }
-    }
-}
+commands
+    .spawn(ListBuilder::new().selection_mode(ListSelectionMode::Multi).build())
+    .with_children(|list| {
+        list.spawn_list_item(&theme, "A", None::<String>);
+        list.spawn_list_item(&theme, "B", None::<String>);
+    });
 ```
 
 ## Handling Item Clicks
@@ -153,9 +125,9 @@ fn handle_list_item_clicks(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `scrollable` | `bool` | `false` | Enable scrolling |
-| `max_height` | `Option<f32>` | `None` | Max height for scrollable |
-| `with_dividers` | `bool` | `false` | Show dividers |
+| `selection_mode` | `ListSelectionMode` | `None` | Selection behavior |
+| `max_height` | `Option<f32>` | `None` | Max height for `build_scrollable()` |
+| `show_scrollbar` | `bool` | `true` | Scrollbar visibility (scrolling still works if hidden) |
 
 ### ListItemBuilder
 
@@ -165,7 +137,7 @@ fn handle_list_item_clicks(
 | `supporting_text` | `Option<String>` | `None` | Secondary text |
 | `leading_icon` | `Option<String>` | `None` | Left icon |
 | `trailing_icon` | `Option<String>` | `None` | Right icon |
-| `avatar` | `Option<String>` | `None` | Avatar image path |
+| `selected` | `bool` | `false` | Initial selected state |
 
 ## State Layers
 

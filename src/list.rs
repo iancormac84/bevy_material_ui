@@ -8,6 +8,7 @@ use bevy::ui::ScrollPosition;
 
 use crate::{
     ripple::RippleHost,
+    scroll::ScrollContainerBuilder,
     theme::{blend_state_layer, MaterialTheme},
     tokens::Spacing,
 };
@@ -18,8 +19,28 @@ pub struct ListPlugin;
 impl Plugin for ListPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<ListItemClickEvent>()
-            .add_systems(Update, (list_item_interaction_system, list_item_style_system, list_item_text_style_system));
+            .add_systems(
+                Update,
+                (
+                    list_item_interaction_system,
+                    list_selection_system,
+                    list_item_style_system,
+                    list_item_text_style_system,
+                ),
+            );
     }
+}
+
+/// Selection behavior for a list.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ListSelectionMode {
+    /// Clicking items does not change their `selected` state.
+    #[default]
+    None,
+    /// Exactly one item is selected at a time.
+    Single,
+    /// Multiple items may be selected.
+    Multi,
 }
 
 /// List item variants based on content
@@ -47,12 +68,21 @@ impl ListItemVariant {
 
 /// Material list container
 #[derive(Component, Default)]
-pub struct MaterialList;
+pub struct MaterialList {
+    pub selection_mode: ListSelectionMode,
+}
 
 impl MaterialList {
     /// Create a new list
     pub fn new() -> Self {
-        Self
+        Self {
+            selection_mode: ListSelectionMode::None,
+        }
+    }
+
+    pub fn with_selection_mode(mut self, mode: ListSelectionMode) -> Self {
+        self.selection_mode = mode;
+        self
     }
 }
 
@@ -220,6 +250,60 @@ pub struct ListItemClickEvent {
     pub entity: Entity,
 }
 
+fn list_selection_system(
+    mut click_events: MessageReader<ListItemClickEvent>,
+    parents: Query<&ChildOf>,
+    lists: Query<&MaterialList>,
+    children_query: Query<&Children>,
+    mut items: Query<&mut MaterialListItem>,
+) {
+    for event in click_events.read() {
+        // Find the nearest ancestor that is a MaterialList.
+        let mut current = Some(event.entity);
+        let mut list_entity = None;
+        for _ in 0..32 {
+            let Some(e) = current else { break };
+            if lists.get(e).is_ok() {
+                list_entity = Some(e);
+                break;
+            }
+            current = parents.get(e).ok().map(|p| p.0);
+        }
+
+        let Some(list_entity) = list_entity else { continue };
+        let Ok(list) = lists.get(list_entity) else { continue };
+
+        match list.selection_mode {
+            ListSelectionMode::None => {}
+            ListSelectionMode::Multi => {
+                if let Ok(mut clicked) = items.get_mut(event.entity) {
+                    clicked.selected = !clicked.selected;
+                }
+            }
+            ListSelectionMode::Single => {
+                // Select the clicked item and clear any other selected items in this list.
+                // Traverse the list subtree to support wrappers (e.g., scroll content).
+                let mut stack: Vec<Entity> = vec![list_entity];
+                while let Some(node) = stack.pop() {
+                    if let Ok(children) = children_query.get(node) {
+                        for child in children.iter() {
+                            if let Ok(mut item) = items.get_mut(child) {
+                                item.selected = child == event.entity;
+                            }
+                            stack.push(child);
+                        }
+                    }
+                }
+
+                // If the clicked entity isn't under the list (unexpected), still force it selected.
+                if let Ok(mut clicked) = items.get_mut(event.entity) {
+                    clicked.selected = true;
+                }
+            }
+        }
+    }
+}
+
 /// System to handle list item interactions
 fn list_item_interaction_system(
     mut interaction_query: Query<
@@ -307,6 +391,8 @@ pub struct ListBuilder {
     max_height: Option<f32>,
     /// Whether to show scrollbar
     show_scrollbar: bool,
+    /// Selection behavior
+    selection_mode: ListSelectionMode,
 }
 
 impl ListBuilder {
@@ -315,7 +401,14 @@ impl ListBuilder {
         Self {
             max_height: None,
             show_scrollbar: true,
+            selection_mode: ListSelectionMode::None,
         }
+    }
+
+    /// Set list selection behavior.
+    pub fn selection_mode(mut self, mode: ListSelectionMode) -> Self {
+        self.selection_mode = mode;
+        self
     }
 
     /// Set maximum height (enables scrolling)
@@ -346,7 +439,7 @@ impl ListBuilder {
     /// Build the list bundle (non-scrollable)
     pub fn build(self) -> impl Bundle {
         (
-            MaterialList::new(),
+            MaterialList::new().with_selection_mode(self.selection_mode),
             Node {
                 flex_direction: FlexDirection::Column,
                 width: Val::Percent(100.0),
@@ -361,8 +454,9 @@ impl ListBuilder {
     pub fn build_scrollable(self) -> impl Bundle {
         let height = self.max_height.map(Val::Px).unwrap_or(Val::Auto);
         (
-            MaterialList::new(),
+            MaterialList::new().with_selection_mode(self.selection_mode),
             ScrollableList,
+            ScrollContainerBuilder::new().vertical().with_scrollbars(self.show_scrollbar).build(),
             ScrollPosition::default(),
             Node {
                 flex_direction: FlexDirection::Column,
@@ -525,4 +619,111 @@ pub fn create_list_divider(theme: &MaterialTheme, inset: bool) -> impl Bundle {
         },
         BackgroundColor(theme.outline_variant),
     )
+}
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material lists and list items as children
+/// 
+/// This trait provides a clean API for spawning lists within UI hierarchies.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_list(&theme, |list| {
+///         list.spawn_list_item(&theme, "Item 1", None);
+///         list.spawn_list_item(&theme, "Item 2", Some("Supporting text"));
+///     });
+/// });
+/// ```
+pub trait SpawnListChild {
+    /// Spawn a list container
+    fn spawn_list(
+        &mut self,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a list item with headline and optional supporting text
+    fn spawn_list_item(
+        &mut self,
+        theme: &MaterialTheme,
+        headline: impl Into<String>,
+        supporting: Option<impl Into<String>>,
+    );
+    
+    /// Spawn a list item with full builder control
+    fn spawn_list_item_with(&mut self, theme: &MaterialTheme, builder: ListItemBuilder);
+    
+    /// Spawn a list divider
+    fn spawn_list_divider(&mut self, theme: &MaterialTheme, inset: bool);
+}
+
+impl SpawnListChild for ChildSpawnerCommands<'_> {
+    fn spawn_list(
+        &mut self,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn(ListBuilder::new().build()).with_children(with_children);
+    }
+    
+    fn spawn_list_item(
+        &mut self,
+        theme: &MaterialTheme,
+        headline: impl Into<String>,
+        supporting: Option<impl Into<String>>,
+    ) {
+        let headline_str = headline.into();
+        let supporting_str = supporting.map(|s| s.into());
+        let has_supporting = supporting_str.is_some();
+        
+        let builder = if has_supporting {
+            ListItemBuilder::new(&headline_str).two_line()
+        } else {
+            ListItemBuilder::new(&headline_str)
+        };
+        
+        let headline_color = theme.on_surface;
+        let supporting_color = theme.on_surface_variant;
+        
+        self.spawn(builder.build(theme))
+            .with_children(|item| {
+                // Body content
+                item.spawn((
+                    ListItemBody,
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        flex_grow: 1.0,
+                        ..default()
+                    },
+                )).with_children(|body| {
+                    // Headline
+                    body.spawn((
+                        ListItemHeadline,
+                        Text::new(&headline_str),
+                        TextFont { font_size: 16.0, ..default() },
+                        TextColor(headline_color),
+                    ));
+                    
+                    // Supporting text (if provided)
+                    if let Some(ref supporting) = supporting_str {
+                        body.spawn((
+                            ListItemSupportingText,
+                            Text::new(supporting),
+                            TextFont { font_size: 14.0, ..default() },
+                            TextColor(supporting_color),
+                        ));
+                    }
+                });
+            });
+    }
+    
+    fn spawn_list_item_with(&mut self, theme: &MaterialTheme, builder: ListItemBuilder) {
+        self.spawn(builder.build(theme));
+    }
+    
+    fn spawn_list_divider(&mut self, theme: &MaterialTheme, inset: bool) {
+        self.spawn(create_list_divider(theme, inset));
+    }
 }

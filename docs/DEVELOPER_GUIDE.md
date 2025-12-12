@@ -617,9 +617,9 @@ let tabs = TabsBuilder::new()
     .build(&theme);
 
 commands.spawn(tabs).with_children(|parent| {
-    parent.spawn(TabBuilder::new("Tab 1").selected(true).build(&theme));
-    parent.spawn(TabBuilder::new("Tab 2").build(&theme));
-    parent.spawn(TabBuilder::new("Tab 3").build(&theme));
+    parent.spawn(TabBuilder::new(0, "Tab 1").selected(true).build(&theme));
+    parent.spawn(TabBuilder::new(1, "Tab 2").selected(false).build(&theme));
+    parent.spawn(TabBuilder::new(2, "Tab 3").selected(false).build(&theme));
 });
 
 // Handle tab changes
@@ -654,19 +654,21 @@ commands.spawn(vertical_divider(&theme));
 Select components let users choose from a dropdown list.
 
 ```rust
-let select = SelectBuilder::new()
+let options = vec![
+    SelectOption::new("United States").value("us"),
+    SelectOption::new("United Kingdom").value("uk"),
+    SelectOption::new("Canada").value("ca"),
+];
+
+let select = SelectBuilder::new(options)
     .label("Country")
-    .options(vec![
-        SelectOption::new("us", "United States"),
-        SelectOption::new("uk", "United Kingdom"),
-        SelectOption::new("ca", "Canada"),
-    ])
-    .selected("us")
+    .selected(0)
     .build(&theme);
 
 fn handle_select(mut events: MessageReader<SelectChangeEvent>) {
     for event in events.read() {
-        println!("Selected: {}", event.value);
+        let value = event.option.value.as_deref().unwrap_or("");
+        println!("Selected: {} ({})", event.option.label, value);
     }
 }
 ```

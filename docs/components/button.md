@@ -18,66 +18,69 @@ Material Design 3 button component with multiple variants and state support.
 use bevy_material_ui::prelude::*;
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
-    // Filled button (default)
-    MaterialButton::new("Click Me")
-        .spawn(&mut commands, &theme);
+    commands.spawn(Node::default()).with_children(|ui| {
+        // Filled button (default)
+        ui.spawn_filled_button(&theme, "Click Me");
 
-    // Other variants
-    MaterialButton::new("Outlined")
-        .with_variant(ButtonVariant::Outlined)
-        .spawn(&mut commands, &theme);
-
-    MaterialButton::new("Text")
-        .with_variant(ButtonVariant::Text)
-        .spawn(&mut commands, &theme);
+        // Other variants
+        ui.spawn_outlined_button(&theme, "Outlined");
+        ui.spawn_text_button(&theme, "Text");
+    });
 }
 ```
 
 ## With Icons
 
 ```rust
-// Leading icon
-MaterialButton::new("Add Item")
-    .with_icon(ICON_ADD)
-    .spawn(&mut commands, &theme);
+use bevy::prelude::*;
+use bevy_material_ui::prelude::*;
 
-// Trailing icon
-MaterialButton::new("Next")
-    .with_trailing_icon(ICON_ARROW_FORWARD)
-    .spawn(&mut commands, &theme);
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+    commands.spawn(Node::default()).with_children(|ui| {
+        // Configure the button data (icon, gravity, etc)...
+        let button = MaterialButton::new("Add Item").with_icon(ICON_ADD);
 
-// Icon gravity control
-MaterialButton::new("Settings")
-    .with_icon(ICON_SETTINGS)
-    .icon_gravity(IconGravity::End)
-    .spawn(&mut commands, &theme);
+        // ...then spawn it (the helper spawns the label child).
+        ui.spawn_button_with(&theme, button);
+    });
+}
 ```
 
 ## Disabled State
 
 ```rust
-MaterialButton::new("Disabled")
-    .disabled(true)
-    .spawn(&mut commands, &theme);
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+    commands.spawn(Node::default()).with_children(|ui| {
+        ui.spawn_button_with(&theme, MaterialButton::new("Disabled").disabled(true));
+    });
+}
 ```
 
 ## Custom Styling
 
 ```rust
-MaterialButton::new("Custom")
-    .corner_radius(24.0)
-    .min_width(200.0)
-    .custom_background_color(Color::srgb(0.2, 0.6, 0.9))
-    .custom_text_color(Color::WHITE)
-    .spawn(&mut commands, &theme);
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+    commands.spawn(Node::default()).with_children(|ui| {
+        ui.spawn_button_with(
+            &theme,
+            MaterialButton::new("Custom")
+                .corner_radius(24.0)
+                .min_width(200.0)
+                .custom_background_color(Color::srgb(0.2, 0.6, 0.9))
+                .custom_text_color(Color::WHITE),
+        );
+    });
+}
 ```
 
 ## Toggle Button (Checkable)
 
 ```rust
-MaterialButton::new("Toggle")
-    .checkable(true)
-    .spawn(&mut commands, &theme);
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+    commands.spawn(Node::default()).with_children(|ui| {
+        ui.spawn_button_with(&theme, MaterialButton::new("Toggle").checkable(true));
+    });
+}
 ```
 
 ## Handling Clicks

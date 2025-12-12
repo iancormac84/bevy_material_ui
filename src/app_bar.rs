@@ -477,6 +477,96 @@ impl Default for BottomAppBarBuilder {
 }
 
 // ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material app bars as children
+pub trait SpawnAppBarChild {
+    /// Spawn a top app bar
+    fn spawn_top_app_bar(
+        &mut self,
+        theme: &MaterialTheme,
+        title: impl Into<String>,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a top app bar with full builder control
+    fn spawn_top_app_bar_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: TopAppBarBuilder,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a bottom app bar
+    fn spawn_bottom_app_bar(
+        &mut self,
+        theme: &MaterialTheme,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a bottom app bar with full builder control
+    fn spawn_bottom_app_bar_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: BottomAppBarBuilder,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+}
+
+impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
+    fn spawn_top_app_bar(
+        &mut self,
+        theme: &MaterialTheme,
+        title: impl Into<String>,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn_top_app_bar_with(theme, TopAppBarBuilder::new(title), with_content);
+    }
+    
+    fn spawn_top_app_bar_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: TopAppBarBuilder,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        let title_text = builder.app_bar.title.clone();
+        let title_color = builder.app_bar.title_color(theme);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|bar| {
+                // Title
+                bar.spawn((
+                    Text::new(&title_text),
+                    TextFont { font_size: 22.0, ..default() },
+                    TextColor(title_color),
+                    Node { flex_grow: 1.0, ..default() },
+                ));
+                
+                // Additional content
+                with_content(bar);
+            });
+    }
+    
+    fn spawn_bottom_app_bar(
+        &mut self,
+        theme: &MaterialTheme,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn_bottom_app_bar_with(theme, BottomAppBarBuilder::new(), with_content);
+    }
+    
+    fn spawn_bottom_app_bar_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: BottomAppBarBuilder,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn(builder.build(theme)).with_children(with_content);
+    }
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 

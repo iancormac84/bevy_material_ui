@@ -24,6 +24,9 @@
 use bevy::prelude::*;
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
 use bevy::picking::hover::HoverMap;
+use bevy::picking::Pickable;
+
+use std::collections::HashSet;
 
 use crate::theme::MaterialTheme;
 
@@ -32,12 +35,133 @@ pub struct ScrollPlugin;
 
 impl Plugin for ScrollPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            mouse_wheel_scroll_system,
-            sync_scroll_state_system,
-            scrollbar_thumb_drag_system,
-            update_scrollbars,
-        ).chain());
+        app.add_systems(
+            Update,
+            (
+                ensure_scroll_content_wrapper_system,
+                sync_scroll_state_system,
+                mouse_wheel_scroll_system,
+                scrollbar_thumb_drag_system,
+                sync_scroll_position_to_content_system,
+                update_scrollbars,
+            )
+                .chain(),
+        );
+    }
+}
+
+/// Ensures each `ScrollContainer` has a `ScrollContent` child that is the actual Bevy scroll node.
+/// This prevents overlay UI (scrollbar rails/thumb) from moving with scrolled content.
+fn ensure_scroll_content_wrapper_system(
+    mut commands: Commands,
+    containers: Query<
+        (Entity, &Children, &Node, &ScrollContainer, Option<&ScrollPosition>),
+        With<ScrollContainer>,
+    >,
+    is_scroll_content: Query<(), With<ScrollContent>>,
+    is_scrollbar_part: Query<
+        (),
+        Or<(
+            With<ScrollbarTrackVertical>,
+            With<ScrollbarTrackHorizontal>,
+            With<ScrollbarThumbVertical>,
+            With<ScrollbarThumbHorizontal>,
+        )>,
+    >,
+) {
+    for (container_entity, children, node, container, scroll_pos) in containers.iter() {
+        let has_scroll_content_child = children
+            .iter()
+            .any(|child| is_scroll_content.get(child).is_ok());
+        if has_scroll_content_child {
+            continue;
+        }
+
+        // Reserve space so overlay scrollbars do not overlap content (e.g. list items).
+        // This matches the thickness used by `spawn_scrollbars`.
+        let reserve_right = if container.show_scrollbars
+            && matches!(container.direction, ScrollDirection::Vertical | ScrollDirection::Both)
+        {
+            SCROLLBAR_THICKNESS
+        } else {
+            0.0
+        };
+        let reserve_bottom = if container.show_scrollbars
+            && matches!(container.direction, ScrollDirection::Horizontal | ScrollDirection::Both)
+        {
+            SCROLLBAR_THICKNESS
+        } else {
+            0.0
+        };
+
+        // Create the wrapper that will actually scroll its children.
+        let mut content_node = Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            // Important for scroll containers inside flex columns:
+            // allow shrinking so overflow/scrolling can happen.
+            min_height: Val::Px(0.0),
+            flex_direction: node.flex_direction,
+            row_gap: node.row_gap,
+            column_gap: node.column_gap,
+            padding: UiRect {
+                right: Val::Px(reserve_right),
+                bottom: Val::Px(reserve_bottom),
+                ..default()
+            },
+            ..default()
+        };
+        content_node.overflow = node.overflow;
+
+        let initial_scroll = scroll_pos
+            .map(|p| ScrollPosition(**p))
+            .unwrap_or_default();
+        let content_entity = commands
+            .spawn((
+                ScrollContent,
+                initial_scroll,
+                content_node,
+                // The scrollable content fills the container; don't let it block pointer
+                // interaction with overlay UI (scrollbar tracks/thumb).
+                Pickable::IGNORE,
+                ChildOf(container_entity),
+            ))
+            .id();
+
+        // Move all non-scrollbar children into the ScrollContent wrapper.
+        for child in children.iter() {
+            if is_scrollbar_part.get(child).is_ok() {
+                continue;
+            }
+            if is_scroll_content.get(child).is_ok() {
+                continue;
+            }
+            commands.entity(child).insert(ChildOf(content_entity));
+        }
+
+        // The container itself should clip; the ScrollContent child scrolls.
+        // (We intentionally do not try to preserve scroll_y vs scroll_x here;
+        // the child inherited the original overflow, and the parent just clips.)
+        commands.entity(container_entity).insert(Node {
+            overflow: Overflow::clip(),
+            ..node.clone()
+        });
+    }
+}
+
+/// Keep the scroll offset in sync between the public `ScrollPosition` on the `ScrollContainer`
+/// and the internal `ScrollContent` scroll node.
+fn sync_scroll_position_to_content_system(
+    containers: Query<(&ScrollPosition, &Children), (With<ScrollContainer>, Without<ScrollContent>)>,
+    mut content_scroll: Query<&mut ScrollPosition, (With<ScrollContent>, Without<ScrollContainer>)>,
+) {
+    for (container_scroll, children) in containers.iter() {
+        for child in children.iter() {
+            if let Ok(mut scroll) = content_scroll.get_mut(child) {
+                **scroll = **container_scroll;
+                break;
+            }
+        }
     }
 }
 
@@ -247,6 +371,10 @@ pub struct ScrollbarDragging {
 /// Line height for scroll calculations
 const LINE_HEIGHT: f32 = 21.0;
 
+/// Thickness (in logical px) of the visual scrollbars spawned by `spawn_scrollbars`.
+/// Also used to reserve space in `ScrollContent` so scrollbars do not overlap content.
+const SCROLLBAR_THICKNESS: f32 = 10.0;
+
 /// System to handle mouse wheel scrolling
 /// This follows Bevy's pattern: read mouse wheel, find hovered entities, update their ScrollPosition
 #[allow(deprecated)] // EventReader renamed to MessageReader in Bevy 0.17
@@ -254,11 +382,19 @@ fn mouse_wheel_scroll_system(
     mut mouse_wheel_reader: EventReader<MouseWheel>,
     hover_map: Res<HoverMap>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut scrollable_query: Query<(&mut ScrollPosition, &Node, &ComputedNode), With<ScrollContainer>>,
+    parents: Query<&ChildOf>,
+    mut scrollable_query: Query<(&mut ScrollPosition, &ScrollContainer), With<ScrollContainer>>,
 ) {
     for mouse_wheel in mouse_wheel_reader.read() {
-        // Calculate scroll delta (negate for natural scrolling direction)
-        let mut delta = Vec2::new(-mouse_wheel.x, -mouse_wheel.y);
+        // Calculate scroll delta.
+        // - Mouse wheels typically report `Line` deltas with the sign opposite of the desired
+        //   scroll offset direction (wheel down should increase scroll offset), so we negate.
+        // - Touchpads often report `Pixel` deltas already aligned with the user's gesture, so we
+        //   keep the sign as-is to avoid inverted scrolling.
+        let mut delta = match mouse_wheel.unit {
+            MouseScrollUnit::Line => Vec2::new(-mouse_wheel.x, -mouse_wheel.y),
+            MouseScrollUnit::Pixel => Vec2::new(mouse_wheel.x, mouse_wheel.y),
+        };
         
         // Convert line units to pixels
         if mouse_wheel.unit == MouseScrollUnit::Line {
@@ -270,15 +406,36 @@ fn mouse_wheel_scroll_system(
             std::mem::swap(&mut delta.x, &mut delta.y);
         }
         
-        // Find entities under the cursor and scroll them
+        // Find entities under the cursor and scroll their nearest ScrollContainer ancestor.
+        // (This allows scrolling when hovering list items/content, not just the container root.)
+        let mut scrolled_containers: HashSet<Entity> = HashSet::new();
         for pointer_map in hover_map.values() {
             for entity in pointer_map.keys().copied() {
-                // Try to get the scrollable container - walk up parent hierarchy
-                if let Ok((mut scroll_position, node, computed)) = scrollable_query.get_mut(entity) {
-                    let max_offset = (computed.content_size() - computed.size()) * computed.inverse_scale_factor();
+                // Walk up the parent hierarchy until we find a ScrollContainer.
+                let mut current = Some(entity);
+                let mut container_entity = None;
+                for _ in 0..32 {
+                    let Some(e) = current else { break };
+                    if scrollable_query.get(e).is_ok() {
+                        container_entity = Some(e);
+                        break;
+                    }
+                    current = parents.get(e).ok().map(|p| p.0);
+                }
+
+                let Some(container_entity) = container_entity else { continue };
+                if !scrolled_containers.insert(container_entity) {
+                    continue;
+                }
+
+                if let Ok((mut scroll_position, container)) = scrollable_query.get_mut(container_entity) {
+                    let max_offset = container.max_offset;
                     
                     // Handle vertical scroll
-                    if node.overflow.y == OverflowAxis::Scroll && delta.y != 0.0 {
+                    if matches!(container.direction, ScrollDirection::Vertical | ScrollDirection::Both)
+                        && max_offset.y > 0.0
+                        && delta.y != 0.0
+                    {
                         let at_max = if delta.y > 0.0 {
                             scroll_position.y >= max_offset.y
                         } else {
@@ -291,7 +448,10 @@ fn mouse_wheel_scroll_system(
                     }
                     
                     // Handle horizontal scroll
-                    if node.overflow.x == OverflowAxis::Scroll && delta.x != 0.0 {
+                    if matches!(container.direction, ScrollDirection::Horizontal | ScrollDirection::Both)
+                        && max_offset.x > 0.0
+                        && delta.x != 0.0
+                    {
                         let at_max = if delta.x > 0.0 {
                             scroll_position.x >= max_offset.x
                         } else {
@@ -311,21 +471,30 @@ fn mouse_wheel_scroll_system(
 /// System to sync ScrollContainer state with Bevy's native ScrollPosition
 /// This reads the ScrollPosition (managed by Bevy's scroll system) and updates our ScrollContainer
 fn sync_scroll_state_system(
-    mut containers: Query<(&mut ScrollContainer, &ScrollPosition, &ComputedNode)>,
+    mut containers: Query<(&mut ScrollContainer, &ScrollPosition, &ComputedNode, &Children)>,
+    content_nodes: Query<&ComputedNode, With<ScrollContent>>,
 ) {
-    for (mut container, scroll_pos, computed) in containers.iter_mut() {
-        let container_size = computed.size();
-        let content_size = computed.content_size();
-        let scale = computed.inverse_scale_factor();
-        
-        container.container_size = container_size;
-        container.content_size = content_size;
-        
-        // Calculate max offset
-        let max_offset = (content_size - container_size).max(Vec2::ZERO) * scale;
-        container.max_offset = max_offset;
-        
-        // Sync offset from Bevy's ScrollPosition
+    for (mut container, scroll_pos, computed, children) in containers.iter_mut() {
+        // The actual scrollable extents come from the internal ScrollContent node.
+        // Fall back to the container node if the wrapper doesn't exist yet.
+        let mut viewport_size_phys = computed.size();
+        let mut content_size_phys = computed.content_size();
+        let mut inv = computed.inverse_scale_factor();
+
+        for child in children.iter() {
+            if let Ok(content_computed) = content_nodes.get(child) {
+                viewport_size_phys = content_computed.size();
+                content_size_phys = content_computed.content_size();
+                inv = content_computed.inverse_scale_factor();
+                break;
+            }
+        }
+
+        container.container_size = viewport_size_phys * inv;
+        container.content_size = content_size_phys * inv;
+        container.max_offset = (container.content_size - container.container_size).max(Vec2::ZERO);
+
+        // Sync offset from Bevy's ScrollPosition (logical pixels)
         container.offset = **scroll_pos;
         container.target_offset = **scroll_pos;
     }
@@ -349,18 +518,43 @@ fn scrollbar_thumb_drag_system(
 ) {
     let Ok(window) = windows.single() else { return };
     let cursor_pos = window.cursor_position();
+    let window_scale_factor = window.scale_factor() as f32;
     
     // Handle vertical scrollbar thumb dragging
-    for (interaction, mut drag_state, track_parent, _thumb_node) in thumb_v.iter_mut() {
+    for (interaction, mut drag_state, track_parent, thumb_node) in thumb_v.iter_mut() {
         // Start dragging on press
-        if *interaction == Interaction::Pressed && mouse_button.just_pressed(MouseButton::Left) {
+        // Note: `Interaction::Pressed` is updated by Bevy's UI systems and may not
+        // become `Pressed` until a frame after the mouse button press is registered.
+        // If we also require `just_pressed`, we can miss the drag start entirely.
+        if *interaction == Interaction::Pressed && !drag_state.is_dragging {
             if let Some(pos) = cursor_pos {
                 // Find the container through the track's parent
-                if let Ok((_track_node, scroll_parent)) = track_v.get(track_parent.0) {
-                    if let Ok((_, scroll_pos, _)) = containers.get(scroll_parent.0) {
+                // track_parent is the thumb's ChildOf (points to track)
+                // scroll_parent is the track's ChildOf (points to scroll container)
+                if let Ok((track_node, scroll_parent)) = track_v.get(track_parent.0) {
+                    if let Ok((container, scroll_pos, computed)) = containers.get(scroll_parent.0) {
                         drag_state.is_dragging = true;
                         drag_state.drag_start_pos = Some(pos);
                         drag_state.drag_start_offset = scroll_pos.y;
+
+                        let inv = computed.inverse_scale_factor();
+                        let phys_scale = if inv > 0.0 { 1.0 / inv } else { 0.0 };
+                        let pos_phys = pos * phys_scale;
+                        bevy::log::info!(
+                            "SBAR DragVStart: cursor_log=({:.1},{:.1}) cursor_phys=({:.1},{:.1}) win_scale={:.3} inv={:.4} phys_scale={:.4} track_h={:.1} thumb_comp_h={:.1} thumb_req={:.1} max_y={:.1} start_off_y={:.1}",
+                            pos.x,
+                            pos.y,
+                            pos_phys.x,
+                            pos_phys.y,
+                            window_scale_factor,
+                            inv,
+                            phys_scale,
+                            track_node.size().y * inv,
+                            thumb_node.size().y * inv,
+                            container.vertical_thumb_size(),
+                            container.max_offset.y,
+                            scroll_pos.y
+                        );
                     }
                 }
             }
@@ -370,6 +564,12 @@ fn scrollbar_thumb_drag_system(
         if mouse_button.just_released(MouseButton::Left) {
             drag_state.is_dragging = false;
             drag_state.drag_start_pos = None;
+
+            if let Some(pos) = cursor_pos {
+                bevy::log::info!("SBAR DragVEnd: cursor_log=({:.1},{:.1})", pos.x, pos.y);
+            } else {
+                bevy::log::info!("SBAR DragVEnd: cursor_log=(none)");
+            }
         }
         
         // Update scroll position while dragging
@@ -377,22 +577,59 @@ fn scrollbar_thumb_drag_system(
             if let (Some(start_pos), Some(current_pos)) = (drag_state.drag_start_pos, cursor_pos) {
                 if let Ok((track_node, scroll_parent)) = track_v.get(track_parent.0) {
                     if let Ok((container, mut scroll_pos, computed)) = containers.get_mut(scroll_parent.0) {
-                        let track_height = track_node.size().y;
-                        let thumb_height = container.vertical_thumb_size();
-                        let available_track = track_height - thumb_height;
+                        // Use logical pixels consistently (cursor positions, ScrollPosition, Node style values).
+                        // track_node.size() is physical, so convert to logical.
+                        let inv = computed.inverse_scale_factor();
+                        let track_height = track_node.size().y * inv;
+
+                        // Clamp thumb size to the actual track height (important when both scrollbars are visible
+                        // and the vertical track is shortened to avoid the bottom-right corner overlap).
+                        let thumb_size = container
+                            .vertical_thumb_size()
+                            .max(30.0)
+                            .min(track_height);
+                        let thumb_travel = track_height - thumb_size;
                         
-                        if available_track > 0.0 {
-                            // Calculate how much the thumb moved in track space
-                            let drag_delta = current_pos.y - start_pos.y;
-                            // Convert to scroll offset
-                            let content_size = computed.content_size();
-                            let container_size = computed.size();
-                            let scale = computed.inverse_scale_factor();
-                            let max_offset_y = (content_size.y - container_size.y).max(0.0) * scale;
-                            
-                            let scroll_delta = (drag_delta / available_track) * max_offset_y;
-                            scroll_pos.y = (drag_state.drag_start_offset + scroll_delta)
+                        let max_offset_y = container.max_offset.y;
+                        
+                        if max_offset_y > 0.0 && thumb_travel > 0.0 {
+                            // Treat cursor Y as increasing downward for drag purposes.
+                            // Dragging the mouse down should increase the thumb/scroll offset.
+                            let drag_delta_y = current_pos.y - start_pos.y;
+
+                            // Convert thumb movement to scroll
+                            let scroll_delta = (drag_delta_y / thumb_travel) * max_offset_y;
+                            let new_y = (drag_state.drag_start_offset + scroll_delta)
                                 .clamp(0.0, max_offset_y);
+
+                            let phys_scale = if inv > 0.0 { 1.0 / inv } else { 0.0 };
+                            let start_phys = start_pos * phys_scale;
+                            let cur_phys = current_pos * phys_scale;
+                            bevy::log::info!(
+                                "SBAR DragV: start_log=({:.1},{:.1}) cur_log=({:.1},{:.1}) start_phys=({:.1},{:.1}) cur_phys=({:.1},{:.1}) d_log_y={:.1} d_phys_y={:.1} track_h={:.1} thumb_comp_h={:.1} thumb_req={:.1} travel={:.1} max_y={:.1} start_off_y={:.1} new_y={:.1} win_scale={:.3} inv={:.4} phys_scale={:.4}",
+                                start_pos.x,
+                                start_pos.y,
+                                current_pos.x,
+                                current_pos.y,
+                                start_phys.x,
+                                start_phys.y,
+                                cur_phys.x,
+                                cur_phys.y,
+                                current_pos.y - start_pos.y,
+                                drag_delta_y,
+                                track_height,
+                                thumb_node.size().y * inv,
+                                thumb_size,
+                                thumb_travel,
+                                max_offset_y,
+                                drag_state.drag_start_offset,
+                                new_y,
+                                window_scale_factor,
+                                inv,
+                                phys_scale
+                            );
+
+                            scroll_pos.y = new_y;
                         }
                     }
                 }
@@ -401,16 +638,35 @@ fn scrollbar_thumb_drag_system(
     }
     
     // Handle horizontal scrollbar thumb dragging
-    for (interaction, mut drag_state, track_parent, _thumb_node) in thumb_h.iter_mut() {
+    for (interaction, mut drag_state, track_parent, thumb_node) in thumb_h.iter_mut() {
         // Start dragging on press
-        if *interaction == Interaction::Pressed && mouse_button.just_pressed(MouseButton::Left) {
+        if *interaction == Interaction::Pressed && !drag_state.is_dragging {
             if let Some(pos) = cursor_pos {
                 // Find the container through the track's parent
                 if let Ok((_track_node, scroll_parent)) = track_h.get(track_parent.0) {
-                    if let Ok((_, scroll_pos, _)) = containers.get(scroll_parent.0) {
+                    if let Ok((container, scroll_pos, computed)) = containers.get(scroll_parent.0) {
                         drag_state.is_dragging = true;
                         drag_state.drag_start_pos = Some(pos);
                         drag_state.drag_start_offset = scroll_pos.x;
+
+                        let inv = computed.inverse_scale_factor();
+                        let phys_scale = if inv > 0.0 { 1.0 / inv } else { 0.0 };
+                        let pos_phys = pos * phys_scale;
+                        bevy::log::info!(
+                            "SBAR DragHStart: cursor_log=({:.1},{:.1}) cursor_phys=({:.1},{:.1}) win_scale={:.3} inv={:.4} phys_scale={:.4} track_w={:.1} thumb_comp_w={:.1} thumb_req={:.1} max_x={:.1} start_off_x={:.1}",
+                            pos.x,
+                            pos.y,
+                            pos_phys.x,
+                            pos_phys.y,
+                            window_scale_factor,
+                            inv,
+                            phys_scale,
+                            container.container_size.x,
+                            thumb_node.size().x * inv,
+                            container.horizontal_thumb_size(),
+                            container.max_offset.x,
+                            scroll_pos.x
+                        );
                     }
                 }
             }
@@ -420,6 +676,12 @@ fn scrollbar_thumb_drag_system(
         if mouse_button.just_released(MouseButton::Left) {
             drag_state.is_dragging = false;
             drag_state.drag_start_pos = None;
+
+            if let Some(pos) = cursor_pos {
+                bevy::log::info!("SBAR DragHEnd: cursor_log=({:.1},{:.1})", pos.x, pos.y);
+            } else {
+                bevy::log::info!("SBAR DragHEnd: cursor_log=(none)");
+            }
         }
         
         // Update scroll position while dragging
@@ -427,22 +689,53 @@ fn scrollbar_thumb_drag_system(
             if let (Some(start_pos), Some(current_pos)) = (drag_state.drag_start_pos, cursor_pos) {
                 if let Ok((track_node, scroll_parent)) = track_h.get(track_parent.0) {
                     if let Ok((container, mut scroll_pos, computed)) = containers.get_mut(scroll_parent.0) {
-                        let track_width = track_node.size().x;
-                        let thumb_width = container.horizontal_thumb_size();
-                        let available_track = track_width - thumb_width;
+                        // Use logical pixels consistently.
+                        let inv = computed.inverse_scale_factor();
+                        let track_width = track_node.size().x * inv;
+                        let thumb_size = container
+                            .horizontal_thumb_size()
+                            .max(30.0)
+                            .min(track_width);
+                        let thumb_travel = track_width - thumb_size;
                         
-                        if available_track > 0.0 {
-                            // Calculate how much the thumb moved in track space
-                            let drag_delta = current_pos.x - start_pos.x;
-                            // Convert to scroll offset
-                            let content_size = computed.content_size();
-                            let container_size = computed.size();
-                            let scale = computed.inverse_scale_factor();
-                            let max_offset_x = (content_size.x - container_size.x).max(0.0) * scale;
+                        let max_offset_x = container.max_offset.x;
+                        
+                        if max_offset_x > 0.0 && thumb_travel > 0.0 {
+                            let drag_delta_x = current_pos.x - start_pos.x;
                             
-                            let scroll_delta = (drag_delta / available_track) * max_offset_x;
-                            scroll_pos.x = (drag_state.drag_start_offset + scroll_delta)
+                            // Convert thumb movement to scroll
+                            let scroll_delta = (drag_delta_x / thumb_travel) * max_offset_x;
+                            let new_x = (drag_state.drag_start_offset + scroll_delta)
                                 .clamp(0.0, max_offset_x);
+
+                            let phys_scale = if inv > 0.0 { 1.0 / inv } else { 0.0 };
+                            let start_phys = start_pos * phys_scale;
+                            let cur_phys = current_pos * phys_scale;
+                            bevy::log::info!(
+                                "SBAR DragH: start_log=({:.1},{:.1}) cur_log=({:.1},{:.1}) start_phys=({:.1},{:.1}) cur_phys=({:.1},{:.1}) d_log_x={:.1} d_phys_x={:.1} track_w={:.1} thumb_comp_w={:.1} thumb_req={:.1} travel={:.1} max_x={:.1} start_off_x={:.1} new_x={:.1} win_scale={:.3} inv={:.4} phys_scale={:.4}",
+                                start_pos.x,
+                                start_pos.y,
+                                current_pos.x,
+                                current_pos.y,
+                                start_phys.x,
+                                start_phys.y,
+                                cur_phys.x,
+                                cur_phys.y,
+                                current_pos.x - start_pos.x,
+                                drag_delta_x,
+                                track_width,
+                                thumb_node.size().x * inv,
+                                thumb_size,
+                                thumb_travel,
+                                max_offset_x,
+                                drag_state.drag_start_offset,
+                                new_x,
+                                window_scale_factor,
+                                inv,
+                                phys_scale
+                            );
+
+                            scroll_pos.x = new_x;
                         }
                     }
                 }
@@ -453,14 +746,16 @@ fn scrollbar_thumb_drag_system(
 
 /// System to update scrollbar visuals
 fn update_scrollbars(
-    containers: Query<(&ScrollContainer, &Children)>,
+    containers: Query<(&ScrollContainer, &ScrollPosition, &Children)>,
+    track_v_nodes: Query<&ComputedNode, With<ScrollbarTrackVertical>>,
+    track_h_nodes: Query<&ComputedNode, With<ScrollbarTrackHorizontal>>,
     mut thumb_v: Query<&mut Node, (With<ScrollbarThumbVertical>, Without<ScrollbarThumbHorizontal>)>,
     mut thumb_h: Query<&mut Node, (With<ScrollbarThumbHorizontal>, Without<ScrollbarThumbVertical>)>,
     mut track_v_vis: Query<&mut Visibility, (With<ScrollbarTrackVertical>, Without<ScrollbarTrackHorizontal>)>,
     mut track_h_vis: Query<&mut Visibility, (With<ScrollbarTrackHorizontal>, Without<ScrollbarTrackVertical>)>,
     children_query: Query<&Children>,
 ) {
-    for (container, children) in containers.iter() {
+    for (container, scroll_pos, children) in containers.iter() {
         // Find scrollbar elements in children
         for child in children.iter() {
             // Check for vertical track
@@ -484,26 +779,80 @@ fn update_scrollbars(
             // Look for thumbs in track children
             if let Ok(track_children) = children_query.get(child) {
                 for track_child in track_children.iter() {
-                    // Update vertical thumb
+                    // Update vertical thumb - get track height from track's ComputedNode
                     if let Ok(mut node) = thumb_v.get_mut(track_child) {
-                        let thumb_size = container.vertical_thumb_size();
-                        let thumb_pos = container.vertical_thumb_position();
-                        let track_height = container.container_size.y - container.scrollbar_width;
-                        let thumb_travel = (track_height - thumb_size).max(0.0);
-                        
-                        node.height = Val::Px(thumb_size.max(30.0));
-                        node.top = Val::Px(thumb_pos * thumb_travel);
+                        if let Ok(track_computed) = track_v_nodes.get(child) {
+                            let track_height = track_computed.size().y * track_computed.inverse_scale_factor();
+                            let thumb_size = container
+                                .vertical_thumb_size()
+                                .max(30.0)
+                                .min(track_height);
+                            // scroll_ratio: 0 = top, 1 = bottom
+                            let scroll_ratio = if container.max_offset.y > 0.0 {
+                                (scroll_pos.y / container.max_offset.y).clamp(0.0, 1.0)
+                            } else {
+                                0.0
+                            };
+                            let thumb_travel = (track_height - thumb_size).max(0.0);
+                            let top_value = scroll_ratio * thumb_travel;
+
+                            // Log only when something is out of sync (thumb outside rails, etc.)
+                            if thumb_size > track_height + 0.5
+                                || top_value < -0.5
+                                || top_value > thumb_travel + 0.5
+                            {
+                                bevy::log::info!(
+                                    "SBAR ThumbV_OOB: scroll_y={:.2} max_y={:.2} ratio={:.4} track_h={:.2} thumb={:.2} travel={:.2} top={:.2}",
+                                    scroll_pos.y,
+                                    container.max_offset.y,
+                                    scroll_ratio,
+                                    track_height,
+                                    thumb_size,
+                                    thumb_travel,
+                                    top_value
+                                );
+                            }
+                            
+                            node.height = Val::Px(thumb_size);
+                            node.top = Val::Px(top_value);
+                        }
                     }
                     
-                    // Update horizontal thumb
+                    // Update horizontal thumb - get track width from track's ComputedNode
                     if let Ok(mut node) = thumb_h.get_mut(track_child) {
-                        let thumb_size = container.horizontal_thumb_size();
-                        let thumb_pos = container.horizontal_thumb_position();
-                        let track_width = container.container_size.x - container.scrollbar_width;
-                        let thumb_travel = (track_width - thumb_size).max(0.0);
-                        
-                        node.width = Val::Px(thumb_size.max(30.0));
-                        node.left = Val::Px(thumb_pos * thumb_travel);
+                        if let Ok(track_computed) = track_h_nodes.get(child) {
+                            let track_width = track_computed.size().x * track_computed.inverse_scale_factor();
+                            let thumb_size = container
+                                .horizontal_thumb_size()
+                                .max(30.0)
+                                .min(track_width);
+                            let scroll_ratio = if container.max_offset.x > 0.0 {
+                                (scroll_pos.x / container.max_offset.x).clamp(0.0, 1.0)
+                            } else {
+                                0.0
+                            };
+                            let thumb_travel = (track_width - thumb_size).max(0.0);
+                            let left_value = scroll_ratio * thumb_travel;
+
+                            if thumb_size > track_width + 0.5
+                                || left_value < -0.5
+                                || left_value > thumb_travel + 0.5
+                            {
+                                bevy::log::info!(
+                                    "SBAR ThumbH_OOB: scroll_x={:.2} max_x={:.2} ratio={:.4} track_w={:.2} thumb={:.2} travel={:.2} left={:.2}",
+                                    scroll_pos.x,
+                                    container.max_offset.x,
+                                    scroll_ratio,
+                                    track_width,
+                                    thumb_size,
+                                    thumb_travel,
+                                    left_value
+                                );
+                            }
+                            
+                            node.width = Val::Px(thumb_size);
+                            node.left = Val::Px(left_value);
+                        }
                     }
                 }
             }
@@ -514,7 +863,7 @@ fn update_scrollbars(
 /// Spawn scrollbars for a scroll container
 /// Call this after spawning ScrollContainer to add visual scrollbars
 pub fn spawn_scrollbars(commands: &mut ChildSpawnerCommands, theme: &MaterialTheme, direction: ScrollDirection) {
-    let scrollbar_width = 10.0;
+    let scrollbar_width = SCROLLBAR_THICKNESS;
     let track_color = theme.surface_container_highest.with_alpha(0.5);
     let thumb_color = theme.primary.with_alpha(0.7);
 

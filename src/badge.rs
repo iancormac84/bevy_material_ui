@@ -257,6 +257,58 @@ impl BadgeBuilder {
 }
 
 // ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material badges as children
+pub trait SpawnBadgeChild {
+    /// Spawn a small badge (dot indicator)
+    fn spawn_small_badge(&mut self, theme: &MaterialTheme);
+    
+    /// Spawn a large badge with count
+    fn spawn_badge_count(&mut self, theme: &MaterialTheme, count: u32);
+    
+    /// Spawn a badge with text
+    fn spawn_badge_text(&mut self, theme: &MaterialTheme, text: impl Into<String>);
+    
+    /// Spawn a badge with full builder control
+    fn spawn_badge_with(&mut self, theme: &MaterialTheme, builder: BadgeBuilder);
+}
+
+impl SpawnBadgeChild for ChildSpawnerCommands<'_> {
+    fn spawn_small_badge(&mut self, theme: &MaterialTheme) {
+        // Small badge is just the dot indicator without content
+        self.spawn(BadgeBuilder::count(0).build(theme));
+    }
+    
+    fn spawn_badge_count(&mut self, theme: &MaterialTheme, count: u32) {
+        self.spawn_badge_with(theme, BadgeBuilder::count(count));
+    }
+    
+    fn spawn_badge_text(&mut self, theme: &MaterialTheme, text: impl Into<String>) {
+        self.spawn_badge_with(theme, BadgeBuilder::text(text));
+    }
+    
+    fn spawn_badge_with(&mut self, theme: &MaterialTheme, builder: BadgeBuilder) {
+        let content = builder.badge.content.clone();
+        let content_color = builder.badge.content_color(theme);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|badge| {
+                // Content text (for large badges)
+                if let Some(ref text) = content {
+                    badge.spawn((
+                        BadgeContent,
+                        Text::new(text),
+                        TextFont { font_size: 11.0, ..default() },
+                        TextColor(content_color),
+                    ));
+                }
+            });
+    }
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 

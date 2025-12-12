@@ -337,6 +337,62 @@ impl TooltipTriggerBuilder {
 }
 
 // ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to attach tooltips to spawned elements
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_with_tooltip(&theme, "Hover me for help", || {
+///         (Button, Text::new("?"))
+///     });
+/// });
+/// ```
+pub trait SpawnTooltipChild {
+    /// Spawn an element with a plain tooltip attached
+    fn spawn_with_tooltip<B: Bundle>(
+        &mut self,
+        tooltip_text: impl Into<String>,
+        bundle: B,
+    );
+    
+    /// Spawn an element with a positioned tooltip
+    fn spawn_with_positioned_tooltip<B: Bundle>(
+        &mut self,
+        tooltip_text: impl Into<String>,
+        position: TooltipPosition,
+        bundle: B,
+    );
+}
+
+impl SpawnTooltipChild for ChildSpawnerCommands<'_> {
+    fn spawn_with_tooltip<B: Bundle>(
+        &mut self,
+        tooltip_text: impl Into<String>,
+        bundle: B,
+    ) {
+        self.spawn((
+            bundle,
+            TooltipTrigger::new(tooltip_text),
+        ));
+    }
+    
+    fn spawn_with_positioned_tooltip<B: Bundle>(
+        &mut self,
+        tooltip_text: impl Into<String>,
+        position: TooltipPosition,
+        bundle: B,
+    ) {
+        self.spawn((
+            bundle,
+            TooltipTrigger::new(tooltip_text).with_position(position),
+        ));
+    }
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 

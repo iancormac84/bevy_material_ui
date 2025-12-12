@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    icons::MaterialIconFont,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
 };
@@ -16,7 +17,16 @@ pub struct SelectPlugin;
 impl Plugin for SelectPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<SelectChangeEvent>()
-            .add_systems(Update, (select_interaction_system, select_style_system));
+            .add_systems(
+                Update,
+                (
+                    select_interaction_system,
+                    select_style_system,
+                    select_dropdown_sync_system,
+                    select_option_interaction_system,
+                    select_option_icon_font_system,
+                ),
+            );
     }
 }
 
@@ -410,8 +420,288 @@ impl SelectBuilder {
 #[derive(Component)]
 pub struct SelectDropdown;
 
-/// Marker for select option
+/// Internal marker for option icons so we can apply the Material Symbols font.
+#[derive(Component)]
+struct SelectOptionIcon;
+
+/// Internal marker used to route option clicks back to the owning select.
+#[derive(Component, Clone, Copy)]
+struct SelectOwner(Entity);
+
+/// Marker for select option item (component attached to each option in the dropdown)
 #[derive(Component)]
 pub struct SelectOptionItem {
+    /// Index of this option in the options list
     pub index: usize,
+    /// Display label for this option
+    pub label: String,
+}
+
+/// Marker for select container (parent of trigger and dropdown)
+#[derive(Component)]
+pub struct SelectContainer;
+
+/// Marker for select trigger button
+#[derive(Component)]
+pub struct SelectTrigger {
+    /// Available options
+    #[allow(dead_code)]
+    pub options: Vec<String>,
+    /// Currently selected index
+    pub selected_index: usize,
+}
+
+/// Marker for select's displayed text
+#[derive(Component)]
+pub struct SelectDisplayText;
+
+/// Keep dropdown visibility + displayed text in sync with `MaterialSelect`.
+fn select_dropdown_sync_system(
+    mut selects: Query<(&MaterialSelect, &Children), Changed<MaterialSelect>>,
+    mut dropdowns: Query<&mut Visibility, With<SelectDropdown>>,
+    mut display_texts: Query<&mut Text, With<SelectDisplayText>>,
+) {
+    for (select, children) in selects.iter_mut() {
+        // Update dropdown visibility
+        for child in children.iter() {
+            if let Ok(mut vis) = dropdowns.get_mut(child) {
+                *vis = if select.open {
+                    Visibility::Inherited
+                } else {
+                    Visibility::Hidden
+                };
+            }
+        }
+
+        // Update displayed text
+        let placeholder = select
+            .label
+            .as_deref()
+            .unwrap_or("Select");
+
+        let display = select
+            .selected_option()
+            .map(|o| o.label.as_str())
+            .unwrap_or(placeholder);
+
+        for child in children.iter() {
+            if let Ok(mut text) = display_texts.get_mut(child) {
+                *text = Text::new(display);
+            }
+        }
+    }
+}
+
+/// Handle clicks on option items.
+fn select_option_interaction_system(
+    mut interactions: Query<(&Interaction, &SelectOptionItem, &SelectOwner), Changed<Interaction>>,
+    mut selects: Query<(Entity, &mut MaterialSelect)>,
+    mut events: MessageWriter<SelectChangeEvent>,
+) {
+    for (interaction, option_item, owner) in interactions.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        let Ok((select_entity, mut select)) = selects.get_mut(owner.0) else {
+            continue;
+        };
+
+        // Ignore disabled options
+        let Some(option) = select.options.get(option_item.index).cloned() else {
+            continue;
+        };
+        if option.disabled {
+            continue;
+        }
+
+        select.selected_index = Some(option_item.index);
+        select.open = false;
+        select.focused = true;
+
+        events.write(SelectChangeEvent {
+            entity: select_entity,
+            index: option_item.index,
+            option,
+        });
+    }
+}
+
+/// Apply the Material Symbols font to select option icon text nodes.
+fn select_option_icon_font_system(
+    icon_font: Option<Res<MaterialIconFont>>,
+    mut icons: Query<&mut TextFont, With<SelectOptionIcon>>,
+) {
+    let Some(icon_font) = icon_font else { return };
+    for mut text_font in icons.iter_mut() {
+        text_font.font = icon_font.handle();
+    }
+}
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material selects as children
+pub trait SpawnSelectChild {
+    /// Spawn a filled select
+    fn spawn_filled_select(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        options: Vec<SelectOption>,
+    );
+    
+    /// Spawn an outlined select
+    fn spawn_outlined_select(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        options: Vec<SelectOption>,
+    );
+    
+    /// Spawn a select with full builder control
+    fn spawn_select_with(&mut self, theme: &MaterialTheme, builder: SelectBuilder);
+}
+
+impl SpawnSelectChild for ChildSpawnerCommands<'_> {
+    fn spawn_filled_select(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        options: Vec<SelectOption>,
+    ) {
+        self.spawn_select_with(
+            theme,
+            SelectBuilder::new(options).label(label).filled(),
+        );
+    }
+    
+    fn spawn_outlined_select(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        options: Vec<SelectOption>,
+    ) {
+        self.spawn_select_with(
+            theme,
+            SelectBuilder::new(options).label(label).outlined(),
+        );
+    }
+    
+    fn spawn_select_with(&mut self, theme: &MaterialTheme, builder: SelectBuilder) {
+        let label_color = builder.select.label_color(theme);
+        let text_color = builder.select.text_color(theme);
+        let option_text_color = theme.on_surface;
+
+        // Clone options for building the dropdown list
+        let options = builder.select.options.clone();
+        let selected_index = builder.select.selected_index;
+        let placeholder = builder
+            .select
+            .label
+            .clone()
+            .unwrap_or_else(|| "Select".to_string());
+
+        let mut select_entity_commands = self.spawn(builder.build(theme));
+        let select_entity = select_entity_commands.id();
+
+        select_entity_commands.with_children(|select| {
+                // Display text
+                let display_label = selected_index
+                    .and_then(|idx| options.get(idx))
+                    .map(|o| o.label.as_str())
+                    .unwrap_or(placeholder.as_str());
+
+                select.spawn((
+                    SelectDisplayText,
+                    Text::new(display_label),
+                    TextFont { font_size: 16.0, ..default() },
+                    TextColor(text_color),
+                    Node { flex_grow: 1.0, ..default() },
+                ));
+
+                // Dropdown arrow
+                select.spawn((
+                    Text::new("▼"),
+                    TextFont { font_size: 12.0, ..default() },
+                    TextColor(label_color),
+                ));
+
+                // Dropdown list (hidden by default)
+                select
+                    .spawn((
+                        SelectDropdown,
+                        Visibility::Hidden,
+                        // Ensure the dropdown renders above later siblings (e.g. code blocks).
+                        GlobalZIndex(100),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Px(SELECT_HEIGHT + 4.0),
+                            left: Val::Px(0.0),
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            padding: UiRect::vertical(Val::Px(8.0)),
+                            ..default()
+                        },
+                        BackgroundColor(theme.surface_container),
+                        BorderRadius::all(Val::Px(8.0)),
+                    ))
+                    .with_children(|dropdown| {
+                        for (index, option) in options.iter().enumerate() {
+                            let is_disabled = option.disabled;
+                            let is_selected = selected_index.is_some_and(|i| i == index);
+                            let row_bg = if is_selected {
+                                theme.secondary_container
+                            } else {
+                                Color::NONE
+                            };
+
+                            dropdown
+                                .spawn((
+                                    SelectOwner(select_entity),
+                                    SelectOptionItem {
+                                        index,
+                                        label: option.label.clone(),
+                                    },
+                                    Button,
+                                    Interaction::None,
+                                    Node {
+                                        height: Val::Px(SELECT_OPTION_HEIGHT),
+                                        padding: UiRect::horizontal(Val::Px(Spacing::LARGE)),
+                                        align_items: AlignItems::Center,
+                                        column_gap: Val::Px(Spacing::MEDIUM),
+                                        ..default()
+                                    },
+                                    BackgroundColor(row_bg),
+                                ))
+                                .with_children(|row| {
+                                    // Optional leading icon
+                                    if let Some(icon) = &option.icon {
+                                        row.spawn((
+                                            SelectOptionIcon,
+                                            Text::new(icon.clone()),
+                                            TextFont { font_size: 20.0, ..default() },
+                                            TextColor(if is_disabled {
+                                                option_text_color.with_alpha(0.38)
+                                            } else {
+                                                option_text_color
+                                            }),
+                                        ));
+                                    }
+
+                                    row.spawn((
+                                        Text::new(option.label.clone()),
+                                        TextFont { font_size: 14.0, ..default() },
+                                        TextColor(if is_disabled {
+                                            option_text_color.with_alpha(0.38)
+                                        } else {
+                                            option_text_color
+                                        }),
+                                    ));
+                                });
+                        }
+                    });
+            });
+    }
 }

@@ -439,6 +439,90 @@ impl SnackbarBuilder {
 }
 
 // ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material snackbars as children
+pub trait SpawnSnackbarChild {
+    /// Spawn a snackbar host container
+    fn spawn_snackbar_host(&mut self, position: SnackbarPosition);
+    
+    /// Spawn a snackbar with message
+    fn spawn_snackbar_message(&mut self, theme: &MaterialTheme, message: impl Into<String>);
+    
+    /// Spawn a snackbar with message and action
+    fn spawn_snackbar_with_action(
+        &mut self,
+        theme: &MaterialTheme,
+        message: impl Into<String>,
+        action: impl Into<String>,
+    );
+    
+    /// Spawn a snackbar with full builder control
+    fn spawn_snackbar_with(&mut self, theme: &MaterialTheme, builder: SnackbarBuilder);
+}
+
+impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
+    fn spawn_snackbar_host(&mut self, position: SnackbarPosition) {
+        self.spawn(SnackbarHostBuilder::build_with_position(position));
+    }
+    
+    fn spawn_snackbar_message(&mut self, theme: &MaterialTheme, message: impl Into<String>) {
+        let msg = message.into();
+        self.spawn_snackbar_with(theme, SnackbarBuilder::new(msg));
+    }
+    
+    fn spawn_snackbar_with_action(
+        &mut self,
+        theme: &MaterialTheme,
+        message: impl Into<String>,
+        action: impl Into<String>,
+    ) {
+        let msg = message.into();
+        let act = action.into();
+        self.spawn_snackbar_with(theme, SnackbarBuilder::new(msg).action(act));
+    }
+    
+    fn spawn_snackbar_with(&mut self, theme: &MaterialTheme, builder: SnackbarBuilder) {
+        let message_text = builder.snackbar.message.clone();
+        let action_text = builder.snackbar.action.clone();
+        let message_color = theme.inverse_on_surface;
+        let action_color = theme.inverse_primary;
+        
+        self.spawn(builder.build(theme))
+            .with_children(|snackbar| {
+                // Message
+                snackbar.spawn((
+                    SnackbarMessage,
+                    Text::new(&message_text),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(message_color),
+                    Node { flex_grow: 1.0, ..default() },
+                ));
+                
+                // Action button (if present)
+                if let Some(ref action) = action_text {
+                    snackbar.spawn((
+                        SnackbarAction,
+                        Button,
+                        Node {
+                            padding: UiRect::axes(Val::Px(Spacing::SMALL), Val::Px(Spacing::EXTRA_SMALL)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                    )).with_children(|btn| {
+                        btn.spawn((
+                            Text::new(action),
+                            TextFont { font_size: 14.0, ..default() },
+                            TextColor(action_color),
+                        ));
+                    });
+                }
+            });
+    }
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 

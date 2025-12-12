@@ -21,32 +21,57 @@ fn bench_button_creation(c: &mut Criterion) {
     let mut group = c.benchmark_group("Button Component");
 
     group.bench_function("create_filled", |b| {
-        b.iter(|| MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Filled))
+        b.iter(|| {
+            black_box(
+                MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Filled),
+            )
+        })
     });
 
     group.bench_function("create_outlined", |b| {
-        b.iter(|| MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Outlined))
+        b.iter(|| {
+            black_box(
+                MaterialButton::new(black_box("Click Me"))
+                    .with_variant(ButtonVariant::Outlined),
+            )
+        })
     });
 
     group.bench_function("create_elevated", |b| {
-        b.iter(|| MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Elevated))
+        b.iter(|| {
+            black_box(
+                MaterialButton::new(black_box("Click Me"))
+                    .with_variant(ButtonVariant::Elevated),
+            )
+        })
     });
 
     group.bench_function("create_tonal", |b| {
-        b.iter(|| MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::FilledTonal))
+        b.iter(|| {
+            black_box(
+                MaterialButton::new(black_box("Click Me"))
+                    .with_variant(ButtonVariant::FilledTonal),
+            )
+        })
     });
 
     group.bench_function("create_text", |b| {
-        b.iter(|| MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Text))
+        b.iter(|| {
+            black_box(
+                MaterialButton::new(black_box("Click Me")).with_variant(ButtonVariant::Text),
+            )
+        })
     });
 
     // Full configuration
     group.bench_function("create_full_config", |b| {
         b.iter(|| {
-            MaterialButton::new(black_box("Submit"))
-                .with_variant(ButtonVariant::Filled)
-                .disabled(false)
-                .with_icon(black_box("send"))
+            black_box(
+                MaterialButton::new(black_box("Submit"))
+                    .with_variant(ButtonVariant::Filled)
+                    .disabled(black_box(false))
+                    .with_icon(black_box("send")),
+            )
         })
     });
 
@@ -68,20 +93,30 @@ fn bench_checkbox(c: &mut Criterion) {
     let mut group = c.benchmark_group("Checkbox Component");
 
     group.bench_function("create_unchecked", |b| {
-        b.iter(|| MaterialCheckbox::new().with_state(CheckboxState::Unchecked))
+        b.iter(|| {
+            black_box(
+                MaterialCheckbox::new().with_state(black_box(CheckboxState::Unchecked)),
+            )
+        })
     });
 
     group.bench_function("create_checked", |b| {
-        b.iter(|| MaterialCheckbox::new().with_state(CheckboxState::Checked))
+        b.iter(|| {
+            black_box(MaterialCheckbox::new().with_state(black_box(CheckboxState::Checked)))
+        })
     });
 
     group.bench_function("create_indeterminate", |b| {
-        b.iter(|| MaterialCheckbox::new().with_state(CheckboxState::Indeterminate))
+        b.iter(|| {
+            black_box(
+                MaterialCheckbox::new().with_state(black_box(CheckboxState::Indeterminate)),
+            )
+        })
     });
 
     group.bench_function("state_toggle", |b| {
-        let state = CheckboxState::Unchecked;
         b.iter(|| {
+            let state = black_box(CheckboxState::Unchecked);
             let toggled = state.toggle();
             black_box(toggled)
         })
@@ -95,15 +130,17 @@ fn bench_switch(c: &mut Criterion) {
     let mut group = c.benchmark_group("Switch Component");
 
     group.bench_function("create_off", |b| {
-        b.iter(|| MaterialSwitch::new().selected(false))
+        b.iter(|| black_box(MaterialSwitch::new().selected(black_box(false))))
     });
 
     group.bench_function("create_on", |b| {
-        b.iter(|| MaterialSwitch::new().selected(true))
+        b.iter(|| black_box(MaterialSwitch::new().selected(black_box(true))))
     });
 
     group.bench_function("create_with_icon", |b| {
-        b.iter(|| MaterialSwitch::new().with_icon().selected(true))
+        b.iter(|| {
+            black_box(MaterialSwitch::new().with_icon().selected(black_box(true)))
+        })
     });
 
     group.finish();
@@ -114,7 +151,7 @@ fn bench_radio(c: &mut Criterion) {
     let mut group = c.benchmark_group("Radio Component");
 
     group.bench_function("create_single", |b| {
-        b.iter(|| MaterialRadio::new().group(black_box("group1")))
+        b.iter(|| black_box(MaterialRadio::new().group(black_box("group1"))))
     });
 
     group.bench_function("create_group_5", |b| {
@@ -134,31 +171,39 @@ fn bench_slider(c: &mut Criterion) {
     let mut group = c.benchmark_group("Slider Component");
 
     group.bench_function("create_default", |b| {
-        b.iter(|| MaterialSlider::new(black_box(0.0), black_box(100.0)))
+        b.iter(|| {
+            black_box(MaterialSlider::new(black_box(0.0), black_box(100.0)))
+        })
     });
 
     group.bench_function("create_with_value", |b| {
         b.iter(|| {
-            MaterialSlider::new(black_box(0.0), black_box(100.0))
-                .with_value(50.0)
+            black_box(
+                MaterialSlider::new(black_box(0.0), black_box(100.0))
+                    .with_value(black_box(50.0)),
+            )
         })
     });
 
     group.bench_function("create_with_step", |b| {
         b.iter(|| {
-            MaterialSlider::new(black_box(0.0), black_box(100.0))
-                .with_value(50.0)
-                .with_step(5.0)
+            black_box(
+                MaterialSlider::new(black_box(0.0), black_box(100.0))
+                    .with_value(black_box(50.0))
+                    .with_step(black_box(5.0)),
+            )
         })
     });
 
     group.bench_function("create_full_config", |b| {
         b.iter(|| {
-            MaterialSlider::new(black_box(0.0), black_box(100.0))
-                .with_value(50.0)
-                .with_step(5.0)
-                .show_label()
-                .show_ticks()
+            black_box(
+                MaterialSlider::new(black_box(0.0), black_box(100.0))
+                    .with_value(black_box(50.0))
+                    .with_step(black_box(5.0))
+                    .show_label()
+                    .show_ticks(),
+            )
         })
     });
 
@@ -176,15 +221,19 @@ fn bench_progress(c: &mut Criterion) {
     let mut group = c.benchmark_group("Progress Component");
 
     group.bench_function("create_linear_determinate", |b| {
-        b.iter(|| MaterialLinearProgress::new().with_progress(black_box(0.5)))
+        b.iter(|| {
+            black_box(MaterialLinearProgress::new().with_progress(black_box(0.5)))
+        })
     });
 
     group.bench_function("create_linear_indeterminate", |b| {
-        b.iter(|| MaterialLinearProgress::new().indeterminate())
+        b.iter(|| black_box(MaterialLinearProgress::new().indeterminate()))
     });
 
     group.bench_function("create_circular", |b| {
-        b.iter(|| MaterialCircularProgress::new().with_progress(black_box(0.75)))
+        b.iter(|| {
+            black_box(MaterialCircularProgress::new().with_progress(black_box(0.75)))
+        })
     });
 
     group.finish();
@@ -195,19 +244,32 @@ fn bench_chip(c: &mut Criterion) {
     let mut group = c.benchmark_group("Chip Component");
 
     group.bench_function("create_assist", |b| {
-        b.iter(|| MaterialChip::new(black_box("Help")).with_variant(ChipVariant::Assist))
+        b.iter(|| {
+            black_box(MaterialChip::new(black_box("Help")).with_variant(ChipVariant::Assist))
+        })
     });
 
     group.bench_function("create_filter", |b| {
-        b.iter(|| MaterialChip::new(black_box("Category")).with_variant(ChipVariant::Filter))
+        b.iter(|| {
+            black_box(
+                MaterialChip::new(black_box("Category")).with_variant(ChipVariant::Filter),
+            )
+        })
     });
 
     group.bench_function("create_input", |b| {
-        b.iter(|| MaterialChip::new(black_box("Tag")).with_variant(ChipVariant::Input))
+        b.iter(|| {
+            black_box(MaterialChip::new(black_box("Tag")).with_variant(ChipVariant::Input))
+        })
     });
 
     group.bench_function("create_suggestion", |b| {
-        b.iter(|| MaterialChip::new(black_box("Recommended")).with_variant(ChipVariant::Suggestion))
+        b.iter(|| {
+            black_box(
+                MaterialChip::new(black_box("Recommended"))
+                    .with_variant(ChipVariant::Suggestion),
+            )
+        })
     });
 
     // Chip group

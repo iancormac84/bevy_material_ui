@@ -309,3 +309,89 @@ pub fn create_dialog_scrim(theme: &MaterialTheme) -> impl Bundle {
         BackgroundColor(theme.scrim.with_alpha(0.32)),
     )
 }
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material dialogs as children
+/// 
+/// This trait provides a clean API for spawning dialogs within UI hierarchies.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_dialog(&theme, "Confirm", |dialog| {
+///         dialog.spawn((Text::new("Are you sure?"), TextColor(theme.on_surface)));
+///     });
+/// });
+/// ```
+pub trait SpawnDialogChild {
+    /// Spawn a dialog with headline and content builder
+    fn spawn_dialog(
+        &mut self,
+        theme: &MaterialTheme,
+        headline: impl Into<String>,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a dialog with full builder control
+    fn spawn_dialog_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: DialogBuilder,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a dialog scrim overlay
+    fn spawn_dialog_scrim(&mut self, theme: &MaterialTheme);
+}
+
+impl SpawnDialogChild for ChildSpawnerCommands<'_> {
+    fn spawn_dialog(
+        &mut self,
+        theme: &MaterialTheme,
+        headline: impl Into<String>,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn_dialog_with(theme, DialogBuilder::new().title(headline), with_content);
+    }
+    
+    fn spawn_dialog_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: DialogBuilder,
+        with_content: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        let title_text: Option<String> = builder.dialog.title.clone();
+        let headline_color = theme.on_surface;
+        
+        self.spawn(builder.build(theme))
+            .with_children(|dialog| {
+                // Headline/Title
+                if let Some(ref title) = title_text {
+                    dialog.spawn((
+                        DialogHeadline,
+                        Text::new(title.as_str()),
+                        TextFont { font_size: 24.0, ..default() },
+                        TextColor(headline_color),
+                        Node { margin: UiRect::bottom(Val::Px(16.0)), ..default() },
+                    ));
+                }
+                
+                // Content area
+                dialog.spawn((
+                    DialogContent,
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        flex_grow: 1.0,
+                        ..default()
+                    },
+                )).with_children(with_content);
+            });
+    }
+    
+    fn spawn_dialog_scrim(&mut self, theme: &MaterialTheme) {
+        self.spawn(create_dialog_scrim(theme));
+    }
+}

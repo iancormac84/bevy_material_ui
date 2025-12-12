@@ -176,3 +176,40 @@ pub fn vertical_divider(theme: &MaterialTheme) -> impl Bundle {
 pub fn inset_divider(theme: &MaterialTheme) -> impl Bundle {
     DividerBuilder::new().inset().build(theme)
 }
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material dividers as children
+pub trait SpawnDividerChild {
+    /// Spawn a horizontal divider
+    fn spawn_horizontal_divider(&mut self, theme: &MaterialTheme);
+    
+    /// Spawn a vertical divider
+    fn spawn_vertical_divider(&mut self, theme: &MaterialTheme);
+    
+    /// Spawn an inset divider
+    fn spawn_inset_divider(&mut self, theme: &MaterialTheme);
+    
+    /// Spawn a divider with full builder control
+    fn spawn_divider_with(&mut self, theme: &MaterialTheme, builder: DividerBuilder);
+}
+
+impl SpawnDividerChild for ChildSpawnerCommands<'_> {
+    fn spawn_horizontal_divider(&mut self, theme: &MaterialTheme) {
+        self.spawn(DividerBuilder::new().build(theme));
+    }
+    
+    fn spawn_vertical_divider(&mut self, theme: &MaterialTheme) {
+        self.spawn(DividerBuilder::vertical().build(theme));
+    }
+    
+    fn spawn_inset_divider(&mut self, theme: &MaterialTheme) {
+        self.spawn(DividerBuilder::new().inset().build(theme));
+    }
+    
+    fn spawn_divider_with(&mut self, theme: &MaterialTheme, builder: DividerBuilder) {
+        self.spawn(builder.build(theme));
+    }
+}

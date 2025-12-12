@@ -590,6 +590,126 @@ impl SpawnCheckbox for Commands<'_, '_> {
     }
 }
 
+/// Extension trait to spawn checkboxes within a ChildSpawnerCommands context
+pub trait SpawnCheckboxChild {
+    /// Spawn a checkbox with a label
+    fn spawn_checkbox(
+        &mut self,
+        theme: &MaterialTheme,
+        state: CheckboxState,
+        label: &str,
+    );
+    
+    /// Spawn a checkbox using a builder for more control
+    fn spawn_checkbox_with(
+        &mut self,
+        theme: &MaterialTheme,
+        checkbox: MaterialCheckbox,
+        label: &str,
+    );
+}
+
+impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
+    fn spawn_checkbox(
+        &mut self,
+        theme: &MaterialTheme,
+        state: CheckboxState,
+        label: &str,
+    ) {
+        let checkbox = CheckboxBuilder::new().state(state).build();
+        self.spawn_checkbox_with(theme, checkbox, label);
+    }
+    
+    fn spawn_checkbox_with(
+        &mut self,
+        theme: &MaterialTheme,
+        checkbox: MaterialCheckbox,
+        label: &str,
+    ) {
+        let label_color = theme.on_surface;
+        let label_text = label.to_string();
+        let bg_color = checkbox.container_color(theme);
+        let border_color = checkbox.outline_color(theme);
+        let icon_color = checkbox.icon_color(theme);
+        let icon_char = checkbox.state.icon();
+        let state_layer_color = checkbox.state_layer_color(theme);
+
+        self.spawn(Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(12.0),
+            ..default()
+        }).with_children(|row| {
+            // Checkbox
+            row.spawn((
+                checkbox,
+                Button,
+                Interaction::None,
+                RippleHost::new(),
+                Node {
+                    width: Val::Px(CHECKBOX_TOUCH_TARGET),
+                    height: Val::Px(CHECKBOX_TOUCH_TARGET),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::NONE),
+                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            )).with_children(|parent| {
+                // State layer
+                parent.spawn((
+                    CheckboxStateLayer,
+                    StateLayer::new(state_layer_color),
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: Val::Px(40.0),
+                        height: Val::Px(40.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                    BorderRadius::all(Val::Px(20.0)),
+                )).with_children(|state_layer_parent| {
+                    // Checkbox box
+                    state_layer_parent.spawn((
+                        CheckboxBox,
+                        Node {
+                            width: Val::Px(CHECKBOX_SIZE),
+                            height: Val::Px(CHECKBOX_SIZE),
+                            border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(bg_color),
+                        BorderColor::all(border_color),
+                        BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                    )).with_children(|box_parent| {
+                        // Checkmark
+                        box_parent.spawn((
+                            CheckboxIcon,
+                            Text::new(icon_char.map(|c| c.to_string()).unwrap_or_default()),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(icon_color),
+                        ));
+                    });
+                });
+            });
+
+            // Label
+            row.spawn((
+                Text::new(label_text),
+                TextFont { font_size: 14.0, ..default() },
+                TextColor(label_color),
+            ));
+        });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

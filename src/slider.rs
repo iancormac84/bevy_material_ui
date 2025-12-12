@@ -447,17 +447,220 @@ impl SliderBuilder {
 #[derive(Component)]
 pub struct SliderTrack;
 
-/// Marker component for slider active track
+/// Marker component for slider active track (fill portion showing current value)
 #[derive(Component)]
-pub struct SliderActiveTrack;
+pub struct SliderActiveTrack {
+    /// Reference to the parent track entity
+    pub track: Entity,
+}
 
-/// Marker component for slider handle
+/// Marker component for slider handle (thumb)
 #[derive(Component)]
-pub struct SliderHandle;
+pub struct SliderHandle {
+    /// Minimum value
+    pub min: f32,
+    /// Maximum value
+    pub max: f32,
+    /// Current value
+    pub value: f32,
+    /// Reference to the parent track entity
+    pub track: Entity,
+    /// Optional step for discrete sliders
+    pub step: Option<f32>,
+}
 
 /// Marker component for slider value label
 #[derive(Component)]
-pub struct SliderLabel;
+pub struct SliderLabel {
+    /// Reference to the parent track entity
+    pub track: Entity,
+}
+
+/// Extension trait to spawn sliders with full visual hierarchy
+pub trait SpawnSliderChild {
+    /// Spawn a continuous slider with a label
+    fn spawn_slider(
+        &mut self,
+        theme: &MaterialTheme,
+        min: f32,
+        max: f32,
+        value: f32,
+        label: Option<&str>,
+    );
+    
+    /// Spawn a discrete slider with tick marks
+    fn spawn_discrete_slider(
+        &mut self,
+        theme: &MaterialTheme,
+        min: f32,
+        max: f32,
+        value: f32,
+        step: f32,
+        label: Option<&str>,
+    );
+    
+    /// Spawn a slider using a builder for more control
+    fn spawn_slider_with(
+        &mut self,
+        theme: &MaterialTheme,
+        slider: MaterialSlider,
+        label: Option<&str>,
+    );
+}
+
+impl SpawnSliderChild for ChildSpawnerCommands<'_> {
+    fn spawn_slider(
+        &mut self,
+        theme: &MaterialTheme,
+        min: f32,
+        max: f32,
+        value: f32,
+        label: Option<&str>,
+    ) {
+        let slider = MaterialSlider::new(min, max).with_value(value);
+        self.spawn_slider_with(theme, slider, label);
+    }
+    
+    fn spawn_discrete_slider(
+        &mut self,
+        theme: &MaterialTheme,
+        min: f32,
+        max: f32,
+        value: f32,
+        step: f32,
+        label: Option<&str>,
+    ) {
+        let mut slider = MaterialSlider::new(min, max)
+            .with_value(value)
+            .with_step(step);
+        slider.show_ticks = true;
+        self.spawn_slider_with(theme, slider, label);
+    }
+    
+    fn spawn_slider_with(
+        &mut self,
+        theme: &MaterialTheme,
+        slider: MaterialSlider,
+        label: Option<&str>,
+    ) {
+        let label_color = theme.on_surface;
+        let track_color = slider.inactive_track_color(theme);
+        let active_color = slider.active_track_color(theme);
+        let handle_color = slider.handle_color(theme);
+        
+        let value_percent = if slider.max > slider.min {
+            (slider.value - slider.min) / (slider.max - slider.min)
+        } else {
+            0.0
+        };
+        
+        let show_ticks = slider.show_ticks;
+        let step = slider.step;
+        let min = slider.min;
+        let max = slider.max;
+        let track_height = slider.track_height;
+        let thumb_radius = slider.thumb_radius;
+        
+        // Container row with optional label
+        self.spawn(Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(16.0),
+            ..default()
+        }).with_children(|row| {
+            // Optional left label
+            if let Some(label_text) = label {
+                row.spawn((
+                    Text::new(label_text),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(label_color),
+                ));
+            }
+            
+            // Slider container
+            row.spawn((
+                slider,
+                Button,
+                Interaction::None,
+                Node {
+                    width: Val::Px(200.0),
+                    height: Val::Px(SLIDER_HANDLE_SIZE + 8.0),
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::NONE),
+            )).with_children(|slider_area| {
+                // Track - spawn and get entity
+                let track_entity = slider_area.spawn((
+                    SliderTrack,
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(track_height),
+                        ..default()
+                    },
+                    BackgroundColor(track_color),
+                    BorderRadius::all(Val::Px(track_height / 2.0)),
+                )).id();
+                
+                // Active track (filled portion)
+                slider_area.spawn((
+                    SliderActiveTrack { track: track_entity },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(0.0),
+                        top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0),
+                        width: Val::Percent(value_percent * 100.0),
+                        height: Val::Px(track_height),
+                        ..default()
+                    },
+                    BackgroundColor(active_color),
+                    BorderRadius::all(Val::Px(track_height / 2.0)),
+                ));
+                
+                // Handle (thumb)
+                slider_area.spawn((
+                    SliderHandle {
+                        min,
+                        max,
+                        value: min + value_percent * (max - min),
+                        track: track_entity,
+                        step,
+                    },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Percent(value_percent * 100.0 - (thumb_radius / 2.0)),
+                        width: Val::Px(thumb_radius * 2.0),
+                        height: Val::Px(thumb_radius * 2.0),
+                        ..default()
+                    },
+                    BackgroundColor(handle_color),
+                    BorderRadius::all(Val::Px(thumb_radius)),
+                ));
+                
+                // Tick marks for discrete sliders
+                if show_ticks {
+                    if let Some(step_size) = step {
+                        let num_ticks = ((max - min) / step_size) as usize + 1;
+                        for i in 0..num_ticks {
+                            let pos = i as f32 / (num_ticks - 1) as f32;
+                            slider_area.spawn((
+                                Node {
+                                    position_type: PositionType::Absolute,
+                                    left: Val::Percent(pos * 100.0 - 0.5),
+                                    top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 + track_height) / 2.0),
+                                    width: Val::Px(2.0),
+                                    height: Val::Px(4.0),
+                                    ..default()
+                                },
+                                BackgroundColor(track_color),
+                            ));
+                        }
+                    }
+                }
+            });
+        });
+    }
+}
 
 #[cfg(test)]
 mod tests {

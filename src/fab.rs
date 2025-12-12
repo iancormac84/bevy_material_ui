@@ -357,3 +357,148 @@ impl FabBuilder {
         )
     }
 }
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+use crate::icons::{MaterialIcon, IconStyle};
+
+/// Marker component for FAB label text
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct FabLabel;
+
+/// Extension trait to spawn FABs as children
+/// 
+/// This trait provides a clean API for spawning FABs within UI hierarchies.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_fab(&theme, "add", FabSize::Regular);
+///     children.spawn_small_fab(&theme, "edit");
+///     children.spawn_extended_fab(&theme, "add", "Create New");
+/// });
+/// ```
+pub trait SpawnFabChild {
+    /// Spawn a FAB with specified size
+    fn spawn_fab(
+        &mut self,
+        theme: &MaterialTheme,
+        icon: impl Into<String>,
+        size: FabSize,
+    );
+    
+    /// Spawn a small FAB
+    fn spawn_small_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
+    
+    /// Spawn a regular FAB
+    fn spawn_regular_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
+    
+    /// Spawn a large FAB
+    fn spawn_large_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>);
+    
+    /// Spawn an extended FAB with icon and label
+    fn spawn_extended_fab(
+        &mut self,
+        theme: &MaterialTheme,
+        icon: impl Into<String>,
+        label: impl Into<String>,
+    );
+    
+    /// Spawn a FAB with full builder control
+    fn spawn_fab_with(&mut self, theme: &MaterialTheme, fab: MaterialFab);
+}
+
+impl SpawnFabChild for ChildSpawnerCommands<'_> {
+    fn spawn_fab(
+        &mut self,
+        theme: &MaterialTheme,
+        icon: impl Into<String>,
+        size: FabSize,
+    ) {
+        let icon_name = icon.into();
+        let builder = FabBuilder::new(icon_name.clone()).size(size);
+        let icon_color = builder.fab.content_color(theme);
+        let icon_size = builder.fab.size.icon_size();
+        
+        self.spawn(builder.build(theme))
+            .with_children(|fab| {
+                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                    fab.spawn((
+                        icon,
+                        IconStyle::outlined().with_color(icon_color).with_size(icon_size),
+                    ));
+                }
+            });
+    }
+    
+    fn spawn_small_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
+        self.spawn_fab(theme, icon, FabSize::Small);
+    }
+    
+    fn spawn_regular_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
+        self.spawn_fab(theme, icon, FabSize::Regular);
+    }
+    
+    fn spawn_large_fab(&mut self, theme: &MaterialTheme, icon: impl Into<String>) {
+        self.spawn_fab(theme, icon, FabSize::Large);
+    }
+    
+    fn spawn_extended_fab(
+        &mut self,
+        theme: &MaterialTheme,
+        icon: impl Into<String>,
+        label: impl Into<String>,
+    ) {
+        let icon_name = icon.into();
+        let label_str = label.into();
+        let builder = FabBuilder::new(icon_name.clone()).extended(label_str.clone());
+        let icon_color = builder.fab.content_color(theme);
+        let text_color = builder.fab.content_color(theme);
+        let icon_size = builder.fab.size.icon_size();
+        
+        self.spawn(builder.build(theme))
+            .with_children(|fab| {
+                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                    fab.spawn((
+                        icon,
+                        IconStyle::outlined().with_color(icon_color).with_size(icon_size),
+                    ));
+                }
+                fab.spawn((
+                    FabLabel,
+                    Text::new(label_str),
+                    TextColor(text_color),
+                    TextFont { font_size: 14.0, ..default() },
+                ));
+            });
+    }
+    
+    fn spawn_fab_with(&mut self, theme: &MaterialTheme, fab: MaterialFab) {
+        let icon_color = fab.content_color(theme);
+        let text_color = fab.content_color(theme);
+        let icon_name = fab.icon.clone();
+        let label_text = fab.label.clone();
+        let icon_size = fab.size.icon_size();
+        let builder = FabBuilder { fab };
+        
+        self.spawn(builder.build(theme))
+            .with_children(|fab_inner| {
+                if let Some(icon) = MaterialIcon::from_name(&icon_name) {
+                    fab_inner.spawn((
+                        icon,
+                        IconStyle::outlined().with_color(icon_color).with_size(icon_size),
+                    ));
+                }
+                if let Some(label) = label_text {
+                    fab_inner.spawn((
+                        FabLabel,
+                        Text::new(label),
+                        TextColor(text_color),
+                        TextFont { font_size: 14.0, ..default() },
+                    ));
+                }
+            });
+    }
+}

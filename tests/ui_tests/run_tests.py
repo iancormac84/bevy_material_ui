@@ -45,7 +45,7 @@ SCREENSHOTS_DIR = OUTPUT_DIR / "screenshots"
 
 
 class ComponentSection(Enum):
-    """Maps to ComponentSection enum in showcase.rs"""
+    """Maps to ComponentSection enum in the showcase example"""
     BUTTONS = "Buttons"
     CHECKBOXES = "Checkboxes"
     SWITCHES = "Switches"

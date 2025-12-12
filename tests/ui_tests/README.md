@@ -67,7 +67,7 @@ update_baseline("checkbox_initial", "path/to/new_screenshot.png")
 Components can report internal state via the `ComponentTelemetry` system:
 
 ```rust
-// In Rust (showcase.rs)
+// In Rust (showcase example)
 telemetry.log_event("button_clicked", "primary_button");
 telemetry.set_state("slider_value", value.to_string());
 ```

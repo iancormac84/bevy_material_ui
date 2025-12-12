@@ -18,7 +18,10 @@ impl Plugin for TabsPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<TabChangeEvent>()
             .add_systems(Update, tab_interaction_system)
-            .add_systems(Update, tab_style_system);
+            .add_systems(Update, tab_style_system)
+            .add_systems(Update, sync_tabs_selection_system)
+            .add_systems(Update, tab_label_and_indicator_system)
+            .add_systems(Update, tab_content_visibility_system);
     }
 }
 
@@ -161,16 +164,30 @@ pub const TAB_HEIGHT_PRIMARY_ICON_ONLY: f32 = 48.0;
 pub const TAB_HEIGHT_SECONDARY: f32 = 48.0;
 pub const TAB_INDICATOR_HEIGHT: f32 = 3.0;
 
+/// Marker for tab label text, so the tabs systems can reliably update the label color.
+#[derive(Component)]
+pub struct TabLabelText;
+
 /// System to handle tab interactions
 fn tab_interaction_system(
-    mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialTab, &ChildOf),
-        (Changed<Interaction>, With<MaterialTab>),
-    >,
+    mut tab_queries: ParamSet<(
+        Query<
+            (Entity, &Interaction, &mut MaterialTab, &ChildOf),
+            (Changed<Interaction>, With<MaterialTab>),
+        >,
+        Query<&mut MaterialTab>,
+    )>,
     mut tabs_query: Query<(Entity, &mut MaterialTabs)>,
+    children_query: Query<&Children>,
     mut change_events: MessageWriter<TabChangeEvent>,
 ) {
-    for (entity, interaction, mut tab, parent) in interaction_query.iter_mut() {
+    // Two-phase approach:
+    // 1) Read interactions and update the interacted tab + parent selection.
+    // 2) Sync sibling `MaterialTab.selected` flags via a separate query.
+    // This avoids Bevy's runtime borrow conflict checks for overlapping `&mut MaterialTab` queries.
+    let mut pending_selection_updates: Vec<(Entity, Entity, usize)> = Vec::new();
+
+    for (entity, interaction, mut tab, parent) in tab_queries.p0().iter_mut() {
         if tab.disabled {
             continue;
         }
@@ -180,24 +197,21 @@ fn tab_interaction_system(
                 tab.pressed = true;
                 tab.hovered = false;
                 
-                if !tab.selected {
-                    let tab_index = tab.index;
-                    
-                    // Update tabs container
-                    if let Ok((tabs_entity, mut tabs)) = tabs_query.get_mut(parent.parent()) {
+                let tab_index = tab.index;
+
+                // Update tabs container
+                if let Ok((tabs_entity, mut tabs)) = tabs_query.get_mut(parent.parent()) {
+                    if tabs.selected != tab_index {
                         tabs.selected = tab_index;
-                        
-                        // Deselect all other tabs
-                        // This would need more complex logic to get siblings
-                        
-                        change_events.write(TabChangeEvent {
-                            tabs_entity,
-                            tab_entity: entity,
-                            index: tab_index,
-                        });
                     }
-                    
-                    tab.selected = true;
+
+                    pending_selection_updates.push((tabs_entity, entity, tab_index));
+
+                    change_events.write(TabChangeEvent {
+                        tabs_entity,
+                        tab_entity: entity,
+                        index: tab_index,
+                    });
                 }
             }
             Interaction::Hovered => {
@@ -210,6 +224,24 @@ fn tab_interaction_system(
             }
         }
     }
+
+    // Apply selection updates to all sibling tabs.
+    for (tabs_entity, pressed_tab_entity, tab_index) in pending_selection_updates {
+        if let Ok(children) = children_query.get(tabs_entity) {
+            for child in children.iter() {
+                if let Ok(mut sibling_tab) = tab_queries.p1().get_mut(child) {
+                    sibling_tab.selected = sibling_tab.index == tab_index;
+                    if child == pressed_tab_entity {
+                        sibling_tab.pressed = true;
+                        sibling_tab.hovered = false;
+                    } else {
+                        sibling_tab.pressed = false;
+                        sibling_tab.hovered = false;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// System to update tab styles
@@ -217,10 +249,105 @@ fn tab_style_system(
     theme: Option<Res<MaterialTheme>>,
     mut tabs: Query<(&MaterialTab, &mut BackgroundColor), Changed<MaterialTab>>,
 ) {
-    let Some(_theme) = theme else { return };
+    let Some(theme) = theme else { return };
 
-    for (_tab, mut bg_color) in tabs.iter_mut() {
-        *bg_color = BackgroundColor(Color::NONE);
+    for (tab, mut bg_color) in tabs.iter_mut() {
+        // Keep styling minimal; primary feedback is the indicator + label color.
+        // Use a subtle container tint on hover/press.
+        bg_color.0 = if tab.pressed {
+            theme.surface_container_high
+        } else if tab.hovered {
+            theme.surface_container_highest
+        } else {
+            Color::NONE
+        };
+    }
+}
+
+/// Ensure the `MaterialTab.selected` flags match the parent `MaterialTabs.selected`.
+/// This keeps programmatic changes and startup state consistent.
+fn sync_tabs_selection_system(
+    tabs_query: Query<(&MaterialTabs, &Children), Changed<MaterialTabs>>,
+    mut tab_query: Query<&mut MaterialTab>,
+) {
+    for (tabs, children) in tabs_query.iter() {
+        for child in children.iter() {
+            if let Ok(mut tab) = tab_query.get_mut(child) {
+                tab.selected = tab.index == tabs.selected;
+            }
+        }
+    }
+}
+
+/// Update tab label colors and ensure the selected tab has an indicator.
+fn tab_label_and_indicator_system(
+    mut commands: Commands,
+    theme: Option<Res<MaterialTheme>>,
+    tabs_query: Query<&MaterialTabs>,
+    mut tab_query: Query<(Entity, &MaterialTab, &Children, &ChildOf), Changed<MaterialTab>>,
+    mut label_query: Query<&mut TextColor, With<TabLabelText>>,
+    indicator_query: Query<(), With<TabIndicator>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (tab_entity, tab, children, parent) in tab_query.iter_mut() {
+        let Ok(tabs) = tabs_query.get(parent.parent()) else { continue };
+        let label_color = tab.content_color(&theme, tabs.variant);
+
+        let mut has_indicator = false;
+        for child in children.iter() {
+            if let Ok(mut tc) = label_query.get_mut(child) {
+                tc.0 = label_color;
+            }
+
+            if indicator_query.get(child).is_ok() {
+                has_indicator = true;
+                if !tab.selected {
+                    // Indicator has no children in our bundles; plain despawn is sufficient.
+                    commands.entity(child).despawn();
+                }
+            }
+        }
+
+        if tab.selected && !has_indicator {
+            commands.entity(tab_entity).with_children(|c| {
+                c.spawn(create_tab_indicator(&theme, tabs.variant));
+            });
+        }
+    }
+}
+
+/// System to update tab content visibility based on selected tab
+/// 
+/// This system looks for `TabContent` components that are siblings of `MaterialTab` components
+/// within a `MaterialTabs` container, or content panels that are children of the tabs container.
+fn tab_content_visibility_system(
+    tabs_query: Query<(Entity, &MaterialTabs)>,
+    mut content_query: Query<(&TabContent, &mut Visibility, Option<&mut Node>)>,
+) {
+    for (tabs_entity, tabs) in tabs_query.iter() {
+        for (content, mut visibility, node) in content_query.iter_mut() {
+            if content.tabs_entity != tabs_entity {
+                continue;
+            }
+
+            let is_selected = content.index == tabs.selected;
+            *visibility = if is_selected {
+                Visibility::Inherited
+            } else {
+                Visibility::Hidden
+            };
+
+            // `Visibility::Hidden` still participates in layout in Bevy UI.
+            // Toggle `Display` so only the selected panel affects layout.
+            if let Some(mut node) = node {
+                node.display = if is_selected {
+                    Display::Flex
+                } else {
+                    Display::None
+                };
+            }
+        }
     }
 }
 
@@ -351,6 +478,27 @@ impl TabBuilder {
 #[derive(Component)]
 pub struct TabIndicator;
 
+/// Tab content panel that shows/hides based on tab selection
+/// 
+/// Add this to content containers that should be shown/hidden when tabs change.
+/// The content's visibility will be managed automatically based on the parent 
+/// `MaterialTabs` container's selected tab.
+#[derive(Component)]
+pub struct TabContent {
+    /// Index of the tab this content corresponds to
+    pub index: usize,
+
+    /// Entity of the `MaterialTabs` container this content belongs to
+    pub tabs_entity: Entity,
+}
+
+impl TabContent {
+    /// Create a new tab content for the given tab index and tabs container
+    pub fn new(index: usize, tabs_entity: Entity) -> Self {
+        Self { index, tabs_entity }
+    }
+}
+
 /// Create a tab indicator
 pub fn create_tab_indicator(theme: &MaterialTheme, _variant: TabVariant) -> impl Bundle {
     (
@@ -366,4 +514,88 @@ pub fn create_tab_indicator(theme: &MaterialTheme, _variant: TabVariant) -> impl
         BackgroundColor(theme.primary),
         BorderRadius::top(Val::Px(TAB_INDICATOR_HEIGHT)),
     )
+}
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material tabs as children
+pub trait SpawnTabsChild {
+    /// Spawn a tab bar container with tabs
+    fn spawn_tab_bar(
+        &mut self,
+        theme: &MaterialTheme,
+        variant: TabVariant,
+        with_tabs: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a single tab
+    fn spawn_tab(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        selected: bool,
+    );
+    
+    /// Spawn a tab with full builder control
+    fn spawn_tab_with(&mut self, theme: &MaterialTheme, builder: TabBuilder);
+}
+
+impl SpawnTabsChild for ChildSpawnerCommands<'_> {
+    fn spawn_tab_bar(
+        &mut self,
+        theme: &MaterialTheme,
+        variant: TabVariant,
+        with_tabs: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn(TabsBuilder::new().variant(variant).build(theme))
+            .with_children(with_tabs);
+    }
+    
+    fn spawn_tab(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        selected: bool,
+    ) {
+        let label_str = label.into();
+        let builder = TabBuilder::new(0, &label_str).selected(selected);
+        let content_color = builder.tab.content_color(theme, builder.variant);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|tab| {
+                tab.spawn((
+                    TabLabelText,
+                    Text::new(&label_str),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(content_color),
+                ));
+                
+                if selected {
+                    tab.spawn(create_tab_indicator(theme, TabVariant::Primary));
+                }
+            });
+    }
+    
+    fn spawn_tab_with(&mut self, theme: &MaterialTheme, builder: TabBuilder) {
+        let label_str = builder.tab.label.clone();
+        let selected = builder.tab.selected;
+        let variant = builder.variant;
+        let content_color = builder.tab.content_color(theme, variant);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|tab| {
+                tab.spawn((
+                    TabLabelText,
+                    Text::new(&label_str),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(content_color),
+                ));
+                
+                if selected {
+                    tab.spawn(create_tab_indicator(theme, variant));
+                }
+            });
+    }
 }

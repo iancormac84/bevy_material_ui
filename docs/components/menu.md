@@ -8,47 +8,52 @@ Material Design 3 dropdown menu component.
 use bevy_material_ui::prelude::*;
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
-    MaterialMenu::new()
-        .add_item("Cut", Some(ICON_CONTENT_CUT))
-        .add_item("Copy", Some(ICON_CONTENT_COPY))
-        .add_item("Paste", Some(ICON_CONTENT_PASTE))
-        .add_divider()
-        .add_item("Delete", Some(ICON_DELETE))
-        .spawn(&mut commands, &theme);
+    commands.spawn(Node::default()).with_children(|ui| {
+        ui.spawn_menu(&theme, |menu| {
+            menu.spawn_menu_item_with(
+                &theme,
+                MenuItemBuilder::new("Cut").leading_icon(ICON_CONTENT_CUT),
+            );
+            menu.spawn_menu_item_with(
+                &theme,
+                MenuItemBuilder::new("Copy").leading_icon(ICON_CONTENT_COPY),
+            );
+            menu.spawn_menu_item_with(
+                &theme,
+                MenuItemBuilder::new("Paste").leading_icon(ICON_CONTENT_PASTE),
+            );
+            menu.spawn_menu_divider(&theme);
+            menu.spawn_menu_item_with(
+                &theme,
+                MenuItemBuilder::new("Delete").leading_icon(ICON_DELETE),
+            );
+        });
+    });
 }
 ```
 
-## With Nested Menus
+## Nested Menus
 
-```rust
-MaterialMenu::new()
-    .add_item("New", Some(ICON_ADD))
-    .add_submenu("Open Recent", |submenu| {
-        submenu
-            .add_item("Document 1", None)
-            .add_item("Document 2", None)
-    })
-    .add_divider()
-    .add_item("Settings", Some(ICON_SETTINGS))
-    .spawn(&mut commands, &theme);
-```
+Nested submenus are not implemented yet.
 
 ## Disabled Items
 
 ```rust
-MaterialMenu::new()
-    .add_item("Active", None)
-    .add_item_disabled("Disabled", None)
-    .spawn(&mut commands, &theme);
+commands.spawn(Node::default()).with_children(|ui| {
+    ui.spawn_menu(&theme, |menu| {
+        menu.spawn_menu_item(&theme, "Active");
+        menu.spawn_menu_item_with(&theme, MenuItemBuilder::new("Disabled").disabled(true));
+    });
+});
 ```
 
 ## Handling Selection
 
 ```rust
-use bevy_material_ui::menu::MenuItemSelectedEvent;
+use bevy_material_ui::menu::MenuItemSelectEvent;
 
 fn handle_menu_selection(
-    mut reader: EventReader<MenuItemSelectedEvent>,
+    mut reader: EventReader<MenuItemSelectEvent>,
 ) {
     for event in reader.read() {
         println!("Menu item selected: {}", event.label);
@@ -60,7 +65,7 @@ fn handle_menu_selection(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `items` | `Vec<MenuItem>` | `[]` | Menu items |
+| `anchor` | `MenuAnchor` | `BottomLeft` | Where the menu opens relative to its parent |
 | `open` | `bool` | `false` | Visibility state |
 
 ## MenuItem Types

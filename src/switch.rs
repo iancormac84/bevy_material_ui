@@ -2,6 +2,15 @@
 //!
 //! Switches toggle the state of a single item on or off.
 //! Reference: <https://m3.material.io/components/switch/overview>
+//!
+//! # Example
+//! ```ignore
+//! // Using the spawn extension trait (recommended)
+//! commands.spawn_switch(&theme, false, "Enable notifications");
+//!
+//! // Or using the builder for more control
+//! parent.spawn_switch_with(&theme, SwitchBuilder::new().selected(true).with_icon(), "Label");
+//! ```
 
 use bevy::prelude::*;
 
@@ -10,6 +19,10 @@ use crate::{
     theme::MaterialTheme,
     tokens::CornerRadius,
 };
+
+/// Marker component for switch state layer
+#[derive(Component)]
+pub struct SwitchStateLayer;
 
 /// Plugin for the switch component
 pub struct SwitchPlugin;
@@ -209,16 +222,35 @@ fn switch_interaction_system(
     }
 }
 
-/// System to update switch styles
+/// System to update switch visual styles when state changes
 fn switch_style_system(
     theme: Option<Res<MaterialTheme>>,
-    mut switches: Query<(&MaterialSwitch, &mut BackgroundColor, &mut BorderColor), Changed<MaterialSwitch>>,
+    mut switches: Query<(&MaterialSwitch, &mut BackgroundColor, &mut BorderColor, &mut Node, &Children), Changed<MaterialSwitch>>,
+    mut handles: Query<(&mut BackgroundColor, &mut Node, &mut BorderRadius), (With<SwitchHandle>, Without<MaterialSwitch>)>,
 ) {
     let Some(theme) = theme else { return };
 
-    for (switch, mut bg_color, mut border_color) in switches.iter_mut() {
+    for (switch, mut bg_color, mut border_color, mut node, children) in switches.iter_mut() {
+        // Update track
         *bg_color = BackgroundColor(switch.track_color(&theme));
         *border_color = BorderColor::all(switch.track_outline_color(&theme));
+        
+        // Update track layout for handle position
+        node.justify_content = if switch.selected { JustifyContent::FlexEnd } else { JustifyContent::FlexStart };
+        node.border = UiRect::all(Val::Px(if switch.selected { 0.0 } else { 2.0 }));
+        
+        // Update handle
+        let handle_color = switch.handle_color(&theme);
+        let handle_size = switch.handle_size();
+        
+        for child in children.iter() {
+            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child) {
+                *handle_bg = BackgroundColor(handle_color);
+                handle_node.width = Val::Px(handle_size);
+                handle_node.height = Val::Px(handle_size);
+                *handle_radius = BorderRadius::all(Val::Px(handle_size / 2.0));
+            }
+        }
     }
 }
 
@@ -289,6 +321,194 @@ impl Default for SwitchBuilder {
 /// Marker component for the switch handle
 #[derive(Component)]
 pub struct SwitchHandle;
+
+/// Extension trait to spawn switches with full visual hierarchy
+pub trait SpawnSwitch {
+    /// Spawn a switch with a label
+    fn spawn_switch(
+        &mut self,
+        theme: &MaterialTheme,
+        selected: bool,
+        label: &str,
+    ) -> Entity;
+    
+    /// Spawn a switch using a builder for more control
+    fn spawn_switch_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: SwitchBuilder,
+        label: &str,
+    ) -> Entity;
+}
+
+impl SpawnSwitch for Commands<'_, '_> {
+    fn spawn_switch(
+        &mut self,
+        theme: &MaterialTheme,
+        selected: bool,
+        label: &str,
+    ) -> Entity {
+        let builder = SwitchBuilder::new().selected(selected);
+        self.spawn_switch_with(theme, builder, label)
+    }
+    
+    fn spawn_switch_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: SwitchBuilder,
+        label: &str,
+    ) -> Entity {
+        let label_color = theme.on_surface;
+        let label_text = label.to_string();
+        let switch = builder.switch;
+        let bg_color = switch.track_color(theme);
+        let border_color = switch.track_outline_color(theme);
+        let handle_color = switch.handle_color(theme);
+        let handle_size = switch.handle_size();
+        let has_border = !switch.selected;
+        let justify = if switch.selected { JustifyContent::FlexEnd } else { JustifyContent::FlexStart };
+
+        self.spawn(Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(12.0),
+            ..default()
+        }).with_children(|row| {
+            // Switch track (the main touch target)
+            row.spawn((
+                switch,
+                Button,
+                Interaction::None,
+                RippleHost::new(),
+                Node {
+                    width: Val::Px(SWITCH_TRACK_WIDTH),
+                    height: Val::Px(SWITCH_TRACK_HEIGHT),
+                    justify_content: justify,
+                    align_items: AlignItems::Center,
+                    padding: UiRect::horizontal(Val::Px(2.0)),
+                    border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                    ..default()
+                },
+                BackgroundColor(bg_color),
+                BorderColor::all(border_color),
+                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            )).with_children(|track| {
+                // Handle (thumb)
+                track.spawn((
+                    SwitchHandle,
+                    Node {
+                        width: Val::Px(handle_size),
+                        height: Val::Px(handle_size),
+                        ..default()
+                    },
+                    BackgroundColor(handle_color),
+                    BorderRadius::all(Val::Px(handle_size / 2.0)),
+                ));
+            });
+
+            // Label
+            row.spawn((
+                Text::new(label_text),
+                TextFont { font_size: 14.0, ..default() },
+                TextColor(label_color),
+            ));
+        }).id()
+    }
+}
+
+/// Extension trait to spawn switches within a ChildSpawnerCommands context
+pub trait SpawnSwitchChild {
+    /// Spawn a switch with a label
+    fn spawn_switch(
+        &mut self,
+        theme: &MaterialTheme,
+        selected: bool,
+        label: &str,
+    );
+    
+    /// Spawn a switch using a builder for more control
+    fn spawn_switch_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: SwitchBuilder,
+        label: &str,
+    );
+}
+
+impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
+    fn spawn_switch(
+        &mut self,
+        theme: &MaterialTheme,
+        selected: bool,
+        label: &str,
+    ) {
+        let builder = SwitchBuilder::new().selected(selected);
+        self.spawn_switch_with(theme, builder, label);
+    }
+    
+    fn spawn_switch_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: SwitchBuilder,
+        label: &str,
+    ) {
+        let label_color = theme.on_surface;
+        let label_text = label.to_string();
+        let switch = builder.switch;
+        let bg_color = switch.track_color(theme);
+        let border_color = switch.track_outline_color(theme);
+        let handle_color = switch.handle_color(theme);
+        let handle_size = switch.handle_size();
+        let has_border = !switch.selected;
+        let justify = if switch.selected { JustifyContent::FlexEnd } else { JustifyContent::FlexStart };
+
+        self.spawn(Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(12.0),
+            ..default()
+        }).with_children(|row| {
+            // Switch track
+            row.spawn((
+                switch,
+                Button,
+                Interaction::None,
+                RippleHost::new(),
+                Node {
+                    width: Val::Px(SWITCH_TRACK_WIDTH),
+                    height: Val::Px(SWITCH_TRACK_HEIGHT),
+                    justify_content: justify,
+                    align_items: AlignItems::Center,
+                    padding: UiRect::horizontal(Val::Px(2.0)),
+                    border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                    ..default()
+                },
+                BackgroundColor(bg_color),
+                BorderColor::all(border_color),
+                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            )).with_children(|track| {
+                // Handle (thumb)
+                track.spawn((
+                    SwitchHandle,
+                    Node {
+                        width: Val::Px(handle_size),
+                        height: Val::Px(handle_size),
+                        ..default()
+                    },
+                    BackgroundColor(handle_color),
+                    BorderRadius::all(Val::Px(handle_size / 2.0)),
+                ));
+            });
+
+            // Label
+            row.spawn((
+                Text::new(label_text),
+                TextFont { font_size: 14.0, ..default() },
+                TextColor(label_color),
+            ));
+        });
+    }
+}
 
 #[cfg(test)]
 mod tests {

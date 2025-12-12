@@ -1435,7 +1435,7 @@ def test_navigation_only(client_origin):
     """Test navigation to all sections using position-based clicking after scrolling."""
     print("\n=== NAVIGATION-ONLY TEST ===")
     
-    # Map display name to TestId (nav_xxx format used in showcase.rs)
+    # Map display name to TestId (nav_xxx format used in the showcase example)
     sections = [
         ("Buttons", "nav_buttons"),
         ("Checkboxes", "nav_checkboxes"),

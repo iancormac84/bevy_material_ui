@@ -17,9 +17,22 @@ impl Plugin for TextFieldPlugin {
     fn build(&self, app: &mut App) {
         app.add_message::<TextFieldChangeEvent>()
             .add_message::<TextFieldSubmitEvent>()
-            .add_systems(Update, (text_field_focus_system, text_field_style_system));
+            .init_resource::<ActiveTextField>()
+            .add_systems(
+                Update,
+                (
+                    text_field_focus_system,
+                    text_field_input_system,
+                    text_field_display_system,
+                    text_field_style_system,
+                ),
+            );
     }
 }
+
+/// Tracks which text field should currently receive keyboard input.
+#[derive(Resource, Default, Debug, Clone, Copy)]
+struct ActiveTextField(pub Option<Entity>);
 
 /// Text field variants
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -462,23 +475,140 @@ pub const TEXT_FIELD_MIN_WIDTH: f32 = 210.0;
 
 /// System to handle text field focus
 fn text_field_focus_system(
-    mut interaction_query: Query<
-        (&Interaction, &mut MaterialTextField),
-        (Changed<Interaction>, With<MaterialTextField>),
-    >,
+    mut active: ResMut<ActiveTextField>,
+    mut fields: ParamSet<(
+        Query<(Entity, &Interaction), (Changed<Interaction>, With<MaterialTextField>)>,
+        Query<(Entity, &mut MaterialTextField), With<MaterialTextField>>,
+    )>,
 ) {
-    for (interaction, mut text_field) in interaction_query.iter_mut() {
-        if text_field.disabled {
+    // Determine which field was pressed this frame.
+    for (entity, interaction) in fields.p0().iter_mut() {
+        if *interaction == Interaction::Pressed {
+            active.0 = Some(entity);
+        }
+    }
+
+    // Keep `focused` consistent: exactly one focused at a time.
+    let active_entity = active.0;
+    for (entity, mut field) in fields.p1().iter_mut() {
+        field.focused = active_entity.is_some_and(|active| active == entity);
+    }
+}
+
+/// Handle keyboard input for the currently focused text field.
+fn text_field_input_system(
+    active: Res<ActiveTextField>,
+    mut keyboard_inputs: MessageReader<bevy::input::keyboard::KeyboardInput>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mut fields: Query<(Entity, &mut MaterialTextField)>,
+    mut change_events: MessageWriter<TextFieldChangeEvent>,
+    mut submit_events: MessageWriter<TextFieldSubmitEvent>,
+) {
+    let Some(active_entity) = active.0 else {
+        keyboard_inputs.clear();
+        return;
+    };
+
+    let Ok((entity, mut field)) = fields.get_mut(active_entity) else {
+        keyboard_inputs.clear();
+        return;
+    };
+
+    if field.disabled {
+        keyboard_inputs.clear();
+        return;
+    }
+
+    let mut changed = false;
+
+    // Backspace
+    if keys.just_pressed(KeyCode::Backspace) {
+        if !field.value.is_empty() {
+            field.value.pop();
+            changed = true;
+        }
+    }
+
+    // Text entry
+    for ev in keyboard_inputs.read() {
+        if ev.state != bevy::input::ButtonState::Pressed {
             continue;
         }
 
-        match *interaction {
-            Interaction::Pressed => {
-                text_field.focused = true;
+        let Some(text) = ev.text.as_deref() else {
+            continue;
+        };
+
+        for ch in text.chars() {
+            if ch.is_control() {
+                continue;
             }
-            Interaction::Hovered | Interaction::None => {
-                // Focus is only lost when clicking elsewhere
-                // This would need a more complex focus management system
+
+            if let Some(max) = field.max_length {
+                if field.value.chars().count() >= max {
+                    break;
+                }
+            }
+
+            field.value.push(ch);
+            changed = true;
+        }
+    }
+
+    field.has_content = !field.value.is_empty();
+
+    if changed {
+        change_events.write(TextFieldChangeEvent {
+            entity,
+            value: field.value.clone(),
+        });
+    }
+
+    // Submit / newline
+    if keys.just_pressed(KeyCode::Enter) {
+        if field.input_type == InputType::Multiline {
+            if field.max_length.is_none_or(|max| field.value.chars().count() < max) {
+                field.value.push('\n');
+                field.has_content = !field.value.is_empty();
+                change_events.write(TextFieldChangeEvent {
+                    entity,
+                    value: field.value.clone(),
+                });
+            }
+        } else {
+            submit_events.write(TextFieldSubmitEvent {
+                entity,
+                value: field.value.clone(),
+            });
+        }
+    }
+}
+
+/// Update the displayed input text when the text field state changes.
+fn text_field_display_system(
+    theme: Option<Res<MaterialTheme>>,
+    changed_fields: Query<(&MaterialTextField, &Children), Changed<MaterialTextField>>,
+    mut input_text: Query<(&mut Text, &mut TextColor), With<TextFieldInput>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (field, children) in changed_fields.iter() {
+        let placeholder = if field.placeholder.is_empty() {
+            field.label.as_deref().unwrap_or("")
+        } else {
+            field.placeholder.as_str()
+        };
+
+        let (display, color) = if field.value.is_empty() {
+            (placeholder, field.label_color(&theme))
+        } else {
+            (field.value.as_str(), field.input_color(&theme))
+        };
+
+        for child in children.iter() {
+            if let Ok((mut text, mut text_color)) = input_text.get_mut(child) {
+                *text = Text::new(display);
+                *text_color = TextColor(color);
             }
         }
     }
@@ -649,3 +779,114 @@ pub struct TextFieldInput;
 /// Marker for the supporting text element
 #[derive(Component)]
 pub struct TextFieldSupportingText;
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material text fields as children
+/// 
+/// This trait provides a clean API for spawning text fields within UI hierarchies.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_filled_text_field(&theme, "Email", "user@example.com");
+///     children.spawn_outlined_text_field(&theme, "Password", "");
+/// });
+/// ```
+pub trait SpawnTextFieldChild {
+    /// Spawn a filled text field
+    fn spawn_filled_text_field(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        value: impl Into<String>,
+    );
+    
+    /// Spawn an outlined text field
+    fn spawn_outlined_text_field(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        value: impl Into<String>,
+    );
+    
+    /// Spawn a text field with full builder control
+    fn spawn_text_field_with(&mut self, theme: &MaterialTheme, builder: TextFieldBuilder);
+}
+
+impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
+    fn spawn_filled_text_field(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        value: impl Into<String>,
+    ) {
+        self.spawn_text_field_with(
+            theme,
+            TextFieldBuilder::new()
+                .label(label)
+                .value(value)
+                .filled(),
+        );
+    }
+    
+    fn spawn_outlined_text_field(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        value: impl Into<String>,
+    ) {
+        self.spawn_text_field_with(
+            theme,
+            TextFieldBuilder::new()
+                .label(label)
+                .value(value)
+                .outlined(),
+        );
+    }
+    
+    fn spawn_text_field_with(&mut self, theme: &MaterialTheme, builder: TextFieldBuilder) {
+        let label_text = builder.text_field.label.clone();
+        let value_text = builder.text_field.value.clone();
+        let placeholder_text = builder.text_field.placeholder.clone();
+        let label_color = builder.text_field.label_color(theme);
+        let input_color = builder.text_field.input_color(theme);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|container| {
+                // Label (if present)
+                if let Some(ref label) = label_text {
+                    container.spawn((
+                        TextFieldLabel,
+                        Text::new(label.as_str()),
+                        TextFont { font_size: 12.0, ..default() },
+                        TextColor(label_color),
+                    ));
+                }
+                
+                // Input content area
+                let placeholder = if placeholder_text.is_empty() {
+                    label_text.as_deref().unwrap_or("")
+                } else {
+                    placeholder_text.as_str()
+                };
+                let display_text = if value_text.is_empty() { placeholder } else { &value_text };
+                container.spawn((
+                    TextFieldInput,
+                    Text::new(display_text),
+                    TextFont { font_size: 16.0, ..default() },
+                    TextColor(if value_text.is_empty() { 
+                        label_color 
+                    } else { 
+                        input_color 
+                    }),
+                    Node {
+                        flex_grow: 1.0,
+                        ..default()
+                    },
+                ));
+            });
+    }
+}

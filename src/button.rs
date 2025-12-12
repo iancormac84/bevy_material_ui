@@ -631,6 +631,115 @@ pub fn material_button_bundle(
     MaterialButtonBuilder::new(label).variant(variant).build(theme)
 }
 
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Marker component for button text label
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct ButtonLabel;
+
+/// Extension trait to spawn Material buttons as children
+/// 
+/// This trait provides a clean API for spawning buttons within UI hierarchies
+/// using Bevy 0.17's ChildSpawnerCommands pattern.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_button(&theme, "Click Me", ButtonVariant::Filled);
+///     children.spawn_filled_button(&theme, "Primary Action");
+///     children.spawn_outlined_button(&theme, "Secondary");
+///     children.spawn_text_button(&theme, "Learn More");
+/// });
+/// ```
+pub trait SpawnButtonChild {
+    /// Spawn a button with specified variant
+    fn spawn_button(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        variant: ButtonVariant,
+    );
+    
+    /// Spawn a filled button (primary action)
+    fn spawn_filled_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+    
+    /// Spawn an outlined button (secondary action)
+    fn spawn_outlined_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+    
+    /// Spawn a text button (tertiary action)
+    fn spawn_text_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+    
+    /// Spawn a filled tonal button (medium emphasis)
+    fn spawn_filled_tonal_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+    
+    /// Spawn an elevated button
+    fn spawn_elevated_button(&mut self, theme: &MaterialTheme, label: impl Into<String>);
+    
+    /// Spawn a button with full builder control
+    fn spawn_button_with(&mut self, theme: &MaterialTheme, button: MaterialButton);
+}
+
+impl SpawnButtonChild for ChildSpawnerCommands<'_> {
+    fn spawn_button(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+        variant: ButtonVariant,
+    ) {
+        let label_str = label.into();
+        let builder = MaterialButtonBuilder::new(label_str.clone()).variant(variant);
+        let text_color = builder.button.text_color(theme);
+        
+        self.spawn(builder.build(theme))
+            .with_children(|button| {
+                button.spawn((
+                    ButtonLabel,
+                    Text::new(label_str),
+                    TextColor(text_color),
+                    TextFont { font_size: 14.0, ..default() },
+                ));
+            });
+    }
+    
+    fn spawn_filled_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
+        self.spawn_button(theme, label, ButtonVariant::Filled);
+    }
+    
+    fn spawn_outlined_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
+        self.spawn_button(theme, label, ButtonVariant::Outlined);
+    }
+    
+    fn spawn_text_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
+        self.spawn_button(theme, label, ButtonVariant::Text);
+    }
+    
+    fn spawn_filled_tonal_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
+        self.spawn_button(theme, label, ButtonVariant::FilledTonal);
+    }
+    
+    fn spawn_elevated_button(&mut self, theme: &MaterialTheme, label: impl Into<String>) {
+        self.spawn_button(theme, label, ButtonVariant::Elevated);
+    }
+    
+    fn spawn_button_with(&mut self, theme: &MaterialTheme, button: MaterialButton) {
+        let text_color = button.text_color(theme);
+        let label_str = button.label.clone();
+        let builder = MaterialButtonBuilder { button };
+        
+        self.spawn(builder.build(theme))
+            .with_children(|btn| {
+                btn.spawn((
+                    ButtonLabel,
+                    Text::new(label_str),
+                    TextColor(text_color),
+                    TextFont { font_size: 14.0, ..default() },
+                ));
+            });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

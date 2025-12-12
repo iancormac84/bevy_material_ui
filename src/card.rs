@@ -379,3 +379,85 @@ impl Default for CardBuilder {
         Self::new()
     }
 }
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material cards as children
+/// 
+/// This trait provides a clean API for spawning cards within UI hierarchies.
+/// 
+/// ## Example:
+/// ```ignore
+/// parent.spawn(Node::default()).with_children(|children| {
+///     children.spawn_elevated_card(&theme, |card| {
+///         card.spawn((Text::new("Card Content"), TextColor(theme.on_surface)));
+///     });
+/// });
+/// ```
+pub trait SpawnCardChild {
+    /// Spawn an elevated card
+    fn spawn_elevated_card(
+        &mut self,
+        theme: &MaterialTheme,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a filled card
+    fn spawn_filled_card(
+        &mut self,
+        theme: &MaterialTheme,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn an outlined card
+    fn spawn_outlined_card(
+        &mut self,
+        theme: &MaterialTheme,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a card with full builder control
+    fn spawn_card_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: CardBuilder,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+}
+
+impl SpawnCardChild for ChildSpawnerCommands<'_> {
+    fn spawn_elevated_card(
+        &mut self,
+        theme: &MaterialTheme,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn_card_with(theme, CardBuilder::new().elevated(), with_children);
+    }
+    
+    fn spawn_filled_card(
+        &mut self,
+        theme: &MaterialTheme,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn_card_with(theme, CardBuilder::new().filled(), with_children);
+    }
+    
+    fn spawn_outlined_card(
+        &mut self,
+        theme: &MaterialTheme,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn_card_with(theme, CardBuilder::new().outlined(), with_children);
+    }
+    
+    fn spawn_card_with(
+        &mut self,
+        theme: &MaterialTheme,
+        builder: CardBuilder,
+        with_children: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn(builder.build(theme)).with_children(with_children);
+    }
+}

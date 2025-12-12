@@ -33,7 +33,7 @@ harness = false
 
 [[example]]
 name = "showcase"
-path = "examples/showcase.rs"
+path = "examples/showcase/main.rs"
 
 [[example]]
 name = "button_demo"

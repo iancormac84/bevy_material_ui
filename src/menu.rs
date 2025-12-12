@@ -457,3 +457,76 @@ pub fn create_menu_divider(theme: &MaterialTheme) -> impl Bundle {
         BackgroundColor(theme.outline_variant),
     )
 }
+
+// ============================================================================
+// Spawn Traits for ChildSpawnerCommands
+// ============================================================================
+
+/// Extension trait to spawn Material menus as children
+pub trait SpawnMenuChild {
+    /// Spawn a menu container
+    fn spawn_menu(
+        &mut self,
+        theme: &MaterialTheme,
+        with_items: impl FnOnce(&mut ChildSpawnerCommands),
+    );
+    
+    /// Spawn a menu item
+    fn spawn_menu_item(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+    );
+    
+    /// Spawn a menu item with full builder control
+    fn spawn_menu_item_with(&mut self, theme: &MaterialTheme, builder: MenuItemBuilder);
+    
+    /// Spawn a menu divider
+    fn spawn_menu_divider(&mut self, theme: &MaterialTheme);
+}
+
+impl SpawnMenuChild for ChildSpawnerCommands<'_> {
+    fn spawn_menu(
+        &mut self,
+        theme: &MaterialTheme,
+        with_items: impl FnOnce(&mut ChildSpawnerCommands),
+    ) {
+        self.spawn(MenuBuilder::new().build(theme)).with_children(with_items);
+    }
+    
+    fn spawn_menu_item(
+        &mut self,
+        theme: &MaterialTheme,
+        label: impl Into<String>,
+    ) {
+        let label_str = label.into();
+        let label_color = theme.on_surface;
+        
+        self.spawn(MenuItemBuilder::new(&label_str).build(theme))
+            .with_children(|item| {
+                item.spawn((
+                    Text::new(&label_str),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(label_color),
+                ));
+            });
+    }
+    
+    fn spawn_menu_item_with(&mut self, theme: &MaterialTheme, builder: MenuItemBuilder) {
+        let label_str = builder.item.label.clone();
+        let label_color = theme.on_surface;
+        
+        self.spawn(builder.build(theme))
+            .with_children(|item| {
+                item.spawn((
+                    Text::new(&label_str),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(label_color),
+                ));
+            });
+    }
+    
+    fn spawn_menu_divider(&mut self, theme: &MaterialTheme) {
+        self.spawn(create_menu_divider(theme));
+    }
+}

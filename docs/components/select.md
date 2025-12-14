@@ -63,15 +63,22 @@ commands.spawn(Node::default()).with_children(|ui| {
 
 ```rust
 let options = vec![
-    SelectOption::new("High").value("high").icon(ICON_PRIORITY_HIGH),
-    SelectOption::new("Medium").value("medium").icon(ICON_REMOVE),
-    SelectOption::new("Low").value("low").icon(ICON_PRIORITY_LOW),
+    // Prefer Material icon *names* (these are resolved via `MaterialIcon::from_name`).
+    SelectOption::new("Home").value("home").icon("home"),
+    SelectOption::new("Settings").value("settings").icon("settings"),
+    // You can also pass a literal glyph (e.g. `MaterialIcon::check().as_str()`).
+    SelectOption::new("Done").value("done").icon(MaterialIcon::check().as_str()),
 ];
 
 commands.spawn(Node::default()).with_children(|ui| {
     ui.spawn_filled_select(&theme, "Priority", options);
 });
 ```
+
+Notes:
+
+- The select dropdown arrow is rendered using the Material Symbols icon font.
+- Option icons are rendered via Material Symbols when you provide a recognized icon name.
 
 ## Disabled State
 

@@ -17,76 +17,80 @@ Material Design 3 progress indicator components.
 use bevy_material_ui::prelude::*;
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
-    // 50% progress
-    MaterialProgress::linear()
-        .progress(0.5)
-        .spawn(&mut commands, &theme);
+    commands.spawn(Node::default()).with_children(|ui| {
+        // 50% progress
+        ui.spawn_linear_progress(&theme, 0.5);
+    });
 }
 ```
 
 ### Indeterminate
 
 ```rust
-// Animated indeterminate progress
-MaterialProgress::linear()
-    .indeterminate()
-    .spawn(&mut commands, &theme);
+commands.spawn(Node::default()).with_children(|ui| {
+    // Animated indeterminate progress
+    ui.spawn_indeterminate_progress(&theme);
+});
 ```
+
+Note:
+
+- The linear progress indicator fill is ensured automatically, even if you spawn only `LinearProgressBuilder::build()` directly.
 
 ## Circular Progress
 
 ### Determinate
 
 ```rust
-// 75% circular progress
-MaterialProgress::circular()
-    .progress(0.75)
-    .spawn(&mut commands, &theme);
+commands.spawn(Node::default()).with_children(|ui| {
+    // 75% circular progress
+    ui.spawn_circular_progress(&theme, 0.75);
+});
 ```
 
 ### Indeterminate
 
 ```rust
-// Spinning indicator
-MaterialProgress::circular()
-    .indeterminate()
-    .spawn(&mut commands, &theme);
+commands.spawn(Node::default()).with_children(|ui| {
+    // Spinning indicator
+    ui.spawn_indeterminate_circular_progress(&theme);
+});
 ```
 
 ## Custom Size
 
 ```rust
-// Custom width for linear
-MaterialProgress::linear()
-    .progress(0.5)
-    .width(200.0)
-    .spawn(&mut commands, &theme);
+commands.spawn(Node::default()).with_children(|ui| {
+    // Custom width for linear
+    ui.spawn_linear_progress_with(
+        &theme,
+        LinearProgressBuilder::new().progress(0.5).width(Val::Px(200.0)),
+    );
 
-// Custom size for circular
-MaterialProgress::circular()
-    .progress(0.5)
-    .size(64.0)
-    .spawn(&mut commands, &theme);
+    // Custom size for circular
+    ui.spawn_circular_progress_with(
+        &theme,
+        CircularProgressBuilder::new().progress(0.5).size(64.0),
+    );
+});
 ```
 
 ## Custom Track Color
 
 ```rust
-MaterialProgress::linear()
-    .progress(0.5)
-    .track_color(Color::srgba(0.5, 0.5, 0.5, 0.3))
-    .spawn(&mut commands, &theme);
+// Track/indicator colors are derived from the active theme.
+// For per-instance customization, you can override colors by directly editing the spawned components.
 ```
 
 ## Updating Progress
 
 ```rust
 fn update_progress(
-    mut progress_query: Query<&mut MaterialProgress>,
+    mut progress_query: Query<&mut MaterialLinearProgress>,
     time: Res<Time>,
 ) {
     for mut progress in progress_query.iter_mut() {
-        progress.value = (progress.value + time.delta_secs() * 0.1) % 1.0;
+        progress.progress = (progress.progress + time.delta_secs() * 0.1) % 1.0;
     }
 }
 ```
@@ -95,12 +99,9 @@ fn update_progress(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `progress_type` | `ProgressType` | `Linear` | Progress style |
-| `value` | `f32` | `0.0` | Progress value (0.0-1.0) |
-| `indeterminate` | `bool` | `false` | Animated indeterminate |
-| `width` | `f32` | `240.0` | Linear progress width |
-| `size` | `f32` | `48.0` | Circular progress size |
-| `track_color` | `Option<Color>` | `None` | Custom track color |
+| `progress` | `f32` | `0.0` | Progress value (0.0-1.0) |
+| `mode` | `ProgressMode` | `Determinate` | Determinate vs indeterminate |
+| `four_color` | `bool` | `false` | Four-color styling (reserved) |
 
 ## Animation
 

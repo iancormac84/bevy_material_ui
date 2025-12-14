@@ -28,6 +28,7 @@ A comprehensive Material Design 3 component library for Bevy game engine.
 | [Tabs](./components/tabs.md) | Tab navigation | [View](./components/tabs.md) |
 | [Text Field](./components/text_field.md) | Input fields with validation | [View](./components/text_field.md) |
 | [Tooltip](./components/tooltip.md) | Hover tooltips | [View](./components/tooltip.md) |
+| [DateTime Picker](./components/datetime_picker.md) | Date and time picking dialogs | [View](./components/datetime_picker.md) |
 
 ## Quick Start
 

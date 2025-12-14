@@ -14,6 +14,7 @@ A Material Design 3 UI library for Bevy.
 ## Features
 
 - **Material Design 3 Components**: Buttons, FABs, Cards, Checkboxes, Switches, Radio Buttons, Sliders, Text Fields, Dialogs, Lists, Menus, Tabs, Progress Indicators, and more
+- **Date/Time Picker**: Material-style date and time picker component (see the showcase for an end-to-end example)
 - **Material Symbols Icons**: Full support for [Material Symbols](https://fonts.google.com/icons) icon font with 3,000+ scalable icons
 - **Theming**: Dynamic color system with light/dark mode support
 - **Animations**: Motion system following MD3 guidelines

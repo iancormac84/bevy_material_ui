@@ -312,6 +312,10 @@ pub struct DialogConfirmButton;
 #[derive(Component)]
 pub struct DialogResultDisplay;
 
+/// Marker for dialog modal option chips (true = modal, false = click-through).
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DialogModalOption(pub bool);
+
 /// Marker for date-time picker demo open button
 #[derive(Component)]
 pub struct DateTimePickerOpenButton(pub Entity);

@@ -801,7 +801,10 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                         SelectDropdown,
                         Visibility::Hidden,
                         // Ensure the dropdown renders above later siblings (e.g. code blocks).
-                        GlobalZIndex(100),
+                        // NOTE: Dialog scrims in this project use `GlobalZIndex(1000)`.
+                        // If the dropdown is promoted to a root node by `GlobalZIndex`, it must
+                        // be above modal overlays, otherwise it will render "behind" dialogs.
+                        GlobalZIndex(1100),
                         Node {
                             position_type: PositionType::Absolute,
                             top: Val::Px(SELECT_HEIGHT + 4.0),

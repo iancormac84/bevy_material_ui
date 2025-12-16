@@ -47,6 +47,30 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                 });
             });
 
+            // Modal options
+            section.spawn(Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(8.0),
+                margin: UiRect::bottom(Val::Px(8.0)),
+                ..default()
+            }).with_children(|col| {
+                col.spawn((
+                    Text::new("Dialog Modality:"),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(theme.on_surface),
+                ));
+
+                col.spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Val::Px(8.0),
+                    flex_wrap: FlexWrap::Wrap,
+                    ..default()
+                }).with_children(|row| {
+                    spawn_dialog_modal_option(row, theme, "Modal (blocks clicks)", true, true);
+                    spawn_dialog_modal_option(row, theme, "Click-through", false, false);
+                });
+            });
+
             // Show Dialog button and result display
             section.spawn(Node {
                 flex_direction: FlexDirection::Row,
@@ -83,100 +107,90 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                 ));
             });
 
-            // Dialog container (hidden by default)
-            section.spawn((
-                DialogContainer,
-                Visibility::Hidden,
-                GlobalZIndex(1000),
-                Node {
-                    width: Val::Px(280.0),
-                    flex_direction: FlexDirection::Column,
-                    padding: UiRect::all(Val::Px(24.0)),
-                    row_gap: Val::Px(16.0),
-                    margin: UiRect::vertical(Val::Px(8.0)),
-                    ..default()
-                },
-                BackgroundColor(theme.surface_container_high),
-                BorderRadius::all(Val::Px(28.0)),
-                BoxShadow::from(ShadowStyle {
-                    color: Color::BLACK.with_alpha(0.3),
-                    x_offset: Val::Px(0.0),
-                    y_offset: Val::Px(8.0),
-                    spread_radius: Val::Px(0.0),
-                    blur_radius: Val::Px(24.0),
-                }),
-            )).with_children(|dialog| {
-                // Title
-                dialog.spawn((
-                    Text::new("Confirm Action"),
-                    TextFont { font_size: 24.0, ..default() },
-                    TextColor(theme.on_surface),
-                ));
-                
-                // Content
-                dialog.spawn((
-                    Text::new("Are you sure you want to proceed? This action cannot be undone."),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(theme.on_surface_variant),
-                ));
-                
-                // Actions
-                dialog.spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::End,
-                    column_gap: Val::Px(8.0),
-                    ..default()
-                }).with_children(|actions| {
-                    // Cancel button
-                    let cancel_label = "Cancel";
-                    actions
-                        .spawn((
-                            DialogCloseButton,
-                            Interaction::None,
-                            MaterialButtonBuilder::new(cancel_label).text().build(theme),
-                        ))
-                        .with_children(|btn| {
-                            btn.spawn((
-                                ButtonLabel,
-                                Text::new(cancel_label),
-                                TextFont { font_size: 14.0, ..default() },
-                                TextColor(theme.primary),
-                            ));
-                        });
-                    
-                    // Confirm button
-                    let confirm_label = "Confirm";
-                    let confirm_button = MaterialButton::new(confirm_label).with_variant(ButtonVariant::Filled);
-                    let confirm_text_color = confirm_button.text_color(theme);
+            // Dialog + scrim (dialog hidden by default via MaterialDialog.open = false)
+            let dialog_entity = section
+                .spawn((
+                    DialogContainer,
+                    GlobalZIndex(1001),
+                    DialogBuilder::new()
+                        .title("Confirm Action")
+                        .modal(true)
+                        .build(theme),
+                ))
+                .with_children(|dialog| {
+                    // Content
+                    dialog.spawn((
+                        Text::new("Are you sure you want to proceed? This action cannot be undone."),
+                        TextFont { font_size: 14.0, ..default() },
+                        TextColor(theme.on_surface_variant),
+                        Node { margin: UiRect::bottom(Val::Px(16.0)), ..default() },
+                    ));
 
-                    actions
-                        .spawn((
-                            DialogConfirmButton,
-                            Interaction::None,
-                            MaterialButtonBuilder::new(confirm_label).filled().build(theme),
-                        ))
-                        .with_children(|btn| {
-                            btn.spawn((
-                                ButtonLabel,
-                                Text::new(confirm_label),
-                                TextFont { font_size: 14.0, ..default() },
-                                TextColor(confirm_text_color),
-                            ));
+                    // Actions
+                    dialog
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::End,
+                            column_gap: Val::Px(8.0),
+                            ..default()
+                        })
+                        .with_children(|actions| {
+                            // Cancel button
+                            let cancel_label = "Cancel";
+                            actions
+                                .spawn((
+                                    DialogCloseButton,
+                                    Interaction::None,
+                                    MaterialButtonBuilder::new(cancel_label).text().build(theme),
+                                ))
+                                .with_children(|btn| {
+                                    btn.spawn((
+                                        ButtonLabel,
+                                        Text::new(cancel_label),
+                                        TextFont { font_size: 14.0, ..default() },
+                                        TextColor(theme.primary),
+                                    ));
+                                });
+
+                            // Confirm button
+                            let confirm_label = "Confirm";
+                            let confirm_button =
+                                MaterialButton::new(confirm_label).with_variant(ButtonVariant::Filled);
+                            let confirm_text_color = confirm_button.text_color(theme);
+
+                            actions
+                                .spawn((
+                                    DialogConfirmButton,
+                                    Interaction::None,
+                                    MaterialButtonBuilder::new(confirm_label).filled().build(theme),
+                                ))
+                                .with_children(|btn| {
+                                    btn.spawn((
+                                        ButtonLabel,
+                                        Text::new(confirm_label),
+                                        TextFont { font_size: 14.0, ..default() },
+                                        TextColor(confirm_text_color),
+                                    ));
+                                });
                         });
-                });
-            });
+                })
+                .id();
+
+            // Scrim follows dialog open state and modal option
+            section.spawn(create_dialog_scrim_for(theme, dialog_entity, true));
 
             spawn_code_block(section, theme,
-r#"// Create a dialog with positioning
+r#"// Create a modal dialog (blocks clicks behind it)
 let dialog = MaterialDialog::new()
     .title("Delete Item?")
-    .position(DialogPosition::CenterWindow)  // or CenterParent, BelowTrigger
+    .modal(true)
     .open(true);
 
-// Position can be set relative to:
-// - CenterWindow: Centered in the application window
-// - CenterParent: Centered within parent container
-// - BelowTrigger: Positioned below the trigger button"#);
+// Or allow click-through (non-modal scrim)
+let dialog = MaterialDialog::new()
+    .title("Info")
+    .modal(false)
+    .open(true);"#);
         });
 }
 
@@ -193,6 +207,32 @@ fn spawn_dialog_position_option(
     parent
         .spawn((
             DialogPositionOption(position),
+            Interaction::None,
+            ChipBuilder::filter(label).selected(is_selected).build(theme),
+        ))
+        .with_children(|chip| {
+            chip.spawn((
+                ChipLabel,
+                Text::new(label),
+                TextFont { font_size: 12.0, ..default() },
+                TextColor(label_color),
+            ));
+        });
+}
+
+fn spawn_dialog_modal_option(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    label: &str,
+    modal: bool,
+    is_selected: bool,
+) {
+    let chip_for_color = MaterialChip::filter(label).with_selected(is_selected);
+    let label_color = chip_for_color.label_color(theme);
+
+    parent
+        .spawn((
+            DialogModalOption(modal),
             Interaction::None,
             ChipBuilder::filter(label).selected(is_selected).build(theme),
         ))

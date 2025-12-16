@@ -35,6 +35,7 @@ impl Plugin for TextFieldPlugin {
         app.add_message::<TextFieldChangeEvent>()
             .add_message::<TextFieldSubmitEvent>()
             .init_resource::<ActiveTextField>()
+            .init_resource::<TextFieldClipboard>()
             .init_resource::<TextFieldCaretBlink>()
             // These systems have ordering dependencies (input/focus must run before
             // placeholder/display rendering updates in the same frame).
@@ -60,6 +61,52 @@ impl Plugin for TextFieldPlugin {
 /// Tracks which text field should currently receive keyboard input.
 #[derive(Resource, Default, Debug, Clone, Copy)]
 struct ActiveTextField(pub Option<Entity>);
+
+/// Clipboard helper for text fields.
+///
+/// When the `clipboard` feature is enabled, this uses `arboard` to integrate with
+/// the host OS clipboard. Without the feature, methods are no-ops.
+#[derive(Resource, Default)]
+struct TextFieldClipboard {
+    #[cfg(feature = "clipboard")]
+    clipboard: Option<arboard::Clipboard>,
+}
+
+impl TextFieldClipboard {
+    fn get_text(&mut self) -> Option<String> {
+        #[cfg(feature = "clipboard")]
+        {
+            if self.clipboard.is_none() {
+                self.clipboard = arboard::Clipboard::new().ok();
+            }
+            return self.clipboard.as_mut().and_then(|c| c.get_text().ok());
+        }
+
+        #[cfg(not(feature = "clipboard"))]
+        {
+            let _ = self;
+            None
+        }
+    }
+
+    fn set_text(&mut self, text: String) {
+        #[cfg(feature = "clipboard")]
+        {
+            if self.clipboard.is_none() {
+                self.clipboard = arboard::Clipboard::new().ok();
+            }
+            if let Some(c) = self.clipboard.as_mut() {
+                let _ = c.set_text(text);
+            }
+            return;
+        }
+
+        #[cfg(not(feature = "clipboard"))]
+        {
+            let _ = (self, text);
+        }
+    }
+}
 
 /// Shared caret blink state for all text fields.
 #[derive(Resource)]
@@ -169,6 +216,9 @@ pub struct MaterialTextField {
     pub counter_enabled: bool,
     /// Whether the field is focused
     pub focused: bool,
+    /// If true, this field will automatically take focus when the user starts typing
+    /// and no other text field is currently focused.
+    pub auto_focus: bool,
     /// Whether the field has content
     pub has_content: bool,
     /// Whether hint animation is enabled
@@ -205,6 +255,7 @@ impl MaterialTextField {
             max_length: None,
             counter_enabled: false,
             focused: false,
+            auto_focus: false,
             has_content: false,
             hint_animation_enabled: true,
             password_visible: false,
@@ -519,12 +570,15 @@ pub const TEXT_FIELD_MIN_WIDTH: f32 = 210.0;
 /// System to handle text field focus
 fn text_field_focus_system(
     mouse: Res<ButtonInput<MouseButton>>,
+    mut keyboard_inputs: MessageReader<bevy::input::keyboard::KeyboardInput>,
     mut active: ResMut<ActiveTextField>,
     mut fields: ParamSet<(
         Query<(Entity, &Interaction), (Changed<Interaction>, With<MaterialTextField>)>,
         Query<(Entity, &mut MaterialTextField), With<MaterialTextField>>,
     )>,
 ) {
+    let mut activated_this_frame = false;
+
     // Determine which field was pressed this frame.
     for (entity, interaction) in fields.p0().iter_mut() {
         if *interaction == Interaction::Pressed
@@ -534,7 +588,58 @@ fn text_field_focus_system(
             || (*interaction == Interaction::Hovered && mouse.just_released(MouseButton::Left))
         {
             active.0 = Some(entity);
+            activated_this_frame = true;
         }
+    }
+
+    // Clicking outside any text field should blur focus.
+    if mouse.just_pressed(MouseButton::Left) && !activated_this_frame {
+        active.0 = None;
+    }
+
+    // If nothing is focused, allow an auto-focus field to take focus when the user
+    // starts typing (no need to click first).
+    if active.0.is_none() {
+        let mut saw_text_input = false;
+
+        for ev in keyboard_inputs.read() {
+            if ev.state != bevy::input::ButtonState::Pressed {
+                continue;
+            }
+
+            let text: Option<&str> = ev
+                .text
+                .as_deref()
+                .or_else(|| match &ev.logical_key {
+                    bevy::input::keyboard::Key::Character(s) => Some(s.as_str()),
+                    _ => None,
+                });
+
+            let Some(text) = text else {
+                continue;
+            };
+
+            if text.chars().any(|ch| !ch.is_control()) {
+                saw_text_input = true;
+                break;
+            }
+        }
+
+        if saw_text_input {
+            for (entity, field) in fields.p1().iter_mut() {
+                if field.disabled {
+                    continue;
+                }
+                if !field.auto_focus {
+                    continue;
+                }
+                active.0 = Some(entity);
+                break;
+            }
+        }
+    } else {
+        // Avoid replaying old keyboard events later for this system.
+        keyboard_inputs.clear();
     }
 
     // Keep `focused` consistent: exactly one focused at a time.
@@ -549,6 +654,7 @@ fn text_field_input_system(
     active: Res<ActiveTextField>,
     mut keyboard_inputs: MessageReader<bevy::input::keyboard::KeyboardInput>,
     keys: Res<ButtonInput<KeyCode>>,
+    mut clipboard: ResMut<TextFieldClipboard>,
     mut fields: Query<(Entity, &mut MaterialTextField)>,
     mut change_events: MessageWriter<TextFieldChangeEvent>,
     mut submit_events: MessageWriter<TextFieldSubmitEvent>,
@@ -569,6 +675,62 @@ fn text_field_input_system(
     }
 
     let mut changed = false;
+
+    // Clipboard shortcuts (desktop): Ctrl/Cmd + C/X/V.
+    // Current text field input is append-only (caret at end), so paste appends.
+    let modifier_down = keys.pressed(KeyCode::ControlLeft)
+        || keys.pressed(KeyCode::ControlRight)
+        || keys.pressed(KeyCode::SuperLeft)
+        || keys.pressed(KeyCode::SuperRight);
+
+    if modifier_down {
+        // Copy
+        if keys.just_pressed(KeyCode::KeyC) {
+            clipboard.set_text(field.value.clone());
+        }
+
+        // Cut
+        if keys.just_pressed(KeyCode::KeyX) {
+            clipboard.set_text(field.value.clone());
+            if !field.value.is_empty() {
+                field.value.clear();
+                changed = true;
+            }
+        }
+
+        // Paste
+        if keys.just_pressed(KeyCode::KeyV) {
+            if let Some(text) = clipboard.get_text() {
+                for mut ch in text.chars() {
+                    // Normalize newlines for single-line inputs.
+                    if ch == '\n' || ch == '\r' {
+                        if field.input_type == InputType::Multiline {
+                            // keep
+                        } else {
+                            ch = ' ';
+                        }
+                    }
+
+                    if ch.is_control() {
+                        continue;
+                    }
+
+                    if !is_allowed_input_char(&field, ch) {
+                        continue;
+                    }
+
+                    if let Some(max) = field.max_length {
+                        if field.value.chars().count() >= max {
+                            break;
+                        }
+                    }
+
+                    field.value.push(ch);
+                    changed = true;
+                }
+            }
+        }
+    }
 
     // Backspace
     if keys.just_pressed(KeyCode::Backspace) && !field.value.is_empty() {
@@ -598,6 +760,10 @@ fn text_field_input_system(
 
         for ch in text.chars() {
             if ch.is_control() {
+                continue;
+            }
+
+            if !is_allowed_input_char(&field, ch) {
                 continue;
             }
 
@@ -638,6 +804,29 @@ fn text_field_input_system(
                 value: field.value.clone(),
             });
         }
+    }
+}
+
+fn is_allowed_input_char(field: &MaterialTextField, ch: char) -> bool {
+    match field.input_type {
+        InputType::Number => {
+            if ch.is_ascii_digit() {
+                return true;
+            }
+
+            // Allow a leading sign character.
+            if (ch == '-' || ch == '+') && field.value.is_empty() {
+                return true;
+            }
+
+            false
+        }
+        InputType::Phone => {
+            // Keep this permissive for typical phone number formats.
+            ch.is_ascii_digit() || matches!(ch, ' ' | '+' | '-' | '(' | ')' )
+        }
+        // For other input types we currently accept any non-control characters.
+        _ => true,
     }
 }
 
@@ -918,6 +1107,15 @@ impl TextFieldBuilder {
         {
             self.text_field.end_icon_mode = EndIconMode::PasswordToggle;
         }
+        self
+    }
+
+    /// Enable/disable auto-focus behavior.
+    ///
+    /// When enabled, this field becomes focused as soon as the user types any
+    /// text character (and no other field is currently focused).
+    pub fn auto_focus(mut self, enabled: bool) -> Self {
+        self.text_field.auto_focus = enabled;
         self
     }
 
@@ -1350,6 +1548,503 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
             }
         });
     }
+}
+
+// ============================================================================
+// Standalone spawn helpers
+// ============================================================================
+
+/// Spawn a Material text field (including its internal children) and return the field entity.
+///
+/// This is useful when you need to later query the specific field entity (e.g. for routing events).
+pub fn spawn_text_field_control(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    builder: TextFieldBuilder,
+) -> Entity {
+    // Duplicate the SpawnTextFieldChild implementation, but return the field entity.
+    let label_text: Option<String> = builder.text_field.label.clone();
+    let value_text = builder.text_field.value.clone();
+    let placeholder_text = builder.text_field.placeholder.clone();
+    let label_color = builder.text_field.label_color(theme);
+    let input_color = builder.text_field.input_color(theme);
+    let placeholder_color = builder.text_field.placeholder_color(theme);
+    let icon_color = builder.text_field.icon_color(theme);
+    let leading_icon_text = builder.text_field.leading_icon.clone();
+    let end_icon_text = builder
+        .text_field
+        .effective_trailing_icon()
+        .map(|s| s.to_string());
+    let initial_is_label_floating = builder.text_field.is_label_floating();
+
+    let supporting_text = builder.text_field.supporting_text.clone();
+    let error = builder.text_field.error;
+    let error_text = builder.text_field.error_text.clone();
+
+    let (supporting_display, supporting_color) = if error {
+        (error_text.as_deref().unwrap_or(""), theme.error)
+    } else {
+        (
+            supporting_text.as_deref().unwrap_or(""),
+            theme.on_surface_variant,
+        )
+    };
+
+    let should_spawn_supporting = !supporting_display.is_empty();
+
+    let mut spawned_field: Option<Entity> = None;
+    parent
+        .spawn(Node {
+            width: builder.width,
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(4.0),
+            ..default()
+        })
+        .with_children(|wrapper| {
+            let mut field_commands = wrapper.spawn(builder.build(theme));
+            let field_entity = field_commands.id();
+            spawned_field = Some(field_entity);
+
+            field_commands.with_children(|container| {
+                // Leading icon (start icon)
+                let leading_icon_visible = leading_icon_text
+                    .as_deref()
+                    .and_then(resolve_icon_codepoint)
+                    .is_some();
+                container
+                    .spawn((
+                        TextFieldLeadingIconButton,
+                        TextFieldLeadingIconButtonFor(field_entity),
+                        Button,
+                        RippleHost::new(),
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            display: if leading_icon_visible {
+                                Display::Flex
+                            } else {
+                                Display::None
+                            },
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        let codepoint = leading_icon_text
+                            .as_deref()
+                            .and_then(resolve_icon_codepoint)
+                            .unwrap_or(ICON_CLOSE);
+                        btn.spawn((
+                            TextFieldLeadingIcon,
+                            TextFieldLeadingIconFor(field_entity),
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
+                    });
+
+                // Content column so the label can float above the input.
+                container
+                    .spawn(Node {
+                        flex_grow: 1.0,
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    })
+                    .with_children(|content| {
+                        // Floating label (hidden when expanded)
+                        if let Some(ref label) = label_text {
+                            content.spawn((
+                                TextFieldLabel,
+                                TextFieldLabelFor(field_entity),
+                                Text::new(label.as_str()),
+                                TextFont { font_size: 12.0, ..default() },
+                                TextColor(label_color),
+                                Node {
+                                    display: if initial_is_label_floating {
+                                        Display::Flex
+                                    } else {
+                                        Display::None
+                                    },
+                                    ..default()
+                                },
+                            ));
+                        }
+
+                        // Input text node (renders value/caret or in-field hint)
+                        let expanded_hint = if label_text.is_some() {
+                            label_text.as_deref().unwrap_or("")
+                        } else {
+                            placeholder_text.as_str()
+                        };
+
+                        let initial_display = if value_text.is_empty() {
+                            if initial_is_label_floating {
+                                "\u{200B}"
+                            } else {
+                                expanded_hint
+                            }
+                        } else {
+                            value_text.as_str()
+                        };
+
+                        let initial_color = if value_text.is_empty() {
+                            if initial_is_label_floating {
+                                input_color
+                            } else if label_text.is_some() {
+                                // Expanded label/hint uses label color.
+                                label_color
+                            } else {
+                                placeholder_color
+                            }
+                        } else {
+                            input_color
+                        };
+
+                        // Input line: placeholder (overlay) + actual input text.
+                        content
+                            .spawn(Node {
+                                position_type: PositionType::Relative,
+                                ..default()
+                            })
+                            .with_children(|input_line| {
+                                // Separate placeholder (shown only when label is floating and value is empty)
+                                // Spawn it even if it's initially hidden so systems can toggle it.
+                                input_line.spawn((
+                                    TextFieldPlaceholder,
+                                    TextFieldPlaceholderFor(field_entity),
+                                    Text::new(placeholder_text.as_str()),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(placeholder_color),
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(0.0),
+                                        right: Val::Px(0.0),
+                                        top: Val::Px(0.0),
+                                        bottom: Val::Px(0.0),
+                                        display: Display::None,
+                                        ..default()
+                                    },
+                                    Visibility::Hidden,
+                                ));
+
+                                input_line.spawn((
+                                    TextFieldInput,
+                                    TextFieldInputFor(field_entity),
+                                    Text::new(initial_display),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(initial_color),
+                                ));
+                            });
+                    });
+
+                // End icon (trailing icon)
+                let end_icon_visible = end_icon_text
+                    .as_deref()
+                    .and_then(resolve_icon_codepoint)
+                    .is_some();
+                container
+                    .spawn((
+                        TextFieldEndIconButton,
+                        TextFieldEndIconButtonFor(field_entity),
+                        Button,
+                        RippleHost::new(),
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            display: if end_icon_visible {
+                                Display::Flex
+                            } else {
+                                Display::None
+                            },
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        let codepoint = end_icon_text
+                            .as_deref()
+                            .and_then(resolve_icon_codepoint)
+                            .unwrap_or(ICON_CLOSE);
+                        btn.spawn((
+                            TextFieldEndIcon,
+                            TextFieldEndIconFor(field_entity),
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
+                    });
+            });
+
+            if should_spawn_supporting {
+                wrapper.spawn((
+                    TextFieldSupportingText,
+                    TextFieldSupportingFor(field_entity),
+                    Text::new(supporting_display),
+                    TextFont { font_size: 12.0, ..default() },
+                    TextColor(supporting_color),
+                    Node {
+                        margin: UiRect::left(Val::Px(Spacing::LARGE)),
+                        ..default()
+                    },
+                ));
+            }
+        });
+
+    spawned_field.expect("spawn_text_field_control must spawn a field")
+}
+
+/// Spawn a Material text field (including its internal children), attach `marker` to the field
+/// entity, and return the field entity.
+pub fn spawn_text_field_control_with<M: Component>(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    builder: TextFieldBuilder,
+    marker: M,
+) -> Entity {
+    // Copy the control spawn logic so we can insert the marker at spawn-time.
+    let label_text: Option<String> = builder.text_field.label.clone();
+    let value_text = builder.text_field.value.clone();
+    let placeholder_text = builder.text_field.placeholder.clone();
+    let label_color = builder.text_field.label_color(theme);
+    let input_color = builder.text_field.input_color(theme);
+    let placeholder_color = builder.text_field.placeholder_color(theme);
+    let icon_color = builder.text_field.icon_color(theme);
+    let leading_icon_text = builder.text_field.leading_icon.clone();
+    let end_icon_text = builder
+        .text_field
+        .effective_trailing_icon()
+        .map(|s| s.to_string());
+    let initial_is_label_floating = builder.text_field.is_label_floating();
+
+    let supporting_text = builder.text_field.supporting_text.clone();
+    let error = builder.text_field.error;
+    let error_text = builder.text_field.error_text.clone();
+
+    let (supporting_display, supporting_color) = if error {
+        (error_text.as_deref().unwrap_or(""), theme.error)
+    } else {
+        (
+            supporting_text.as_deref().unwrap_or(""),
+            theme.on_surface_variant,
+        )
+    };
+
+    let should_spawn_supporting = !supporting_display.is_empty();
+
+    let mut spawned_field: Option<Entity> = None;
+    parent
+        .spawn(Node {
+            width: builder.width,
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(4.0),
+            ..default()
+        })
+        .with_children(|wrapper| {
+            let mut field_commands = wrapper.spawn(builder.build(theme));
+            field_commands.insert(marker);
+            let field_entity = field_commands.id();
+            spawned_field = Some(field_entity);
+
+            field_commands.with_children(|container| {
+                // Leading icon (start icon)
+                let leading_icon_visible = leading_icon_text
+                    .as_deref()
+                    .and_then(resolve_icon_codepoint)
+                    .is_some();
+                container
+                    .spawn((
+                        TextFieldLeadingIconButton,
+                        TextFieldLeadingIconButtonFor(field_entity),
+                        Button,
+                        RippleHost::new(),
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            display: if leading_icon_visible {
+                                Display::Flex
+                            } else {
+                                Display::None
+                            },
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        let codepoint = leading_icon_text
+                            .as_deref()
+                            .and_then(resolve_icon_codepoint)
+                            .unwrap_or(ICON_CLOSE);
+                        btn.spawn((
+                            TextFieldLeadingIcon,
+                            TextFieldLeadingIconFor(field_entity),
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
+                    });
+
+                // Content column so the label can float above the input.
+                container
+                    .spawn(Node {
+                        flex_grow: 1.0,
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    })
+                    .with_children(|content| {
+                        // Floating label (hidden when expanded)
+                        if let Some(ref label) = label_text {
+                            content.spawn((
+                                TextFieldLabel,
+                                TextFieldLabelFor(field_entity),
+                                Text::new(label.as_str()),
+                                TextFont { font_size: 12.0, ..default() },
+                                TextColor(label_color),
+                                Node {
+                                    display: if initial_is_label_floating {
+                                        Display::Flex
+                                    } else {
+                                        Display::None
+                                    },
+                                    ..default()
+                                },
+                            ));
+                        }
+
+                        // Input text node (renders value/caret or in-field hint)
+                        let expanded_hint = if label_text.is_some() {
+                            label_text.as_deref().unwrap_or("")
+                        } else {
+                            placeholder_text.as_str()
+                        };
+
+                        let initial_display = if value_text.is_empty() {
+                            if initial_is_label_floating {
+                                "\u{200B}"
+                            } else {
+                                expanded_hint
+                            }
+                        } else {
+                            value_text.as_str()
+                        };
+
+                        let initial_color = if value_text.is_empty() {
+                            if initial_is_label_floating {
+                                input_color
+                            } else if label_text.is_some() {
+                                // Expanded label/hint uses label color.
+                                label_color
+                            } else {
+                                placeholder_color
+                            }
+                        } else {
+                            input_color
+                        };
+
+                        // Input line: placeholder (overlay) + actual input text.
+                        content
+                            .spawn(Node {
+                                position_type: PositionType::Relative,
+                                ..default()
+                            })
+                            .with_children(|input_line| {
+                                // Separate placeholder (shown only when label is floating and value is empty)
+                                // Spawn it even if it's initially hidden so systems can toggle it.
+                                input_line.spawn((
+                                    TextFieldPlaceholder,
+                                    TextFieldPlaceholderFor(field_entity),
+                                    Text::new(placeholder_text.as_str()),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(placeholder_color),
+                                    Node {
+                                        position_type: PositionType::Absolute,
+                                        left: Val::Px(0.0),
+                                        right: Val::Px(0.0),
+                                        top: Val::Px(0.0),
+                                        bottom: Val::Px(0.0),
+                                        display: Display::None,
+                                        ..default()
+                                    },
+                                    Visibility::Hidden,
+                                ));
+
+                                input_line.spawn((
+                                    TextFieldInput,
+                                    TextFieldInputFor(field_entity),
+                                    Text::new(initial_display),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(initial_color),
+                                ));
+                            });
+                    });
+
+                // End icon (trailing icon)
+                let end_icon_visible = end_icon_text
+                    .as_deref()
+                    .and_then(resolve_icon_codepoint)
+                    .is_some();
+                container
+                    .spawn((
+                        TextFieldEndIconButton,
+                        TextFieldEndIconButtonFor(field_entity),
+                        Button,
+                        RippleHost::new(),
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(40.0),
+                            height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            display: if end_icon_visible {
+                                Display::Flex
+                            } else {
+                                Display::None
+                            },
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    ))
+                    .with_children(|btn| {
+                        let codepoint = end_icon_text
+                            .as_deref()
+                            .and_then(resolve_icon_codepoint)
+                            .unwrap_or(ICON_CLOSE);
+                        btn.spawn((
+                            TextFieldEndIcon,
+                            TextFieldEndIconFor(field_entity),
+                            MaterialIcon::new(codepoint),
+                            IconStyle::outlined().with_color(icon_color).with_size(24.0),
+                        ));
+                    });
+            });
+
+            if should_spawn_supporting {
+                wrapper.spawn((
+                    TextFieldSupportingText,
+                    TextFieldSupportingFor(field_entity),
+                    Text::new(supporting_display),
+                    TextFont { font_size: 12.0, ..default() },
+                    TextColor(supporting_color),
+                    Node {
+                        margin: UiRect::left(Val::Px(Spacing::LARGE)),
+                        ..default()
+                    },
+                ));
+            }
+        });
+
+    spawned_field.expect("spawn_text_field_control_with must spawn a field")
 }
 
 fn text_field_end_icon_click_system(

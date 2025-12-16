@@ -6,6 +6,7 @@
 //! Reference: <https://m3.material.io/components/dialogs/overview>
 
 use bevy::prelude::*;
+use bevy::picking::Pickable;
 use bevy::ui::BoxShadow;
 
 use crate::{
@@ -22,7 +23,15 @@ impl Plugin for DialogPlugin {
         app.add_message::<DialogOpenEvent>()
             .add_message::<DialogCloseEvent>()
             .add_message::<DialogConfirmEvent>()
-            .add_systems(Update, (dialog_visibility_system, dialog_shadow_system));
+            .add_systems(
+                Update,
+                (
+                    dialog_visibility_system,
+                    dialog_scrim_visibility_system,
+                    dialog_scrim_pickable_system,
+                    dialog_shadow_system,
+                ),
+            );
     }
 }
 
@@ -51,6 +60,12 @@ pub struct MaterialDialog {
     pub dismiss_on_scrim_click: bool,
     /// Whether pressing Escape closes the dialog
     pub dismiss_on_escape: bool,
+
+    /// Whether the dialog should behave as a modal (block pointer interactions behind it).
+    ///
+    /// When `true`, the dialog scrim will be pickable and will block lower entities from receiving
+    /// pointer interactions. When `false`, the scrim will be click-through.
+    pub modal: bool,
 }
 
 impl MaterialDialog {
@@ -63,6 +78,7 @@ impl MaterialDialog {
             icon: None,
             dismiss_on_scrim_click: true,
             dismiss_on_escape: true,
+            modal: true,
         }
     }
 
@@ -99,6 +115,12 @@ impl MaterialDialog {
     /// Disable escape key dismissal
     pub fn no_escape_dismiss(mut self) -> Self {
         self.dismiss_on_escape = false;
+        self
+    }
+
+    /// Set whether the dialog is modal (blocks pointer interactions behind it).
+    pub fn modal(mut self, modal: bool) -> Self {
+        self.modal = modal;
         self
     }
 
@@ -190,6 +212,44 @@ fn dialog_shadow_system(
     }
 }
 
+/// Keep dialog scrims in sync with their dialog's open state.
+fn dialog_scrim_visibility_system(
+    dialogs: Query<&MaterialDialog>,
+    mut scrims: Query<(&DialogScrimFor, &mut Node), With<DialogScrim>>,
+) {
+    for (for_dialog, mut node) in scrims.iter_mut() {
+        let open = dialogs.get(for_dialog.0).map(|d| d.open).unwrap_or(false);
+        node.display = if open { Display::Flex } else { Display::None };
+    }
+}
+
+/// Update scrim pickability when dialog modality changes.
+fn dialog_scrim_pickable_system(
+    changed_dialogs: Query<(Entity, &MaterialDialog), Changed<MaterialDialog>>,
+    mut scrims: Query<(&DialogScrimFor, &mut Pickable), With<DialogScrim>>,
+) {
+    if changed_dialogs.is_empty() {
+        return;
+    }
+
+    for (dialog_entity, dialog) in changed_dialogs.iter() {
+        for (for_dialog, mut pickable) in scrims.iter_mut() {
+            if for_dialog.0 != dialog_entity {
+                continue;
+            }
+
+            *pickable = if dialog.modal {
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: false,
+                }
+            } else {
+                Pickable::IGNORE
+            };
+        }
+    }
+}
+
 /// Builder for dialogs
 pub struct DialogBuilder {
     dialog: MaterialDialog,
@@ -244,6 +304,12 @@ impl DialogBuilder {
         self
     }
 
+    /// Set whether the dialog is modal (blocks pointer interactions behind it).
+    pub fn modal(mut self, modal: bool) -> Self {
+        self.dialog.modal = modal;
+        self
+    }
+
     /// Build the dialog bundle with native BoxShadow
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.dialog.surface_color(theme);
@@ -280,6 +346,10 @@ impl Default for DialogBuilder {
 #[derive(Component)]
 pub struct DialogScrim;
 
+/// Associates a dialog scrim with a specific dialog entity.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DialogScrimFor(pub Entity);
+
 /// Marker for dialog headline/title
 #[derive(Component)]
 pub struct DialogHeadline;
@@ -307,6 +377,47 @@ pub fn create_dialog_scrim(theme: &MaterialTheme) -> impl Bundle {
             ..default()
         },
         BackgroundColor(theme.scrim.with_alpha(0.32)),
+        // Default scrim behavior is modal: block pointer interactions behind it.
+        Pickable {
+            should_block_lower: true,
+            is_hoverable: false,
+        },
+    )
+}
+
+/// Helper to create a dialog scrim linked to a specific dialog entity.
+///
+/// The scrim starts hidden and is shown/hidden automatically based on the dialog's `open` state.
+/// When `modal` is true, the scrim blocks pointer interactions behind it.
+pub fn create_dialog_scrim_for(
+    theme: &MaterialTheme,
+    dialog_entity: Entity,
+    modal: bool,
+) -> impl Bundle {
+    (
+        DialogScrim,
+        DialogScrimFor(dialog_entity),
+        Node {
+            display: Display::None, // Hidden by default; synced by system.
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        BackgroundColor(theme.scrim.with_alpha(0.32)),
+        if modal {
+            Pickable {
+                should_block_lower: true,
+                is_hoverable: false,
+            }
+        } else {
+            Pickable::IGNORE
+        },
+        GlobalZIndex(1000),
     )
 }
 

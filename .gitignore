@@ -22,3 +22,6 @@ target
 
 # Ui testing files
 **/test_output/**
+
+# VS Code workspace files
+*.code-workspace

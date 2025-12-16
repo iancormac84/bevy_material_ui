@@ -279,6 +279,7 @@ pub mod prelude {
     pub use crate::slider::{
         SliderActiveTrack, SliderBuilder, SliderChangeEvent, SliderHandle, SliderLabel,
         SliderPlugin, SliderTrack, MaterialSlider, SpawnSliderChild,
+        SliderDirection, SliderOrientation, spawn_slider_control, spawn_slider_control_with,
         SLIDER_HANDLE_SIZE, SLIDER_HANDLE_SIZE_PRESSED, SLIDER_LABEL_HEIGHT,
         SLIDER_TICK_SIZE, SLIDER_TRACK_HEIGHT, SLIDER_TRACK_HEIGHT_ACTIVE,
     };
@@ -287,7 +288,8 @@ pub mod prelude {
     pub use crate::text_field::{
         TextFieldBuilder, TextFieldChangeEvent, TextFieldInput, TextFieldLabel,
         TextFieldPlugin, TextFieldSubmitEvent, TextFieldSupportingText, TextFieldVariant,
-        MaterialTextField, SpawnTextFieldChild, TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
+        MaterialTextField, SpawnTextFieldChild, spawn_text_field_control, spawn_text_field_control_with,
+        TEXT_FIELD_HEIGHT, TEXT_FIELD_MIN_WIDTH,
     };
 
     // Progress
@@ -301,8 +303,8 @@ pub mod prelude {
     // Dialog
     pub use crate::dialog::{
         DialogActions, DialogBuilder, DialogCloseEvent, DialogConfirmEvent, DialogContent,
-        DialogHeadline, DialogOpenEvent, DialogPlugin, DialogScrim, DialogType,
-        MaterialDialog, SpawnDialogChild, create_dialog_scrim, DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
+        DialogHeadline, DialogOpenEvent, DialogPlugin, DialogScrim, DialogScrimFor, DialogType,
+        MaterialDialog, SpawnDialogChild, create_dialog_scrim, create_dialog_scrim_for, DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
     };
 
     // DateTime Picker

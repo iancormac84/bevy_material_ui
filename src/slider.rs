@@ -8,6 +8,29 @@ use bevy::ui::UiGlobalTransform;
 
 use crate::theme::MaterialTheme;
 
+/// Slider orientation
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SliderOrientation {
+    /// Horizontal slider (left/right)
+    #[default]
+    Horizontal,
+    /// Vertical slider (top/bottom)
+    Vertical,
+}
+
+/// Direction that values increase along the track.
+///
+/// - Horizontal: `StartToEnd` = left->right, `EndToStart` = right->left
+/// - Vertical: `StartToEnd` = top->bottom, `EndToStart` = bottom->top
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SliderDirection {
+    /// Values increase from the start edge toward the end edge.
+    #[default]
+    StartToEnd,
+    /// Values increase from the end edge toward the start edge.
+    EndToStart,
+}
+
 /// Plugin for the slider component
 pub struct SliderPlugin;
 
@@ -89,6 +112,10 @@ pub struct MaterialSlider {
     pub thumb_ripple_radius: f32,
     /// Custom value label formatter
     pub value_formatter: Option<fn(f32) -> String>,
+    /// Slider orientation
+    pub orientation: SliderOrientation,
+    /// Direction values increase along the track
+    pub direction: SliderDirection,
     /// Interaction states
     pub dragging: bool,
     pub hovered: bool,
@@ -126,10 +153,34 @@ impl MaterialSlider {
             thumb_elevation: 1.0,
             thumb_ripple_radius: SLIDER_HANDLE_SIZE * 1.5,
             value_formatter: None,
+            orientation: SliderOrientation::Horizontal,
+            direction: SliderDirection::StartToEnd,
             dragging: false,
             hovered: false,
             focused: false,
         }
+    }
+
+    /// Set orientation
+    pub fn orientation(mut self, orientation: SliderOrientation) -> Self {
+        self.orientation = orientation;
+        self
+    }
+
+    /// Convenience for vertical sliders
+    pub fn vertical(self) -> Self {
+        self.orientation(SliderOrientation::Vertical)
+    }
+
+    /// Set direction
+    pub fn direction(mut self, direction: SliderDirection) -> Self {
+        self.direction = direction;
+        self
+    }
+
+    /// Convenience for reversed sliders
+    pub fn reversed(self) -> Self {
+        self.direction(SliderDirection::EndToStart)
     }
 
     /// Set the initial value
@@ -238,6 +289,15 @@ impl MaterialSlider {
     /// Get the normalized value (0.0 to 1.0)
     pub fn normalized_value(&self) -> f32 {
         (self.value - self.min) / (self.max - self.min)
+    }
+
+    /// Get the visual position along the track (0.0 to 1.0), respecting `direction`.
+    pub fn position_percent(&self) -> f32 {
+        let v = self.normalized_value().clamp(0.0, 1.0);
+        match self.direction {
+            SliderDirection::StartToEnd => v,
+            SliderDirection::EndToStart => 1.0 - v,
+        }
     }
 
     /// Set value from normalized (0.0 to 1.0)
@@ -375,15 +435,42 @@ fn slider_interaction_system(
             let slider_center = transform.translation;
             let slider_size = computed_node.size();
 
-            // Layout may not be computed yet (or may be zero during first-frame interactions).
-            // Avoid NaNs that would poison the slider value and visuals.
-            if slider_size.x <= 0.0 {
-                continue;
-            }
+            let position_percent = match slider.orientation {
+                SliderOrientation::Horizontal => {
+                    // Layout may not be computed yet (or may be zero during first-frame interactions).
+                    // Avoid NaNs that would poison the slider value and visuals.
+                    if slider_size.x <= 0.0 {
+                        continue;
+                    }
 
-            let slider_left = slider_center.x - slider_size.x / 2.0;
-            let relative_x = cursor_physical.x - slider_left;
-            let normalized = (relative_x / slider_size.x).clamp(0.0, 1.0);
+                    let slider_left = slider_center.x - slider_size.x / 2.0;
+                    let relative_x = cursor_physical.x - slider_left;
+                    let p = (relative_x / slider_size.x).clamp(0.0, 1.0);
+                    if !p.is_finite() {
+                        continue;
+                    }
+                    p
+                }
+                SliderOrientation::Vertical => {
+                    if slider_size.y <= 0.0 {
+                        continue;
+                    }
+
+                    let slider_top = slider_center.y - slider_size.y / 2.0;
+                    let relative_y = cursor_physical.y - slider_top;
+                    let p = (relative_y / slider_size.y).clamp(0.0, 1.0);
+                    if !p.is_finite() {
+                        continue;
+                    }
+                    p
+                }
+            };
+
+            // Convert visual position into normalized value (min..max), respecting direction.
+            let normalized = match slider.direction {
+                SliderDirection::StartToEnd => position_percent,
+                SliderDirection::EndToStart => 1.0 - position_percent,
+            };
             if !normalized.is_finite() {
                 continue;
             }
@@ -465,12 +552,8 @@ fn update_slider_visuals(
     visibilities: &mut Query<&mut Visibility>,
     ticks: &Query<&SliderTick>,
 ) {
-    let value_percent = if slider.max > slider.min {
-        (slider.value - slider.min) / (slider.max - slider.min)
-    } else {
-        0.0
-    }
-    .clamp(0.0, 1.0);
+    let value_percent = slider.normalized_value().clamp(0.0, 1.0);
+    let position_percent = slider.position_percent().clamp(0.0, 1.0);
 
     let track_height = if slider.dragging {
         SLIDER_TRACK_HEIGHT_ACTIVE
@@ -489,7 +572,14 @@ fn update_slider_visuals(
         *bg = BackgroundColor(track_color);
     }
     if let Ok(mut node) = nodes.get_mut(parts.track) {
-        node.height = Val::Px(track_height);
+        match slider.orientation {
+            SliderOrientation::Horizontal => {
+                node.height = Val::Px(track_height);
+            }
+            SliderOrientation::Vertical => {
+                node.width = Val::Px(track_height);
+            }
+        }
     }
     if let Ok(mut radius) = border_radii.get_mut(parts.track) {
         *radius = BorderRadius::all(Val::Px(track_height / 2.0));
@@ -500,9 +590,35 @@ fn update_slider_visuals(
         *bg = BackgroundColor(active_color);
     }
     if let Ok(mut node) = nodes.get_mut(parts.active_track) {
-        node.width = Val::Percent(value_percent * 100.0);
-        node.height = Val::Px(track_height);
-        node.top = Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0);
+        match slider.orientation {
+            SliderOrientation::Horizontal => {
+                match slider.direction {
+                    SliderDirection::StartToEnd => {
+                        node.left = Val::Px(0.0);
+                        node.width = Val::Percent(position_percent * 100.0);
+                    }
+                    SliderDirection::EndToStart => {
+                        node.left = Val::Percent(position_percent * 100.0);
+                        node.width = Val::Percent((1.0 - position_percent) * 100.0);
+                    }
+                }
+                node.height = Val::Px(track_height);
+                node.top = Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0);
+            }
+            SliderOrientation::Vertical => {
+                node.width = Val::Px(track_height);
+                match slider.direction {
+                    SliderDirection::StartToEnd => {
+                        node.top = Val::Px(0.0);
+                        node.height = Val::Percent(position_percent * 100.0);
+                    }
+                    SliderDirection::EndToStart => {
+                        node.top = Val::Percent(position_percent * 100.0);
+                        node.height = Val::Percent((1.0 - position_percent) * 100.0);
+                    }
+                }
+            }
+        }
     }
     if let Ok(mut radius) = border_radii.get_mut(parts.active_track) {
         *radius = BorderRadius::all(Val::Px(track_height / 2.0));
@@ -517,8 +633,16 @@ fn update_slider_visuals(
         *bg = BackgroundColor(handle_color);
     }
     if let Ok(mut node) = nodes.get_mut(parts.handle) {
-        node.left = Val::Percent(value_percent * 100.0);
-        node.margin.left = Val::Px(-handle_radius);
+        match slider.orientation {
+            SliderOrientation::Horizontal => {
+                node.left = Val::Percent(position_percent * 100.0);
+                node.margin.left = Val::Px(-handle_radius);
+            }
+            SliderOrientation::Vertical => {
+                node.top = Val::Percent(position_percent * 100.0);
+                node.margin.top = Val::Px(-handle_radius);
+            }
+        }
         node.width = Val::Px(handle_radius * 2.0);
         node.height = Val::Px(handle_radius * 2.0);
     }
@@ -538,7 +662,11 @@ fn update_slider_visuals(
         }
 
         let Ok(tick) = ticks.get(tick_entity) else { continue };
-        let tick_color = if tick.position <= value_percent {
+        let tick_active = match slider.direction {
+            SliderDirection::StartToEnd => tick.position <= position_percent,
+            SliderDirection::EndToStart => tick.position >= position_percent,
+        };
+        let tick_color = if tick_active {
             active_tick_color
         } else {
             inactive_tick_color
@@ -547,6 +675,253 @@ fn update_slider_visuals(
             *bg = BackgroundColor(tick_color);
         }
     }
+}
+
+/// Spawn a standalone slider control (no label wrapper) as a child.
+///
+/// Returns the slider entity id so callers can attach marker components.
+pub fn spawn_slider_control(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    slider: MaterialSlider,
+) -> Entity {
+    spawn_slider_control_with(parent, theme, slider, ())
+}
+
+/// Spawn a standalone slider control (no label wrapper) as a child, inserting extra components.
+///
+/// Returns the slider entity id so callers can reference it later.
+pub fn spawn_slider_control_with<E: Bundle>(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    slider: MaterialSlider,
+    extra: E,
+) -> Entity {
+    let orientation = slider.orientation;
+    let direction = slider.direction;
+    let track_color = slider.inactive_track_color(theme);
+    let active_color = slider.active_track_color(theme);
+    let handle_color = slider.handle_color(theme);
+
+    let value_percent = slider.normalized_value().clamp(0.0, 1.0);
+    let position_percent = slider.position_percent().clamp(0.0, 1.0);
+
+    let show_ticks = slider.show_ticks;
+    let show_ticks_now = slider.should_show_ticks();
+    let step = slider.step;
+    let min = slider.min;
+    let max = slider.max;
+    let track_height = slider.track_height;
+    let thumb_radius = slider.thumb_radius;
+    let active_tick_color = slider.active_tick_color(theme);
+    let inactive_tick_color = slider.inactive_tick_color(theme);
+
+    let mut slider_ec = parent.spawn((
+        slider,
+        Button,
+        Interaction::None,
+        extra,
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            // Allow flexbox to shrink this item on compact widths.
+            min_width: Val::Px(0.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: match orientation {
+                SliderOrientation::Horizontal => FlexDirection::Row,
+                SliderOrientation::Vertical => FlexDirection::Column,
+            },
+            ..default()
+        },
+        BackgroundColor(Color::NONE),
+    ));
+
+    let mut parts_track: Option<Entity> = None;
+    let mut parts_active_track: Option<Entity> = None;
+    let mut parts_handle: Option<Entity> = None;
+    let mut parts_ticks: Vec<Entity> = Vec::new();
+
+    slider_ec.with_children(|slider_area| {
+        // Track
+        let track_node = match orientation {
+                SliderOrientation::Horizontal => Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Px(track_height),
+                    ..default()
+                },
+                SliderOrientation::Vertical => Node {
+                    width: Val::Px(track_height),
+                    height: Val::Percent(100.0),
+                    ..default()
+                },
+            };
+        let track_entity = slider_area
+            .spawn((
+                SliderTrack,
+                track_node,
+                BackgroundColor(track_color),
+                BorderRadius::all(Val::Px(track_height / 2.0)),
+            ))
+            .id();
+        parts_track = Some(track_entity);
+
+        // Active track
+        let active_node = match orientation {
+                SliderOrientation::Horizontal => {
+                    let (left, width) = match direction {
+                        SliderDirection::StartToEnd => (Val::Px(0.0), Val::Percent(position_percent * 100.0)),
+                        SliderDirection::EndToStart => (
+                            Val::Percent(position_percent * 100.0),
+                            Val::Percent((1.0 - position_percent) * 100.0),
+                        ),
+                    };
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left,
+                        top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0),
+                        width,
+                        height: Val::Px(track_height),
+                        ..default()
+                    }
+                }
+                SliderOrientation::Vertical => {
+                    let (top, height) = match direction {
+                        SliderDirection::StartToEnd => (Val::Px(0.0), Val::Percent(position_percent * 100.0)),
+                        SliderDirection::EndToStart => (
+                            Val::Percent(position_percent * 100.0),
+                            Val::Percent((1.0 - position_percent) * 100.0),
+                        ),
+                    };
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Percent(50.0),
+                        margin: UiRect::left(Val::Px(-track_height / 2.0)),
+                        top,
+                        width: Val::Px(track_height),
+                        height,
+                        ..default()
+                    }
+                }
+            };
+        let active_track_entity = slider_area
+            .spawn((
+                SliderActiveTrack { track: track_entity },
+                active_node,
+                BackgroundColor(active_color),
+                BorderRadius::all(Val::Px(track_height / 2.0)),
+            ))
+            .id();
+        parts_active_track = Some(active_track_entity);
+
+        // Handle
+        let handle_node = match orientation {
+                SliderOrientation::Horizontal => Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(position_percent * 100.0),
+                    margin: UiRect::left(Val::Px(-thumb_radius)),
+                    width: Val::Px(thumb_radius * 2.0),
+                    height: Val::Px(thumb_radius * 2.0),
+                    ..default()
+                },
+                SliderOrientation::Vertical => Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Percent(position_percent * 100.0),
+                    left: Val::Percent(50.0),
+                    margin: UiRect {
+                        left: Val::Px(-thumb_radius),
+                        right: Val::Px(0.0),
+                        top: Val::Px(-thumb_radius),
+                        bottom: Val::Px(0.0),
+                    },
+                    width: Val::Px(thumb_radius * 2.0),
+                    height: Val::Px(thumb_radius * 2.0),
+                    ..default()
+                },
+            };
+        let handle_entity = slider_area
+            .spawn((
+                SliderHandle {
+                    min,
+                    max,
+                    value: min + value_percent * (max - min),
+                    track: track_entity,
+                    step,
+                },
+                handle_node,
+                BackgroundColor(handle_color),
+                BorderRadius::all(Val::Px(thumb_radius)),
+            ))
+            .id();
+        parts_handle = Some(handle_entity);
+
+        // Tick marks (discrete)
+        if show_ticks {
+            if let Some(step_size) = step {
+                let num_ticks = ((max - min) / step_size) as usize + 1;
+                for i in 0..num_ticks {
+                    let pos = i as f32 / (num_ticks - 1) as f32;
+                    let tick_active = match direction {
+                        SliderDirection::StartToEnd => pos <= position_percent,
+                        SliderDirection::EndToStart => pos >= position_percent,
+                    };
+                    let tick_color = if tick_active {
+                        active_tick_color
+                    } else {
+                        inactive_tick_color
+                    };
+
+                    let tick_node = match orientation {
+                        SliderOrientation::Horizontal => Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::Percent(pos * 100.0),
+                            margin: UiRect::left(Val::Px(-1.0)),
+                            top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 + track_height) / 2.0),
+                            width: Val::Px(2.0),
+                            height: Val::Px(4.0),
+                            ..default()
+                        },
+                        SliderOrientation::Vertical => Node {
+                            position_type: PositionType::Absolute,
+                            top: Val::Percent(pos * 100.0),
+                            margin: UiRect::top(Val::Px(-1.0)),
+                            left: Val::Percent(50.0),
+                            width: Val::Px(4.0),
+                            height: Val::Px(2.0),
+                            ..default()
+                        },
+                    };
+
+                    let tick_entity = slider_area
+                        .spawn((
+                            SliderTick { position: pos },
+                            tick_node,
+                            BackgroundColor(tick_color),
+                            if show_ticks_now {
+                                Visibility::Visible
+                            } else {
+                                Visibility::Hidden
+                            },
+                        ))
+                        .id();
+                    parts_ticks.push(tick_entity);
+                }
+            }
+        }
+    });
+
+    if let (Some(track), Some(active_track), Some(handle)) =
+        (parts_track, parts_active_track, parts_handle)
+    {
+        slider_ec.insert(SliderParts {
+            track,
+            active_track,
+            handle,
+            ticks: parts_ticks,
+        });
+    }
+
+    slider_ec.id()
 }
 
 /// Builder for sliders
@@ -722,26 +1097,6 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
         label: Option<&str>,
     ) {
         let label_color = theme.on_surface;
-        let track_color = slider.inactive_track_color(theme);
-        let active_color = slider.active_track_color(theme);
-        let handle_color = slider.handle_color(theme);
-        
-        let value_percent = if slider.max > slider.min {
-            (slider.value - slider.min) / (slider.max - slider.min)
-        } else {
-            0.0
-        };
-        
-        let show_ticks = slider.show_ticks;
-        let show_ticks_now = slider.should_show_ticks();
-        let step = slider.step;
-        let min = slider.min;
-        let max = slider.max;
-        let track_height = slider.track_height;
-        let thumb_radius = slider.thumb_radius;
-        let active_tick_color = slider.active_tick_color(theme);
-        let inactive_tick_color = slider.inactive_tick_color(theme);
-        
         // Container row with optional label
         self.spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -760,127 +1115,18 @@ impl SpawnSliderChild for ChildSpawnerCommands<'_> {
                     TextColor(label_color),
                 ));
             }
-            
-            // Slider container
-            let mut slider_ec = row.spawn((
-                slider,
-                Button,
-                Interaction::None,
-                Node {
-                    flex_grow: 1.0,
-                    width: Val::Percent(100.0),
-                    // Allow flexbox to shrink this item on compact widths.
-                    min_width: Val::Px(0.0),
-                    height: Val::Px(SLIDER_HANDLE_SIZE + 8.0),
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::NONE),
-            ));
 
-            let mut parts_track: Option<Entity> = None;
-            let mut parts_active_track: Option<Entity> = None;
-            let mut parts_handle: Option<Entity> = None;
-            let mut parts_ticks: Vec<Entity> = Vec::new();
-
-            slider_ec.with_children(|slider_area| {
-                // Track - spawn and get entity
-                let track_entity = slider_area.spawn((
-                    SliderTrack,
-                    Node {
-                        width: Val::Percent(100.0),
-                        height: Val::Px(track_height),
-                        ..default()
-                    },
-                    BackgroundColor(track_color),
-                    BorderRadius::all(Val::Px(track_height / 2.0)),
-                )).id();
-                parts_track = Some(track_entity);
-                
-                // Active track (filled portion)
-                let active_track_entity = slider_area.spawn((
-                    SliderActiveTrack { track: track_entity },
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Px(0.0),
-                        top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 - track_height) / 2.0),
-                        width: Val::Percent(value_percent * 100.0),
-                        height: Val::Px(track_height),
-                        ..default()
-                    },
-                    BackgroundColor(active_color),
-                    BorderRadius::all(Val::Px(track_height / 2.0)),
-                )).id();
-                parts_active_track = Some(active_track_entity);
-                
-                // Handle (thumb)
-                let handle_entity = slider_area.spawn((
-                    SliderHandle {
-                        min,
-                        max,
-                        value: min + value_percent * (max - min),
-                        track: track_entity,
-                        step,
-                    },
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Percent(value_percent * 100.0),
-                        margin: UiRect::left(Val::Px(-thumb_radius)),
-                        width: Val::Px(thumb_radius * 2.0),
-                        height: Val::Px(thumb_radius * 2.0),
-                        ..default()
-                    },
-                    BackgroundColor(handle_color),
-                    BorderRadius::all(Val::Px(thumb_radius)),
-                )).id();
-                parts_handle = Some(handle_entity);
-                
-                // Tick marks for discrete sliders
-                if show_ticks {
-                    if let Some(step_size) = step {
-                        let num_ticks = ((max - min) / step_size) as usize + 1;
-                        for i in 0..num_ticks {
-                            let pos = i as f32 / (num_ticks - 1) as f32;
-                            let tick_entity = slider_area
-                                .spawn((
-                                    SliderTick { position: pos },
-                                Node {
-                                    position_type: PositionType::Absolute,
-                                        left: Val::Percent(pos * 100.0),
-                                        margin: UiRect::left(Val::Px(-1.0)),
-                                    top: Val::Px((SLIDER_HANDLE_SIZE + 8.0 + track_height) / 2.0),
-                                    width: Val::Px(2.0),
-                                    height: Val::Px(4.0),
-                                    ..default()
-                                },
-                                    BackgroundColor(if pos <= value_percent {
-                                        active_tick_color
-                                    } else {
-                                        inactive_tick_color
-                                    }),
-                                    if show_ticks_now {
-                                        Visibility::Visible
-                                    } else {
-                                        Visibility::Hidden
-                                    },
-                                ))
-                                .id();
-                            parts_ticks.push(tick_entity);
-                        }
-                    }
-                }
+            // Slider container: caller can size the row child; slider fills 100%.
+            row.spawn(Node {
+                flex_grow: 1.0,
+                width: Val::Percent(100.0),
+                min_width: Val::Px(0.0),
+                height: Val::Px(SLIDER_HANDLE_SIZE + 8.0),
+                ..default()
+            })
+            .with_children(|slot| {
+                spawn_slider_control(slot, theme, slider);
             });
-
-            if let (Some(track), Some(active_track), Some(handle)) =
-                (parts_track, parts_active_track, parts_handle)
-            {
-                slider_ec.insert(SliderParts {
-                    track,
-                    active_track,
-                    handle,
-                    ticks: parts_ticks,
-                });
-            }
         });
     }
 }

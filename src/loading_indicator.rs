@@ -11,6 +11,10 @@ use bevy::{
 
 use crate::theme::MaterialTheme;
 
+pub const SHAPE_MORPH_SHADER_HANDLE: Handle<Shader> = bevy::asset::uuid_handle!(
+    "5a0d5e7c-4d3d-4a0e-a2b9-8b26e5f31b2d"
+);
+
 /// Custom UI material for shape morphing using SDF shaders
 #[derive(AsBindGroup, Asset, TypePath, Debug, Clone)]
 pub struct ShapeMorphMaterial {
@@ -28,7 +32,7 @@ pub struct ShapeMorphMaterial {
 
 impl UiMaterial for ShapeMorphMaterial {
     fn fragment_shader() -> ShaderRef {
-        "shaders/shape_morph.wgsl".into()
+        SHAPE_MORPH_SHADER_HANDLE.clone().into()
     }
 }
 
@@ -49,6 +53,15 @@ pub struct LoadingIndicatorPlugin;
 
 impl Plugin for LoadingIndicatorPlugin {
     fn build(&self, app: &mut App) {
+        // Embed the shader so downstream apps don't need to copy it into their `assets/` folder.
+        // Path is relative to this source file (bevy_asset::load_internal_asset! uses include_str!).
+        bevy::asset::load_internal_asset!(
+            app,
+            SHAPE_MORPH_SHADER_HANDLE,
+            "../assets/shaders/shape_morph.wgsl",
+            Shader::from_wgsl
+        );
+
         app.add_plugins(UiMaterialPlugin::<ShapeMorphMaterial>::default())
             .add_systems(
                 Update,

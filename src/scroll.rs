@@ -749,12 +749,12 @@ fn scrollbar_thumb_drag_system(
                 // track_parent is the thumb's ChildOf (points to track)
                 // scroll_parent is the track's ChildOf (points to scroll container)
                 if let Ok((track_node, scroll_parent)) = track_v.get(track_parent.0) {
-                    if let Ok((container, scroll_pos, computed)) = containers.get(scroll_parent.0) {
+                    if let Ok((container, scroll_pos, _computed)) = containers.get(scroll_parent.0) {
                         drag_state.is_dragging = true;
                         drag_state.drag_start_pos = Some(pos);
                         drag_state.drag_start_offset = scroll_pos.y;
 
-                        let inv = computed.inverse_scale_factor();
+                        let inv = track_node.inverse_scale_factor();
                         let phys_scale = if inv > 0.0 { 1.0 / inv } else { 0.0 };
                         let pos_phys = pos * phys_scale;
                         bevy::log::info!(
@@ -793,10 +793,10 @@ fn scrollbar_thumb_drag_system(
         if drag_state.is_dragging {
             if let (Some(start_pos), Some(current_pos)) = (drag_state.drag_start_pos, cursor_pos) {
                 if let Ok((track_node, scroll_parent)) = track_v.get(track_parent.0) {
-                    if let Ok((container, mut scroll_pos, computed)) = containers.get_mut(scroll_parent.0) {
+                    if let Ok((container, mut scroll_pos, _computed)) = containers.get_mut(scroll_parent.0) {
                         // Use logical pixels consistently (cursor positions, ScrollPosition, Node style values).
                         // track_node.size() is physical, so convert to logical.
-                        let inv = computed.inverse_scale_factor();
+                        let inv = track_node.inverse_scale_factor();
                         let track_height = track_node.size().y * inv;
 
                         // Clamp thumb size to the actual track height (important when both scrollbars are visible
@@ -866,7 +866,7 @@ fn scrollbar_thumb_drag_system(
                         drag_state.drag_start_pos = Some(pos);
                         drag_state.drag_start_offset = scroll_pos.x;
 
-                        let inv = computed.inverse_scale_factor();
+                        let inv = track_h.get(track_parent.0).map(|(t, _)| t.inverse_scale_factor()).unwrap_or(computed.inverse_scale_factor());
                         let phys_scale = if inv > 0.0 { 1.0 / inv } else { 0.0 };
                         let pos_phys = pos * phys_scale;
                         bevy::log::info!(
@@ -905,9 +905,9 @@ fn scrollbar_thumb_drag_system(
         if drag_state.is_dragging {
             if let (Some(start_pos), Some(current_pos)) = (drag_state.drag_start_pos, cursor_pos) {
                 if let Ok((track_node, scroll_parent)) = track_h.get(track_parent.0) {
-                    if let Ok((container, mut scroll_pos, computed)) = containers.get_mut(scroll_parent.0) {
+                    if let Ok((container, mut scroll_pos, _computed)) = containers.get_mut(scroll_parent.0) {
                         // Use logical pixels consistently.
-                        let inv = computed.inverse_scale_factor();
+                        let inv = track_node.inverse_scale_factor();
                         let track_width = track_node.size().x * inv;
                         let thumb_size = container
                             .horizontal_thumb_size()

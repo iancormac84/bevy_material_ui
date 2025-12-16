@@ -107,6 +107,74 @@ MaterialTextField::new("Description")
     .spawn(&mut commands, &theme);
 ```
 
+## Auto Focus
+
+If you enable auto-focus, the text field will take focus automatically when the
+user starts typing (and no other field is currently focused).
+
+```rust
+use bevy_material_ui::prelude::*;
+
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+    commands.spawn(Node::default()).with_children(|ui| {
+        ui.spawn_text_field_with(
+            &theme,
+            TextFieldBuilder::new()
+                .label("Command")
+                .placeholder("--dice 2d6")
+                .auto_focus(true)
+                .outlined(),
+        );
+    });
+}
+```
+
+## Clipboard (Optional)
+
+Clipboard integration (copy/cut/paste) is behind the optional `clipboard` feature.
+
+```toml
+[dependencies]
+bevy_material_ui = { version = "0.1", features = ["clipboard"] }
+```
+
+With the feature enabled, common shortcuts are supported:
+- Copy: Ctrl/Cmd + C
+- Cut: Ctrl/Cmd + X
+- Paste: Ctrl/Cmd + V
+
+Note: the current text editing model is append/backspace oriented (caret at end),
+so paste appends to the existing value.
+
+## Standalone Spawn Helpers
+
+If you need the spawned field entity (for routing events or attaching marker
+components), use these helpers:
+
+```rust
+use bevy_material_ui::prelude::*;
+
+fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+    commands.spawn(Node::default()).with_children(|ui| {
+        let field_entity = bevy_material_ui::text_field::spawn_text_field_control(
+            ui,
+            &theme,
+            TextFieldBuilder::new().label("Name").outlined(),
+        );
+
+        let _field_entity_with_marker = bevy_material_ui::text_field::spawn_text_field_control_with(
+            ui,
+            &theme,
+            TextFieldBuilder::new().label("Email").outlined(),
+            MyMarker,
+        );
+    });
+}
+
+#[derive(Component)]
+struct MyMarker;
+```
+
 ## Handling Input
 
 ```rust
@@ -150,6 +218,7 @@ fn read_text_fields(
 | `input_type` | `InputType` | `Text` | Keyboard + obscuring behavior |
 | `max_length` | `Option<usize>` | `None` | Maximum characters |
 | `counter_enabled` | `bool` | `false` | Show character counter |
+| `auto_focus` | `bool` | `false` | Focus this field when user starts typing |
 
 ## TextFieldChangeEvent
 

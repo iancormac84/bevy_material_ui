@@ -64,9 +64,19 @@ impl Default for ListDemoOptions {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 struct DialogDemoOptions {
     position: DialogPosition,
+    modal: bool,
+}
+
+impl Default for DialogDemoOptions {
+    fn default() -> Self {
+        Self {
+            position: DialogPosition::default(),
+            modal: true,
+        }
+    }
 }
 
 #[derive(Resource, Default)]
@@ -142,6 +152,9 @@ pub fn run() {
                 dialog_demo_position_options_system,
                 dialog_demo_position_style_system,
                 dialog_demo_apply_position_system,
+                dialog_demo_modal_options_system,
+                dialog_demo_modal_style_system,
+                dialog_demo_apply_modal_system,
                 dialog_demo_open_close_system,
                 list_demo_mode_options_system,
                 list_demo_mode_style_system,
@@ -1939,6 +1952,17 @@ fn dialog_demo_position_options_system(
     }
 }
 
+fn dialog_demo_modal_options_system(
+    mut options: ResMut<DialogDemoOptions>,
+    mut modal_buttons: Query<(&DialogModalOption, &Interaction), Changed<Interaction>>,
+) {
+    for (opt, interaction) in modal_buttons.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            options.modal = opt.0;
+        }
+    }
+}
+
 fn dialog_demo_position_style_system(
     theme: Res<MaterialTheme>,
     options: Res<DialogDemoOptions>,
@@ -1950,6 +1974,20 @@ fn dialog_demo_position_style_system(
 
     for (opt, mut chip) in position_chips.iter_mut() {
         chip.selected = opt.0 == options.position;
+    }
+}
+
+fn dialog_demo_modal_style_system(
+    theme: Res<MaterialTheme>,
+    options: Res<DialogDemoOptions>,
+    mut modal_chips: Query<(&DialogModalOption, &mut MaterialChip)>,
+) {
+    if !theme.is_changed() && !options.is_changed() {
+        return;
+    }
+
+    for (opt, mut chip) in modal_chips.iter_mut() {
+        chip.selected = opt.0 == options.modal;
     }
 }
 
@@ -2002,11 +2040,25 @@ fn dialog_demo_apply_position_system(
     }
 }
 
+fn dialog_demo_apply_modal_system(
+    options: Res<DialogDemoOptions>,
+    dialogs_added: Query<(), Added<DialogContainer>>,
+    mut dialogs: Query<&mut MaterialDialog, With<DialogContainer>>,
+) {
+    if !options.is_changed() && dialogs_added.is_empty() {
+        return;
+    }
+
+    for mut dialog in dialogs.iter_mut() {
+        dialog.modal = options.modal;
+    }
+}
+
 fn dialog_demo_open_close_system(
     mut show_buttons: Query<&Interaction, (Changed<Interaction>, With<ShowDialogButton>)>,
     mut close_buttons: Query<&Interaction, (Changed<Interaction>, With<DialogCloseButton>)>,
     mut confirm_buttons: Query<&Interaction, (Changed<Interaction>, With<DialogConfirmButton>)>,
-    mut dialog: Query<&mut Visibility, With<DialogContainer>>,
+    mut dialog: Query<&mut MaterialDialog, With<DialogContainer>>,
     mut result_text: Query<&mut Text, With<DialogResultDisplay>>,
 ) {
     let mut open = false;
@@ -2031,14 +2083,14 @@ fn dialog_demo_open_close_system(
     }
 
     if open {
-        for mut vis in dialog.iter_mut() {
-            *vis = Visibility::Visible;
+        for mut d in dialog.iter_mut() {
+            d.open = true;
         }
     }
 
     if let Some(reason) = close_reason {
-        for mut vis in dialog.iter_mut() {
-            *vis = Visibility::Hidden;
+        for mut d in dialog.iter_mut() {
+            d.open = false;
         }
         for mut text in result_text.iter_mut() {
             text.0 = format!("Result: {}", reason);

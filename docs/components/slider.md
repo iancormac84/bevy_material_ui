@@ -16,13 +16,10 @@ use bevy_material_ui::prelude::*;
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
     // Continuous slider (0-100)
-    MaterialSlider::new()
-        .spawn(&mut commands, &theme);
+    MaterialSlider::new(0.0, 100.0).spawn(&mut commands, &theme);
 
     // With initial value
-    MaterialSlider::new()
-        .value(50.0)
-        .spawn(&mut commands, &theme);
+    MaterialSlider::new(0.0, 100.0).with_value(50.0).spawn(&mut commands, &theme);
 }
 ```
 
@@ -30,38 +27,81 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
 
 ```rust
 // Slider from 0 to 1000
-MaterialSlider::new()
-    .min(0.0)
-    .max(1000.0)
-    .value(500.0)
+MaterialSlider::new(0.0, 1000.0)
+    .with_value(500.0)
     .spawn(&mut commands, &theme);
 ```
 
 ## Discrete Slider
 
 ```rust
-// Slider with 10 steps
-MaterialSlider::new()
-    .discrete()
-    .steps(10)
+// Discrete slider with a fixed step size
+MaterialSlider::new(0.0, 10.0)
+    .with_step(1.0)
+    .show_ticks()
+    .spawn(&mut commands, &theme);
+
+// Discrete slider with a specific count of discrete values
+MaterialSlider::new(0.0, 10.0)
+    .discrete(11)
+    .show_ticks()
     .spawn(&mut commands, &theme);
 ```
 
 ## With Label
 
 ```rust
-MaterialSlider::new()
-    .label("Volume")
+MaterialSlider::new(0.0, 100.0)
+    .show_label()
     .spawn(&mut commands, &theme);
 ```
 
 ## Disabled State
 
 ```rust
-MaterialSlider::new()
-    .value(30.0)
+MaterialSlider::new(0.0, 100.0)
+    .with_value(30.0)
     .disabled(true)
     .spawn(&mut commands, &theme);
+
+## Orientation and Direction
+
+```rust
+use bevy_material_ui::prelude::*;
+
+// Vertical slider
+MaterialSlider::new(0.0, 1.0).vertical().spawn(&mut commands, &theme);
+
+// Reversed direction (values increase end -> start)
+MaterialSlider::new(0.0, 1.0).reversed().spawn(&mut commands, &theme);
+```
+
+## Standalone Spawn Helpers
+
+If you're spawning sliders inside existing layouts and want just the control
+(no label wrapper), use:
+
+```rust
+use bevy_material_ui::prelude::*;
+
+commands.spawn(Node::default()).with_children(|ui| {
+    let slider_entity = bevy_material_ui::slider::spawn_slider_control(
+        ui,
+        &theme,
+        MaterialSlider::new(0.0, 100.0),
+    );
+
+    let _slider_entity_with_extra = bevy_material_ui::slider::spawn_slider_control_with(
+        ui,
+        &theme,
+        MaterialSlider::new(0.0, 100.0),
+        MyMarker,
+    );
+});
+
+#[derive(Component)]
+struct MyMarker;
+```
 ```
 
 ## Handling Changes
@@ -94,13 +134,14 @@ fn read_slider_values(
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `value` | `f32` | `0.0` | Current value |
+| `value` | `f32` | `min` | Current value |
 | `min` | `f32` | `0.0` | Minimum value |
 | `max` | `f32` | `100.0` | Maximum value |
-| `discrete` | `bool` | `false` | Enable discrete mode |
-| `steps` | `u32` | `10` | Number of discrete steps |
+| `step` | `Option<f32>` | `None` | Step size for discrete sliders |
+| `discrete_value_count` | `Option<usize>` | `None` | Number of discrete values |
 | `disabled` | `bool` | `false` | Disabled state |
-| `label` | `Option<String>` | `None` | Slider label |
+| `orientation` | `SliderOrientation` | `Horizontal` | Slider orientation |
+| `direction` | `SliderDirection` | `StartToEnd` | Value increase direction |
 
 ## SliderChangeEvent
 

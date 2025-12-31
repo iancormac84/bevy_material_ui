@@ -15,7 +15,7 @@ The key advantage of HCT is that tone differences directly correspond to contras
 
 ## Implementation
 
-This is a complete Rust port of the Material Design 3 HctSolver algorithm from [material-components-android](https://github.com/material-components/material-components-android).
+This is a complete Rust port of the Material Design 3 HctSolver algorithm from the reference Material Components implementation.
 
 ### Key Features
 
@@ -201,7 +201,7 @@ Green Tonal Palette (H:140, C:60):
 ## References
 
 - [Material Design 3 - The Science of Color & Design](https://m3.material.io/blog/science-of-color-design)
-- [material-components-android HctSolver.java](https://github.com/material-components/material-components-android/blob/master/lib/java/com/google/android/material/color/utilities/HctSolver.java)
+- Reference implementation: `HctSolver.java` in the Material Components source tree.
 - [CAM16 Color Appearance Model](https://doi.org/10.1002/col.22131)
 - [CIE L*a*b* Color Space](https://en.wikipedia.org/wiki/CIELAB_color_space)
 

@@ -1,6 +1,6 @@
 # Orientation policy (MDC-first, Bevy/ECS implementation)
 
-This project follows **Material Components Android (MDC)** as the source of truth for:
+This project follows the reference **Material Components (MDC)** implementation as the source of truth for:
 
 - Which components have first-class **orientation** (vertical vs horizontal)
 - What the public **API surface** should look like (properties, naming, defaults)
@@ -16,7 +16,7 @@ We use **Bevy** as the source of truth for:
 
 | Component | Vertical supported? | Why / upstream signal | Notes for this repo |
 |---|---:|---|---|
-| Slider | Yes | MDC slider supports `android:orientation` and has an explicit `SliderOrientation` API | Keep `SliderOrientation` and `SliderDirection` (direction/reversed). Consider adding range slider later (two thumbs) to match MDC `RangeSlider`. |
+| Slider | Yes | MDC slider supports `orientation` and has an explicit `SliderOrientation` API | Keep `SliderOrientation` and `SliderDirection` (direction/reversed). Consider adding range slider later (two thumbs) to match MDC `RangeSlider`. |
 | Scroll container / scrollbars | Yes | Bevy has first-class scroll + scrollbars with explicit horizontal/vertical | Keep `ScrollDirection::{Vertical, Horizontal, Both}` and scrollbar tracks/thumbs for both axes. |
 | Divider | Yes | Material supports both horizontal and vertical dividers in practice; MDC docs explicitly discuss vertical/horizontal for divider decorations | Keep `MaterialDivider.vertical()` and ensure insets apply on the correct axis. |
 | Button group / segmented buttons | Yes | MDC `MaterialButtonGroup` / `MaterialButtonToggleGroup` are `LinearLayout`-based and mention using `VERTICAL` | If/when this repo has a “button group / segmented” component, give it an explicit orientation API. |

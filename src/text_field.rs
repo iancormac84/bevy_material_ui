@@ -12,18 +12,12 @@ use crate::{
     tokens::{CornerRadius, Spacing},
 };
 
-fn resolve_icon_codepoint(icon: &str) -> Option<char> {
+fn resolve_icon_id(icon: &str) -> Option<crate::icons::material_icons::IconId> {
     let icon = icon.trim();
     if icon.is_empty() {
         return None;
     }
 
-    // If the caller passed an actual icon glyph (e.g. ICON_EMAIL.to_string()), keep it.
-    if icon.chars().count() == 1 {
-        return icon.chars().next();
-    }
-
-    // Otherwise treat it as an icon name.
     icon_by_name(icon)
 }
 
@@ -174,7 +168,7 @@ pub enum InputType {
 
 /// Material text field component
 ///
-/// Matches properties from Material Android TextInputLayout:
+/// Matches properties from the reference `TextInputLayout`:
 /// - Box background mode (filled/outlined)
 /// - Box stroke width and colors
 /// - Box corner radii
@@ -444,19 +438,19 @@ impl MaterialTextField {
             EndIconMode::None => self.trailing_icon.as_deref(),
             EndIconMode::PasswordToggle => {
                 Some(if self.password_visible {
-                    "\u{E8F4}"
+                    "visibility"
                 } else {
-                    "\u{E8F5}"
-                }) // visibility / visibility_off
+                    "visibility_off"
+                })
             }
             EndIconMode::ClearText => {
                 if self.has_content {
-                    Some("\u{E5CD}")
+                    Some(ICON_CLOSE)
                 } else {
                     None
-                } // close icon
+                }
             }
-            EndIconMode::DropdownMenu => Some("\u{E5C5}"), // arrow_drop_down
+            EndIconMode::DropdownMenu => Some("arrow_drop_down"),
             EndIconMode::Custom => self.trailing_icon.as_deref(),
         }
     }
@@ -945,7 +939,7 @@ fn text_field_placeholder_system(
     let Some(theme) = theme else { return };
 
     for (field_entity, field) in changed_fields.iter() {
-        // Android M3 placeholder behavior:
+        // Reference M3 placeholder behavior:
         // - Placeholder is a separate layer.
         // - Shown only when the label is floating (hint collapsed) and the field is empty.
         // We only enable this when a label exists; otherwise placeholder acts as the expanded hint.
@@ -1376,7 +1370,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                 // Leading icon (start icon)
                 let leading_icon_visible = leading_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1401,14 +1395,15 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = leading_icon_text
+                        let icon_id = leading_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldLeadingIcon,
                             TextFieldLeadingIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1520,7 +1515,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                 // End icon (trailing icon)
                 let end_icon_visible = end_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1545,14 +1540,15 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = end_icon_text
+                        let icon_id = end_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldEndIcon,
                             TextFieldEndIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1637,7 +1633,7 @@ pub fn spawn_text_field_control(
                 // Leading icon (start icon)
                 let leading_icon_visible = leading_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1662,14 +1658,15 @@ pub fn spawn_text_field_control(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = leading_icon_text
+                        let icon_id = leading_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldLeadingIcon,
                             TextFieldLeadingIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1781,7 +1778,7 @@ pub fn spawn_text_field_control(
                 // End icon (trailing icon)
                 let end_icon_visible = end_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1806,14 +1803,15 @@ pub fn spawn_text_field_control(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = end_icon_text
+                        let icon_id = end_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldEndIcon,
                             TextFieldEndIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -1896,7 +1894,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                 // Leading icon (start icon)
                 let leading_icon_visible = leading_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -1921,14 +1919,15 @@ pub fn spawn_text_field_control_with<M: Component>(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = leading_icon_text
+                        let icon_id = leading_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldLeadingIcon,
                             TextFieldLeadingIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -2040,7 +2039,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                 // End icon (trailing icon)
                 let end_icon_visible = end_icon_text
                     .as_deref()
-                    .and_then(resolve_icon_codepoint)
+                    .and_then(resolve_icon_id)
                     .is_some();
                 container
                     .spawn((
@@ -2065,14 +2064,15 @@ pub fn spawn_text_field_control_with<M: Component>(
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
                     .with_children(|btn| {
-                        let codepoint = end_icon_text
+                        let icon_id = end_icon_text
                             .as_deref()
-                            .and_then(resolve_icon_codepoint)
-                            .unwrap_or(ICON_CLOSE);
+                            .and_then(resolve_icon_id)
+                            .or_else(|| icon_by_name(ICON_CLOSE))
+                            .expect("embedded icon 'close' not found");
                         btn.spawn((
                             TextFieldEndIcon,
                             TextFieldEndIconFor(field_entity),
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -2167,25 +2167,22 @@ fn text_field_icon_system(
         let icon_color = field.icon_color(&theme);
 
         // Leading
-        let leading_codepoint = field
-            .leading_icon
-            .as_deref()
-            .and_then(resolve_icon_codepoint);
+        let leading_icon_id = field.leading_icon.as_deref().and_then(resolve_icon_id);
         for (owner, mut icon, mut style) in leading_icons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            if let Some(cp) = leading_codepoint {
-                icon.codepoint = cp;
-                style.color = Some(icon_color);
-                style.size = Some(24.0);
+            if let Some(id) = leading_icon_id {
+                icon.id = id;
+                style.color = icon_color;
+                style.size = 24.0;
             }
         }
         for (owner, mut node) in leading_buttons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            node.display = if leading_codepoint.is_some() {
+            node.display = if leading_icon_id.is_some() {
                 Display::Flex
             } else {
                 Display::None
@@ -2193,24 +2190,24 @@ fn text_field_icon_system(
         }
 
         // End icon (trailing)
-        let end_codepoint = field
+        let end_icon_id = field
             .effective_trailing_icon()
-            .and_then(resolve_icon_codepoint);
+            .and_then(resolve_icon_id);
         for (owner, mut icon, mut style) in end_icons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            if let Some(cp) = end_codepoint {
-                icon.codepoint = cp;
-                style.color = Some(icon_color);
-                style.size = Some(24.0);
+            if let Some(id) = end_icon_id {
+                icon.id = id;
+                style.color = icon_color;
+                style.size = 24.0;
             }
         }
         for (owner, mut node) in end_buttons.iter_mut() {
             if owner.0 != field_entity {
                 continue;
             }
-            node.display = if end_codepoint.is_some() {
+            node.display = if end_icon_id.is_some() {
                 Display::Flex
             } else {
                 Display::None

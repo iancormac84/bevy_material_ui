@@ -10,7 +10,7 @@ use crate::showcase::common::*;
 pub fn spawn_badges_section(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     parent
         .spawn(Node {
@@ -25,8 +25,6 @@ pub fn spawn_badges_section(
                 "Badges",
                 "Notification indicators for counts and status",
             );
-
-            let icon_font_clone = icon_font.clone();
             section
                 .spawn(Node {
                     flex_direction: FlexDirection::Row,
@@ -37,11 +35,11 @@ pub fn spawn_badges_section(
                 })
                 .with_children(|row| {
                     // Dot badge
-                    spawn_badge_example(row, theme, &icon_font_clone, None);
+                    spawn_badge_example(row, theme, None);
                     // Small count
-                    spawn_badge_example(row, theme, &icon_font_clone, Some("3"));
+                    spawn_badge_example(row, theme, Some("3"));
                     // Large count
-                    spawn_badge_example(row, theme, &icon_font_clone, Some("99+"));
+                    spawn_badge_example(row, theme, Some("99+"));
                 });
 
             spawn_code_block(
@@ -62,7 +60,6 @@ let badge = MaterialBadge::count(150).max(99); // Shows "99+""#,
 fn spawn_badge_example(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: &Handle<Font>,
     count: Option<&str>,
 ) {
     parent
@@ -78,16 +75,10 @@ fn spawn_badge_example(
             BorderRadius::all(Val::Px(8.0)),
         ))
         .with_children(|container| {
-            // Notification icon with proper font
-            container.spawn((
-                Text::new(ICON_NOTIFICATIONS.to_string()),
-                TextFont {
-                    font: icon_font.clone(),
-                    font_size: 24.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
+            // Notification icon
+            if let Some(icon) = MaterialIcon::from_name(ICON_NOTIFICATIONS) {
+                container.spawn(icon.with_size(24.0).with_color(theme.on_surface));
+            }
 
             // Badge (real MaterialBadge component)
             match count {

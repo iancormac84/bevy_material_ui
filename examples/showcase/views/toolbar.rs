@@ -12,6 +12,7 @@ pub fn spawn_toolbar_section(
     theme: &MaterialTheme,
     icon_font: Handle<Font>,
 ) {
+    let _ = icon_font;
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -41,47 +42,29 @@ pub fn spawn_toolbar_section(
                     BackgroundColor(theme.surface),
                 ))
                 .with_children(|toolbar| {
-                    fn spawn_standard_icon_button_codepoint(
+                    fn spawn_standard_icon_button(
                         parent: &mut ChildSpawnerCommands,
                         theme: &MaterialTheme,
-                        icon_font: &Handle<Font>,
-                        codepoint: char,
+                        icon_name: &str,
                     ) {
-                        let icon_btn = MaterialIconButton::new(codepoint.to_string())
+                        let icon_btn = MaterialIconButton::new(icon_name.to_string())
                             .with_variant(IconButtonVariant::Standard);
-                        let bg_color = icon_btn.background_color(theme);
                         let icon_color = icon_btn.icon_color(theme);
 
                         parent
                             .spawn((
-                                icon_btn,
-                                Button,
-                                Interaction::None,
-                                RippleHost::new(),
-                                Node {
-                                    width: Val::Px(ICON_BUTTON_SIZE),
-                                    height: Val::Px(ICON_BUTTON_SIZE),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                                BackgroundColor(bg_color),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                IconButtonBuilder::new(icon_name.to_string())
+                                    .standard()
+                                    .build(theme),
                             ))
                             .with_children(|btn| {
-                                btn.spawn((
-                                    Text::new(codepoint.to_string()),
-                                    TextFont {
-                                        font: icon_font.clone(),
-                                        font_size: TOOLBAR_ICON_SIZE,
-                                        ..default()
-                                    },
-                                    TextColor(icon_color),
-                                ));
+                                if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(icon_name) {
+                                    btn.spawn(icon.with_size(TOOLBAR_ICON_SIZE).with_color(icon_color));
+                                }
                             });
                     }
 
-                    spawn_standard_icon_button_codepoint(toolbar, theme, &icon_font, ICON_MENU);
+                    spawn_standard_icon_button(toolbar, theme, ICON_MENU);
 
                     toolbar.spawn((
                         Text::new("Inventory"),
@@ -96,13 +79,8 @@ pub fn spawn_toolbar_section(
                         },
                     ));
 
-                    spawn_standard_icon_button_codepoint(toolbar, theme, &icon_font, ICON_SEARCH);
-                    spawn_standard_icon_button_codepoint(
-                        toolbar,
-                        theme,
-                        &icon_font,
-                        ICON_MORE_VERT,
-                    );
+                    spawn_standard_icon_button(toolbar, theme, ICON_SEARCH);
+                    spawn_standard_icon_button(toolbar, theme, ICON_MORE_VERT);
                 });
 
             spawn_code_block(
@@ -112,9 +90,9 @@ pub fn spawn_toolbar_section(
 ui.spawn_toolbar_with(
     &theme,
     ToolbarBuilder::new("Inventory")
-        .navigation_icon(MaterialIcon::new(ICON_MENU))
-        .action(MaterialIcon::new(ICON_SEARCH), "search")
-        .action(MaterialIcon::new(ICON_MORE_VERT), "more"),
+            .navigation_icon_name(ICON_MENU)
+            .action_name(ICON_SEARCH, "search")
+            .action_name(ICON_MORE_VERT, "more"),
 );"#,
             );
         });

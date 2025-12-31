@@ -52,13 +52,18 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                 col.spawn_search_bar_with(
                     &theme,
-                    SearchBarBuilder::new("Search...").with_navigation(MaterialIcon::new(ICON_MENU)),
+                    SearchBarBuilder::new("Search...").with_navigation(
+                        MaterialIcon::from_name(ICON_MENU).expect("menu icon should exist"),
+                    ),
                 );
 
                 col.spawn_search_bar_with(
                     &theme,
                     SearchBarBuilder::new("Search...")
-                        .with_navigation(MaterialIcon::new(ICON_ARROW_BACK))
+                        .with_navigation(
+                            MaterialIcon::from_name(ICON_ARROW_BACK)
+                                .expect("arrow_back icon should exist"),
+                        )
                         .with_text("material design"),
                 );
             });

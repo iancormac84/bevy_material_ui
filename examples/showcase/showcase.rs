@@ -11,9 +11,11 @@ pub mod views;
 pub mod tab_state;
 
 use bevy::asset::{AssetPlugin, RenderAssetUsages};
+use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
-use bevy::ui::{ComputedNode, OverflowAxis, ScrollPosition, UiGlobalTransform};
+use bevy::ui::{ComputedNode, OverflowAxis, ScrollPosition, UiGlobalTransform, UiSystems};
+use bevy::window::{PresentMode, PrimaryWindow};
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::text_field::InputType;
 use bevy_material_ui::theme::ThemeMode;
@@ -27,9 +29,6 @@ pub use common::ComponentSection;
 pub use tab_state::TabStateCache;
 
 use bevy_material_ui::list::MaterialListItem;
-
-#[derive(Resource, Clone)]
-struct IconFont(Handle<Font>);
 
 #[derive(Component)]
 struct SpinningDice;
@@ -45,6 +44,35 @@ struct MainContentScroll;
 
 #[derive(Component)]
 struct DetailSurface;
+
+#[derive(Component)]
+struct FpsOverlay;
+
+#[derive(Component)]
+struct FpsText;
+
+#[derive(Component)]
+struct SettingsButton;
+
+#[derive(Component)]
+struct SettingsDialog;
+
+#[derive(Component)]
+struct SettingsVsyncSwitch;
+
+#[derive(Component)]
+struct SettingsDialogOkButton;
+
+#[derive(Resource, Default)]
+struct PresentModeSettings {
+    auto_no_vsync: bool,
+}
+
+#[derive(Resource)]
+struct SettingsUiEntities {
+    dialog: Entity,
+    vsync_switch: Entity,
+}
 
 #[derive(Resource, Default)]
 struct ThemeRebuildGate {
@@ -79,6 +107,7 @@ pub fn run() {
                 ..default()
             }),
         )
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(MaterialUiPlugin)
         .init_resource::<ShowcaseThemeSelection>()
         // Default seed theme (Material You purple)
@@ -92,6 +121,7 @@ pub fn run() {
         .init_resource::<TooltipDemoOptions>()
         .init_resource::<ListDemoOptions>()
         .init_resource::<DialogDemoOptions>()
+        .init_resource::<PresentModeSettings>()
         .init_resource::<TabStateCache>()
         .init_resource::<ThemeRebuildGate>()
         .add_systems(Startup, (setup_3d_scene, setup_ui, setup_telemetry))
@@ -114,6 +144,10 @@ pub fn run() {
                 menu_demo_system,
                 date_picker_demo_system,
                 time_picker_demo_system,
+                fps_overlay_system,
+                settings_button_click_system,
+                settings_vsync_toggle_system,
+                settings_dialog_ok_close_system,
             ),
         )
         .add_systems(Update, (sidebar_scroll_telemetry_system, main_scroll_telemetry_system))
@@ -145,7 +179,34 @@ pub fn run() {
                 write_telemetry,
             ),
         )
+        // Keep debug probing after UI layout so ComputedNode sizes are meaningful.
+        .add_systems(
+            PostUpdate,
+            debug_lists_visibility_system.after(UiSystems::Layout),
+        )
         .run();
+}
+
+fn fps_overlay_system(
+    diagnostics: Res<DiagnosticsStore>,
+    theme: Res<MaterialTheme>,
+    mut fps: Query<(&mut Text, &mut TextColor), With<FpsText>>,
+) {
+    let Some((mut text, mut color)) = fps.iter_mut().next() else { return };
+
+    // Keep it legible across theme changes.
+    color.0 = theme.on_surface;
+
+    let fps_value = diagnostics
+        .get(&FrameTimeDiagnosticsPlugin::FPS)
+        .and_then(|d| d.smoothed());
+
+    let label = match fps_value {
+        Some(v) if v.is_finite() => format!("FPS: {v:>5.1}"),
+        _ => "FPS:  --.-".to_string(),
+    };
+
+    *text = Text::new(label);
 }
 
 #[derive(Debug)]
@@ -805,6 +866,168 @@ fn telemetry_snapshot_system(
     );
 }
 
+fn debug_lists_visibility_system(
+    selected: Res<SelectedSection>,
+    lists: Query<(Entity, Option<&Children>, Option<&ComputedNode>), With<ListDemoRoot>>,
+    scroll_contents: Query<(Entity, Option<&Children>, Option<&ComputedNode>), With<bevy_material_ui::scroll::ScrollContent>>,
+    items: Query<Entity, With<bevy_material_ui::list::MaterialListItem>>,
+    icons: Query<(), With<MaterialIcon>>,
+    texts: Query<(), With<Text>>,
+    test_ids: Query<(Entity, &TestId, Option<&Children>, Option<&ComputedNode>)>,
+    children_q: Query<&Children>,
+    parents: Query<&ChildOf>,
+    scroll_positions: Query<&ScrollPosition>,
+    mut did_log: Local<bool>,
+    mut attempts: Local<u32>,
+) {
+    if !cfg!(debug_assertions) {
+        return;
+    }
+
+    if selected.current != ComponentSection::Lists {
+        *did_log = false;
+        *attempts = 0;
+        return;
+    }
+    if *did_log {
+        return;
+    }
+
+    // Try to find the list root. Prefer the marker, but fall back to TestId for robustness.
+    let mut list_entity = None;
+    let mut list_children = None;
+    let mut list_computed = None;
+    if let Some((e, c, comp)) = lists.iter().next() {
+        list_entity = Some(e);
+        list_children = c;
+        list_computed = comp;
+    } else {
+        for (e, id, c, comp) in test_ids.iter() {
+            if id.id() == "list_scroll_area" {
+                list_entity = Some(e);
+                list_children = c;
+                list_computed = comp;
+                break;
+            }
+        }
+    }
+
+    let Some(list_entity) = list_entity else {
+        *attempts += 1;
+        if *attempts == 1 || (*attempts % 30 == 0) {
+            bevy::log::warn!(
+                "[lists debug] List not found yet (attempt {}). UI may not be spawned this frame.",
+                *attempts
+            );
+        }
+        return;
+    };
+
+    let list_child_count = list_children.map(|c| c.len()).unwrap_or(0);
+    let list_size = list_computed.map(|c| c.size());
+    let list_scroll = scroll_positions
+        .get(list_entity)
+        .ok()
+        .map(|p| (**p));
+    bevy::log::info!(
+        "[lists debug] ListDemoRoot={:?} children={} size={:?} scroll={:?}",
+        list_entity,
+        list_child_count,
+        list_size,
+        list_scroll
+    );
+
+    // Find a ScrollContent descendant (not necessarily direct child).
+    let mut content_entity = None;
+    let mut stack: Vec<Entity> = vec![list_entity];
+    for _ in 0..64 {
+        let Some(node) = stack.pop() else { break };
+        if scroll_contents.get(node).is_ok() {
+            content_entity = Some(node);
+            break;
+        }
+        if let Ok(children) = children_q.get(node) {
+            for child in children.iter() {
+                stack.push(child);
+            }
+        }
+    }
+
+    if let Some(content) = content_entity {
+        let (content_e, content_children, content_computed) = scroll_contents.get(content).ok().unwrap();
+        let content_child_count = content_children.map(|c| c.len()).unwrap_or(0);
+        let content_size = content_computed.map(|c| c.size());
+        let content_scroll = scroll_positions
+            .get(content_e)
+            .ok()
+            .map(|p| (**p));
+        bevy::log::info!(
+            "[lists debug] ScrollContent={:?} children={} size={:?} scroll={:?}",
+            content_e,
+            content_child_count,
+            content_size,
+            content_scroll
+        );
+    } else {
+        bevy::log::warn!("[lists debug] No ScrollContent child found under ListDemoRoot (yet)");
+    }
+
+    // Count list items that are under this list (walk up parents to see if list is an ancestor).
+    let mut item_count = 0usize;
+    for entity in items.iter() {
+        let mut current = Some(entity);
+        for _ in 0..64 {
+            let Some(e) = current else { break };
+            if e == list_entity {
+                item_count += 1;
+                break;
+            }
+            current = parents.get(e).ok().map(|p| p.0);
+        }
+    }
+    bevy::log::info!("[lists debug] MaterialListItem descendants under list: {}", item_count);
+
+    // Inspect a representative list item so we know whether it has visible content.
+    // (If item nodes have non-zero size and contain Text, rendering should be happening.)
+    if let Some((item_e, _id, _c, item_comp)) = test_ids
+        .iter()
+        .find(|(_e, id, _c, _comp)| id.id() == "list_item_0")
+    {
+        let item_size = item_comp.map(|c| c.size());
+        let item_scroll = scroll_positions.get(item_e).ok().map(|p| (**p));
+
+        // Count descendants for quick sanity.
+        let mut text_count = 0usize;
+        let mut icon_count = 0usize;
+        let mut stack: Vec<Entity> = vec![item_e];
+        for _ in 0..128 {
+            let Some(node) = stack.pop() else { break };
+            if texts.get(node).is_ok() {
+                text_count += 1;
+            }
+            if icons.get(node).is_ok() {
+                icon_count += 1;
+            }
+            if let Ok(children) = children_q.get(node) {
+                for child in children.iter() {
+                    stack.push(child);
+                }
+            }
+        }
+
+        bevy::log::info!(
+            "[lists debug] list_item_0={:?} size={:?} scroll={:?} text_desc={} icon_desc={}",
+            item_e,
+            item_size,
+            item_scroll,
+            text_count,
+            icon_count
+        );
+    }
+
+    *did_log = true;
+}
+
 fn sidebar_scroll_telemetry_system(
     sidebar: Query<&ScrollPosition, With<SidebarNavScroll>>,
     mut telemetry: ResMut<ComponentTelemetry>,
@@ -977,8 +1200,8 @@ fn write_telemetry(telemetry: Res<ComponentTelemetry>) {
 
 fn setup_ui(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     theme: Res<MaterialTheme>,
+    windows: Query<&Window, With<PrimaryWindow>>,
     selected: Res<SelectedSection>,
     tab_cache: Res<TabStateCache>,
     theme_selection: Res<ShowcaseThemeSelection>,
@@ -993,11 +1216,240 @@ fn setup_ui(
         },
     ));
 
-    let icon_font = asset_server.load::<Font>("fonts/MaterialSymbolsOutlined.ttf");
-    commands.insert_resource(IconFont(icon_font.clone()));
+    // Icons are embedded and rendered via `MaterialIcon` (no icon font needed).
+    let icon_font = Handle::<Font>::default();
 
     // Global snackbar host overlay (required for ShowSnackbar events to display).
     commands.spawn(SnackbarHostBuilder::build());
+
+    // Persist present mode choice and sync initial UI state from the actual window.
+    let auto_no_vsync = windows
+        .iter()
+        .next()
+        .map(|w| matches!(w.present_mode, PresentMode::AutoNoVsync))
+        .unwrap_or(false);
+    commands.insert_resource(PresentModeSettings { auto_no_vsync });
+
+    // Bottom-right overlay (FPS + Settings).
+    commands
+        .spawn((
+            FpsOverlay,
+            GlobalZIndex(100),
+            Node {
+                position_type: PositionType::Absolute,
+                right: Val::Px(12.0),
+                bottom: Val::Px(12.0),
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                column_gap: Val::Px(8.0),
+                ..default()
+            },
+        ))
+        .with_children(|overlay| {
+            overlay.spawn((
+                FpsText,
+                Text::new("FPS:  --.-"),
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface),
+            ));
+
+            // Settings icon button.
+            let icon_name = "settings";
+            let button = MaterialIconButton::new(icon_name).with_variant(IconButtonVariant::Standard);
+            let bg_color = button.background_color(&theme);
+            let border_color = button.border_color(&theme);
+            let icon_color = button.icon_color(&theme);
+
+            overlay
+                .spawn((
+                    SettingsButton,
+                    button,
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        width: Val::Px(ICON_BUTTON_SIZE),
+                        height: Val::Px(ICON_BUTTON_SIZE),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(if border_color == Color::NONE { 0.0 } else { 1.0 })),
+                        ..default()
+                    },
+                    BackgroundColor(bg_color),
+                    BorderColor::all(border_color),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(|btn| {
+                    if let Some(icon) = MaterialIcon::from_name(icon_name)
+                        .or_else(|| MaterialIcon::from_name("tune"))
+                        .or_else(|| MaterialIcon::from_name("settings_applications"))
+                    {
+                        btn.spawn(icon.with_size(ICON_SIZE).with_color(icon_color));
+                    }
+                });
+        });
+
+    // Settings dialog (initially closed) + linked scrim.
+    let mut vsync_switch_entity: Option<Entity> = None;
+    let dialog_entity = commands
+        .spawn((
+            SettingsDialog,
+            DialogBuilder::new()
+                .title("Settings")
+                .modal(true)
+                .build(&theme),
+        ))
+        .with_children(|dialog| {
+            // Headline
+            dialog.spawn((
+                DialogHeadline,
+                Text::new("Settings"),
+                TextFont {
+                    font_size: 24.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface),
+                Node {
+                    margin: UiRect::bottom(Val::Px(16.0)),
+                    ..default()
+                },
+            ));
+
+            // Content
+            dialog
+                .spawn((
+                    DialogContent,
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(12.0),
+                        ..default()
+                    },
+                ))
+                .with_children(|content| {
+                    // Row: label + switch
+                    content
+                        .spawn(Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Row,
+                            justify_content: JustifyContent::SpaceBetween,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        })
+                        .with_children(|row| {
+                            row.spawn((
+                                Text::new("AutoNoVsync"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(theme.on_surface),
+                            ));
+
+                            // Spawn a switch track we can identify via SettingsVsyncSwitch.
+                            let switch = MaterialSwitch::new().selected(auto_no_vsync);
+                            let bg_color = switch.track_color(&theme);
+                            let border_color = switch.track_outline_color(&theme);
+                            let handle_color = switch.handle_color(&theme);
+                            let handle_size = switch.handle_size();
+                            let has_border = !switch.selected;
+                            let justify = if switch.selected {
+                                JustifyContent::FlexEnd
+                            } else {
+                                JustifyContent::FlexStart
+                            };
+
+                            let track_entity = row
+                                .spawn((
+                                    SettingsVsyncSwitch,
+                                    switch,
+                                    Button,
+                                    Interaction::None,
+                                    RippleHost::new(),
+                                    Node {
+                                        width: Val::Px(SWITCH_TRACK_WIDTH),
+                                        height: Val::Px(SWITCH_TRACK_HEIGHT),
+                                        justify_content: justify,
+                                        align_items: AlignItems::Center,
+                                        padding: UiRect::horizontal(Val::Px(2.0)),
+                                        border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                                        ..default()
+                                    },
+                                    BackgroundColor(bg_color),
+                                    BorderColor::all(border_color),
+                                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                ))
+                                .with_children(|track| {
+                                    track.spawn((
+                                        SwitchHandle,
+                                        Node {
+                                            width: Val::Px(handle_size),
+                                            height: Val::Px(handle_size),
+                                            ..default()
+                                        },
+                                        BackgroundColor(handle_color),
+                                        BorderRadius::all(Val::Px(handle_size / 2.0)),
+                                    ));
+                                })
+                                .id();
+
+                            vsync_switch_entity = Some(track_entity);
+                        });
+                });
+
+            // Actions (OK button closes the dialog)
+            let ok_label = "OK";
+            let ok_button = MaterialButton::new(ok_label).with_variant(ButtonVariant::Filled);
+            let ok_text_color = ok_button.text_color(&theme);
+
+            dialog
+                .spawn((
+                    DialogActions,
+                    Node {
+                        width: Val::Percent(100.0),
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::FlexEnd,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(8.0),
+                        margin: UiRect::top(Val::Px(16.0)),
+                        ..default()
+                    },
+                ))
+                .with_children(|actions| {
+                    actions
+                        .spawn((
+                            SettingsDialogOkButton,
+                            Interaction::None,
+                            MaterialButtonBuilder::new(ok_label).filled().build(&theme),
+                        ))
+                        .with_children(|btn| {
+                            btn.spawn((
+                                ButtonLabel,
+                                Text::new(ok_label),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(ok_text_color),
+                            ));
+                        });
+                });
+        })
+        .id();
+
+    let scrim_entity = commands
+        .spawn(create_dialog_scrim_for(&theme, dialog_entity, true))
+        .id();
+    commands.entity(scrim_entity).add_child(dialog_entity);
+
+    if let Some(vsync_switch) = vsync_switch_entity {
+        commands.insert_resource(SettingsUiEntities {
+            dialog: dialog_entity,
+            vsync_switch,
+        });
+    }
 
     spawn_ui_root(
         &mut commands,
@@ -1008,6 +1460,74 @@ fn setup_ui(
         theme_selection.seed_argb,
         &mut materials,
     );
+}
+
+fn settings_button_click_system(
+    ui: Option<Res<SettingsUiEntities>>,
+    settings: Res<PresentModeSettings>,
+    mut click_events: MessageReader<IconButtonClickEvent>,
+    buttons: Query<(), With<SettingsButton>>,
+    mut dialogs: Query<&mut MaterialDialog, With<SettingsDialog>>,
+    mut switches: Query<&mut MaterialSwitch, With<SettingsVsyncSwitch>>,
+) {
+    let Some(ui) = ui else { return };
+
+    for event in click_events.read() {
+        if !buttons.contains(event.entity) {
+            continue;
+        }
+
+        if let Ok(mut dialog) = dialogs.get_mut(ui.dialog) {
+            dialog.open = true;
+        }
+
+        // Sync toggle UI to actual current state on open.
+        if let Ok(mut switch_) = switches.get_mut(ui.vsync_switch) {
+            switch_.selected = settings.auto_no_vsync;
+            switch_.animation_progress = if switch_.selected { 1.0 } else { 0.0 };
+        }
+    }
+}
+
+fn settings_vsync_toggle_system(
+    mut change_events: MessageReader<SwitchChangeEvent>,
+    switches: Query<(), With<SettingsVsyncSwitch>>,
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    mut settings: ResMut<PresentModeSettings>,
+) {
+    for event in change_events.read() {
+        if !switches.contains(event.entity) {
+            continue;
+        }
+
+        settings.auto_no_vsync = event.selected;
+
+        let Some(mut window) = windows.iter_mut().next() else {
+            continue;
+        };
+
+        window.present_mode = if event.selected {
+            PresentMode::AutoNoVsync
+        } else {
+            PresentMode::AutoVsync
+        };
+    }
+}
+
+fn settings_dialog_ok_close_system(
+    ui: Option<Res<SettingsUiEntities>>,
+    mut dialogs: Query<&mut MaterialDialog, With<SettingsDialog>>,
+    mut interactions: Query<&Interaction, (Changed<Interaction>, With<SettingsDialogOkButton>)>,
+) {
+    let Some(ui) = ui else { return };
+    let Ok(mut dialog) = dialogs.get_mut(ui.dialog) else {
+        return;
+    };
+
+    let should_close = interactions.iter_mut().any(|i| *i == Interaction::Pressed);
+    if should_close {
+        dialog.open = false;
+    }
 }
 
 fn spawn_ui_root(
@@ -1446,7 +1966,6 @@ fn rebuild_ui_on_theme_change_system(
     mut commands: Commands,
     theme: Res<MaterialTheme>,
     selected: Res<SelectedSection>,
-    icon_font: Res<IconFont>,
     tab_cache: Res<TabStateCache>,
     theme_selection: Res<ShowcaseThemeSelection>,
     mut materials: ResMut<Assets<ShapeMorphMaterial>>,
@@ -1474,7 +1993,7 @@ fn rebuild_ui_on_theme_change_system(
         &mut commands,
         &theme,
         selected.current,
-        icon_font.0.clone(),
+        Handle::<Font>::default(),
         &tab_cache,
         theme_selection.seed_argb,
         &mut materials,
@@ -1765,7 +2284,6 @@ fn update_detail_content(
     mut commands: Commands,
     theme: Res<MaterialTheme>,
     selected: Res<SelectedSection>,
-    icon_font: Res<IconFont>,
     tab_cache: Res<TabStateCache>,
     theme_selection: Res<ShowcaseThemeSelection>,
     mut materials: ResMut<Assets<ShapeMorphMaterial>>,
@@ -1783,13 +2301,12 @@ fn update_detail_content(
     clear_children_recursive(&mut commands, &children_q, detail_entity);
 
     let section = selected.current;
-    let icon_font = icon_font.0.clone();
     commands.entity(detail_entity).with_children(|detail| {
         spawn_detail_scroller(
             detail,
             &theme,
             section,
-            icon_font,
+            Handle::<Font>::default(),
             &tab_cache,
             theme_selection.seed_argb,
             &mut materials,

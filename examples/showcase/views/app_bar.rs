@@ -10,43 +10,21 @@ use bevy_material_ui::app_bar::SpawnTopAppBarWithRightContentChild;
 
 use crate::showcase::common::*;
 
-fn spawn_standard_icon_button_codepoint(
+fn spawn_standard_icon_button(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: &Handle<Font>,
-    codepoint: char,
+    icon_name: &str,
 ) {
     let icon_btn =
-        MaterialIconButton::new(codepoint.to_string()).with_variant(IconButtonVariant::Standard);
-    let bg_color = icon_btn.background_color(theme);
+        MaterialIconButton::new(icon_name.to_string()).with_variant(IconButtonVariant::Standard);
     let icon_color = icon_btn.icon_color(theme);
 
     parent
-        .spawn((
-            icon_btn,
-            Button,
-            Interaction::None,
-            RippleHost::new(),
-            Node {
-                width: Val::Px(48.0),
-                height: Val::Px(48.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(24.0)),
-        ))
+        .spawn(IconButtonBuilder::new(icon_name.to_string()).standard().build(theme))
         .with_children(|btn| {
-            btn.spawn((
-                Text::new(codepoint.to_string()),
-                TextFont {
-                    font: icon_font.clone(),
-                    font_size: 24.0,
-                    ..default()
-                },
-                TextColor(icon_color),
-            ));
+            if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(icon_name) {
+                btn.spawn(icon.with_size(24.0).with_color(icon_color));
+            }
         });
 }
 
@@ -56,6 +34,7 @@ pub fn spawn_app_bar_section(
     theme: &MaterialTheme,
     icon_font: Handle<Font>,
 ) {
+    let _ = icon_font;
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -149,10 +128,8 @@ pub fn spawn_app_bar_section(
                             ..default()
                         })
                         .with_children(|actions| {
-                            for codepoint in [ICON_MENU, ICON_SEARCH, ICON_CHECK, ICON_CLOSE] {
-                                spawn_standard_icon_button_codepoint(
-                                    actions, theme, &icon_font, codepoint,
-                                );
+                            for icon_name in [ICON_MENU, ICON_SEARCH, ICON_CHECK, ICON_CLOSE] {
+                                spawn_standard_icon_button(actions, theme, icon_name);
                             }
                         });
 
@@ -179,15 +156,9 @@ pub fn spawn_app_bar_section(
                                 BorderRadius::all(Val::Px(16.0)),
                             ))
                             .with_children(|btn| {
-                                btn.spawn((
-                                    Text::new(ICON_ADD.to_string()),
-                                    TextFont {
-                                        font: icon_font.clone(),
-                                        font_size: 24.0,
-                                        ..default()
-                                    },
-                                    TextColor(icon_color),
-                                ));
+                                if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(ICON_ADD) {
+                                    btn.spawn(icon.with_size(24.0).with_color(icon_color));
+                                }
                             });
                         }
                     });

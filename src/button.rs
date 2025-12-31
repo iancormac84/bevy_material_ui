@@ -58,7 +58,7 @@ pub enum ButtonVariant {
 }
 
 /// Icon gravity - determines where the icon is positioned relative to the label
-/// Matches Android MaterialButton.IconGravity
+/// Matches the reference `MaterialButton.IconGravity`
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum IconGravity {
     /// Icon at the start of the button
@@ -78,7 +78,7 @@ pub enum IconGravity {
 
 /// Material button component
 ///
-/// Matches properties from Material Android MaterialButton:
+/// Matches properties from the reference `MaterialButton`:
 /// - Multiple variants (filled, outlined, text, elevated, tonal)
 /// - State-based styling (normal, pressed, hovered, focused, disabled)
 /// - Corner radius customization

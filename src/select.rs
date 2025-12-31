@@ -6,8 +6,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    icons::MaterialIcon,
-    icons::MaterialIconFont,
+    icons::{icon_by_name, MaterialIcon, ICON_EXPAND_MORE},
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
@@ -30,7 +29,6 @@ impl Plugin for SelectPlugin {
                 select_theme_refresh_system,
                 select_dropdown_sync_system,
                 select_option_interaction_system,
-                select_option_icon_font_system,
                 select_telemetry_system,
             ),
         );
@@ -427,9 +425,9 @@ fn select_content_style_system(
     selects: Query<&MaterialSelect>,
     mut text_colors: ParamSet<(
         Query<(&ChildOf, &mut TextColor), With<SelectDisplayText>>,
-        Query<(&ChildOf, &mut TextColor), With<SelectDropdownArrow>>,
+        Query<(&ChildOf, &mut MaterialIcon), With<SelectDropdownArrow>>,
         Query<&mut TextColor, With<SelectOptionLabelText>>,
-        Query<&mut TextColor, With<SelectOptionIcon>>,
+        Query<&mut MaterialIcon, With<SelectOptionIcon>>,
     )>,
     mut dropdowns: Query<
         (&ChildOf, &mut BackgroundColor),
@@ -462,7 +460,7 @@ fn select_content_style_system(
 
     for (parent, mut color) in text_colors.p1().iter_mut() {
         if let Ok(select) = selects.get(parent.parent()) {
-            color.0 = select.label_color(&theme);
+            color.color = select.label_color(&theme);
         }
     }
 
@@ -502,7 +500,7 @@ fn select_content_style_system(
                 c.0 = text_color;
             }
             if let Ok(mut c) = text_colors.p3().get_mut(child) {
-                c.0 = text_color;
+                c.color = text_color;
             }
         }
     }
@@ -518,9 +516,9 @@ fn select_theme_refresh_system(
     >,
     mut text_colors: ParamSet<(
         Query<(&ChildOf, &mut TextColor), With<SelectDisplayText>>,
-        Query<(&ChildOf, &mut TextColor), With<SelectDropdownArrow>>,
+        Query<(&ChildOf, &mut MaterialIcon), With<SelectDropdownArrow>>,
         Query<&mut TextColor, With<SelectOptionLabelText>>,
-        Query<&mut TextColor, With<SelectOptionIcon>>,
+        Query<&mut MaterialIcon, With<SelectOptionIcon>>,
     )>,
     mut dropdowns: Query<
         (&ChildOf, &mut BackgroundColor),
@@ -558,7 +556,7 @@ fn select_theme_refresh_system(
 
     for (parent, mut color) in text_colors.p1().iter_mut() {
         if let Ok(select) = selects.get(parent.parent()) {
-            color.0 = select.label_color(&theme);
+            color.color = select.label_color(&theme);
         }
     }
 
@@ -598,7 +596,7 @@ fn select_theme_refresh_system(
                 c.0 = text_color;
             }
             if let Ok(mut c) = text_colors.p3().get_mut(child) {
-                c.0 = text_color;
+                c.color = text_color;
             }
         }
     }
@@ -826,16 +824,7 @@ fn select_option_interaction_system(
     }
 }
 
-/// Apply the Material Symbols font to select option icon text nodes.
-fn select_option_icon_font_system(
-    icon_font: Option<Res<MaterialIconFont>>,
-    mut icons: Query<&mut TextFont, Or<(With<SelectOptionIcon>, With<SelectDropdownArrow>)>>,
-) {
-    let Some(icon_font) = icon_font else { return };
-    for mut text_font in icons.iter_mut() {
-        text_font.font = icon_font.handle();
-    }
-}
+// (no icon font system; icons are embedded bitmaps)
 
 // ============================================================================
 // Spawn Traits for ChildSpawnerCommands
@@ -923,12 +912,10 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
             // Dropdown arrow
             select.spawn((
                 SelectDropdownArrow,
-                Text::new(MaterialIcon::expand_more().as_str()),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(label_color),
+                MaterialIcon::from_name(ICON_EXPAND_MORE)
+                    .expect("embedded icon 'expand_more' not found")
+                    .with_size(20.0)
+                    .with_color(label_color),
             ));
 
             // Dropdown list (hidden by default)
@@ -984,23 +971,18 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                             .with_children(|row| {
                                 // Optional leading icon
                                 if let Some(icon) = &option.icon {
-                                    let icon_text = MaterialIcon::from_name(icon.as_str())
-                                        .map(|i| i.as_str())
-                                        .unwrap_or_else(|| icon.clone());
-
-                                    row.spawn((
-                                        SelectOptionIcon,
-                                        Text::new(icon_text),
-                                        TextFont {
-                                            font_size: 20.0,
-                                            ..default()
-                                        },
-                                        TextColor(if is_disabled {
-                                            option_text_color.with_alpha(0.38)
-                                        } else {
-                                            option_text_color
-                                        }),
-                                    ));
+                                    if let Some(id) = icon_by_name(icon.as_str()) {
+                                        row.spawn((
+                                            SelectOptionIcon,
+                                            MaterialIcon::new(id)
+                                                .with_size(20.0)
+                                                .with_color(if is_disabled {
+                                                    option_text_color.with_alpha(0.38)
+                                                } else {
+                                                    option_text_color
+                                                }),
+                                        ));
+                                    }
                                 }
 
                                 row.spawn((

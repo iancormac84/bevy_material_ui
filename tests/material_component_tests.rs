@@ -1,7 +1,6 @@
 //! Comprehensive Material Component Tests
 //!
-//! Tests modeled after Android Material Components test patterns from:
-//! https://github.com/material-components/material-components-android/tree/1.13.0/lib/javatests/com/google/android/material
+//! Tests modeled after reference Material Components test patterns.
 //!
 //! These tests verify:
 //! - Component state management

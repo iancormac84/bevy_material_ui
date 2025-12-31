@@ -1,6 +1,6 @@
 //! Material button group / toggle group (segmented buttons)
 //!
-//! This is an ECS-native analog to Android MDC's `MaterialButtonToggleGroup`.
+//! This is an ECS-native analog to the reference MDC `MaterialButtonToggleGroup`.
 //! The group is responsible for:
 //! - Orientation (horizontal / vertical)
 //! - Optional single-selection behavior

@@ -3,18 +3,28 @@
 //! A standalone time picker with clock face and keyboard input modes.
 
 use bevy::prelude::*;
-use bevy::ui::FocusPolicy;
+use bevy::ui::{ComputedNode, FocusPolicy, UiGlobalTransform};
 use std::f32::consts::PI;
 
 use crate::theme::MaterialTheme;
+use crate::icons::material_icon_names;
 use crate::tokens::{CornerRadius, Spacing};
 use crate::text_field::{spawn_text_field_control_with, InputType, MaterialTextField, TextFieldBuilder};
+use bevy::ui::UiTransform;
+use std::f32::consts::TAU;
 
 mod clock;
 mod format;
 
 pub use clock::*;
 pub use format::*;
+
+// Touch targets: outer ring can be full 48px without overlap;
+// inner ring (24h 00-11) must be smaller to avoid overlapping neighbors.
+const CLOCK_NUMBER_OUTER_SIZE: f32 = 48.0;
+const CLOCK_NUMBER_OUTER_HALF: f32 = CLOCK_NUMBER_OUTER_SIZE / 2.0;
+const CLOCK_NUMBER_INNER_SIZE: f32 = 32.0;
+const CLOCK_NUMBER_INNER_HALF: f32 = CLOCK_NUMBER_INNER_SIZE / 2.0;
 
 /// Plugin for the Time Picker component.
 pub struct TimePickerPlugin;
@@ -565,10 +575,10 @@ fn time_picker_selection_mode_system(
 
 fn time_picker_clock_interaction_system(
     mut pickers: Query<&mut MaterialTimePicker>,
-    clock_faces: Query<(&Node, &GlobalTransform, &TimePickerClockFace)>,
+    clock_faces: Query<(&ComputedNode, &UiGlobalTransform, &TimePickerClockFace)>,
+    clock_numbers: Query<(&TimePickerClockNumber, &Interaction, &Node)>,
     mouse: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
-    camera: Query<(&Camera, &GlobalTransform)>,
 ) {
     let is_dragging = mouse.pressed(MouseButton::Left);
     let is_release = mouse.just_released(MouseButton::Left);
@@ -584,12 +594,10 @@ fn time_picker_clock_interaction_system(
         return;
     };
 
-    // Convert screen to world coordinates
-    let Ok((camera, camera_transform)) = camera.single() else {
-        return;
-    };
+    // `Window::cursor_position()` is in logical pixels; UI layout/transforms are in physical.
+    let cursor_physical = cursor_pos * window.scale_factor();
 
-    for (node, transform, clock) in clock_faces.iter() {
+    for (computed, transform, clock) in clock_faces.iter() {
         let Ok(mut picker) = pickers.get_mut(clock.picker) else {
             continue;
         };
@@ -598,21 +606,24 @@ fn time_picker_clock_interaction_system(
             continue;
         }
 
-        // Get clock face center
-        let clock_pos = transform.translation().truncate();
-        
-        // Calculate size (assuming square clock)
-        let clock_radius = match node.width {
-            Val::Px(px) => px / 2.0,
-            _ => 120.0, // Default radius
-        };
-
-        // Convert cursor to clock-relative coordinates
-        let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) else {
+        // If the user is interacting with a visible clock number button, do not also run
+        // the clock-face angle selection logic. Otherwise, slight misses around the glyph can
+        // fall through and select the next tick (e.g. clicking 05 selecting 10).
+        let over_number_button = clock_numbers.iter().any(|(n, interaction, number_node)| {
+            n.picker == clock.picker
+                && number_node.display != Display::None
+                && matches!(*interaction, Interaction::Hovered | Interaction::Pressed)
+        });
+        if over_number_button {
             continue;
-        };
+        }
 
-        let relative = world_pos - clock_pos;
+        // UI transform translation is the node center in physical pixels.
+        let clock_center = transform.translation;
+        // Use computed size; assume square.
+        let clock_radius = (computed.size().x.min(computed.size().y)) / 2.0;
+
+        let relative = cursor_physical - clock_center;
         let distance = relative.length();
 
         // Ignore interactions outside of the clock face.
@@ -624,7 +635,11 @@ fn time_picker_clock_interaction_system(
         }
 
         // Calculate angle (0 = top, clockwise)
-        let angle = (-relative.y).atan2(relative.x) + PI / 2.0;
+        //
+        // NOTE: In Bevy UI / window coordinates, +Y points down. This matches the typical
+        // `atan2(dY, dX) + 90°` convention for a clock dial: 0 at 12 o'clock, increasing
+        // clockwise. Do NOT negate Y here, otherwise the dial direction is inverted.
+        let angle = (relative.y).atan2(relative.x) + PI / 2.0;
         let angle = if angle < 0.0 { angle + 2.0 * PI } else { angle };
 
         match picker.selection_mode {
@@ -762,8 +777,8 @@ fn time_picker_render_system(
         &mut Text,
         Option<&TimePickerHourText>,
         Option<&TimePickerMinuteText>,
-        Option<&TimePickerModeToggleLabel>,
     )>,
+    mut mode_toggle_icons: Query<(&mut crate::icons::svg::SvgIcon, &TimePickerModeToggleLabel)>,
     mut styled_nodes: ParamSet<(
         Query<(
             &mut BackgroundColor,
@@ -775,7 +790,7 @@ fn time_picker_render_system(
         )>,
         Query<(&TimePickerClockHandLine, &mut Node)>,
     )>,
-    mut clock_hand: Query<(&TimePickerClockHand, &mut Transform)>,
+    mut clock_hand: Query<(&TimePickerClockHand, &mut UiTransform)>,
     mut text_colors: Query<&mut TextColor>,
     mut keyboard_fields: Query<(
         &mut MaterialTextField,
@@ -796,12 +811,8 @@ fn time_picker_render_system(
         };
         let hour_text = format!("{:02}", display_hour);
         let minute_text = format!("{:02}", picker.minute);
-        let mode_toggle_text = match picker.input_mode {
-            TimeInputMode::Clock => "⌨".to_string(),
-            TimeInputMode::Keyboard => "⏱".to_string(),
-        };
 
-        for (mut text, hour_marker, minute_marker, mode_toggle_marker) in text_nodes.iter_mut() {
+        for (mut text, hour_marker, minute_marker) in text_nodes.iter_mut() {
             if let Some(m) = hour_marker {
                 if m.picker == picker_entity {
                     text.0 = hour_text.clone();
@@ -812,11 +823,20 @@ fn time_picker_render_system(
                     text.0 = minute_text.clone();
                 }
             }
-            if let Some(m) = mode_toggle_marker {
-                if m.picker == picker_entity {
-                    text.0 = mode_toggle_text.clone();
-                }
+        }
+
+        // Update mode-toggle icon (keyboard <-> clock).
+        // When in clock mode, show the KEYBOARD icon; when in keyboard mode, show the CLOCK icon.
+        let mode_toggle_icon_name = match picker.input_mode {
+            TimeInputMode::Clock => material_icon_names::ic_keyboard_black_24dp,
+            TimeInputMode::Keyboard => material_icon_names::ic_clock_black_24dp,
+        };
+        for (mut icon, marker) in mode_toggle_icons.iter_mut() {
+            if marker.picker != picker_entity {
+                continue;
             }
+            icon.name = mode_toggle_icon_name.to_string();
+            icon.color = theme.on_surface;
         }
 
         // Style chips, toggles, and clock numbers.
@@ -930,23 +950,32 @@ fn time_picker_render_system(
                 continue;
             }
 
+            // Bevy UI rotation is driven by UiTransform, not Transform.
+            // UiTransform rotation is clockwise; our hand line points "up" at rest.
             let (angle, length) = match picker.selection_mode {
                 TimeSelectionMode::Hour => {
                     if picker.format == TimeFormat::H24 {
                         let is_inner = picker.hour < 12;
                         let hour_value = picker.hour % 12;
-                        layout.hand_transform(hour_value, 12, is_inner)
+                        let (_, length) = layout.hand_transform(hour_value, 12, is_inner);
+                        let angle = (hour_value as f32 / 12.0) * TAU;
+                        (angle, length)
                     } else {
-                        layout.hand_transform(picker.hour_12h(), 12, false)
+                        // Map 12 -> 0 so the hand points to 12 o'clock.
+                        let hour_value = picker.hour_12h() % 12;
+                        let (_, length) = layout.hand_transform(hour_value, 12, false);
+                        let angle = (hour_value as f32 / 12.0) * TAU;
+                        (angle, length)
                     }
                 }
                 TimeSelectionMode::Minute => {
-                    let (angle, _) = layout.hand_transform(picker.minute, 60, false);
-                    (angle, 100.0)
+                    let (_, length) = layout.hand_transform(picker.minute, 60, false);
+                    let angle = (picker.minute as f32 / 60.0) * TAU;
+                    (angle, length)
                 }
             };
 
-            transform.rotation = Quat::from_rotation_z(angle);
+            transform.rotation = bevy::math::Rot2::radians(angle);
             desired_hand_length = Some(length);
         }
 
@@ -1137,15 +1166,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                         .with_children(|btn| {
                             btn.spawn((
                                 TimePickerModeToggleLabel { picker: entity },
-                                Text::new(match initial_input_mode {
-                                    TimeInputMode::Clock => "⌨",
-                                    TimeInputMode::Keyboard => "⏱",
-                                }),
-                                TextFont {
-                                    font_size: 18.0,
-                                    ..default()
-                                },
-                                TextColor(on_surface),
+                                crate::icons::svg::SvgIcon::new(match initial_input_mode {
+                                    TimeInputMode::Clock => material_icon_names::ic_keyboard_black_24dp,
+                                    TimeInputMode::Keyboard => material_icon_names::ic_clock_black_24dp,
+                                })
+                                .with_size(18.0)
+                                .with_color(on_surface),
                             ));
                         });
                     });
@@ -1366,10 +1392,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
-                                                left: Val::Px(120.0 + pos.x - 20.0),
-                                                top: Val::Px(120.0 + pos.y - 20.0),
-                                                width: Val::Px(40.0),
-                                                height: Val::Px(40.0),
+                                                left: Val::Px(120.0 + pos.x - CLOCK_NUMBER_OUTER_HALF),
+                                                top: Val::Px(120.0 + pos.y - CLOCK_NUMBER_OUTER_HALF),
+                                                width: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
+                                                height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
                                                 ..default()
@@ -1418,10 +1444,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
-                                                left: Val::Px(120.0 + pos_inner.x - 20.0),
-                                                top: Val::Px(120.0 + pos_inner.y - 20.0),
-                                                width: Val::Px(40.0),
-                                                height: Val::Px(40.0),
+                                                left: Val::Px(120.0 + pos_inner.x - CLOCK_NUMBER_INNER_HALF),
+                                                top: Val::Px(120.0 + pos_inner.y - CLOCK_NUMBER_INNER_HALF),
+                                                width: Val::Px(CLOCK_NUMBER_INNER_SIZE),
+                                                height: Val::Px(CLOCK_NUMBER_INNER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
                                                 ..default()
@@ -1455,10 +1481,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
-                                                left: Val::Px(120.0 + pos_outer.x - 20.0),
-                                                top: Val::Px(120.0 + pos_outer.y - 20.0),
-                                                width: Val::Px(40.0),
-                                                height: Val::Px(40.0),
+                                                left: Val::Px(120.0 + pos_outer.x - CLOCK_NUMBER_OUTER_HALF),
+                                                top: Val::Px(120.0 + pos_outer.y - CLOCK_NUMBER_OUTER_HALF),
+                                                width: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
+                                                height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
                                                 ..default()
@@ -1497,10 +1523,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display: Display::None,
-                                                left: Val::Px(120.0 + pos.x - 20.0),
-                                                top: Val::Px(120.0 + pos.y - 20.0),
-                                                width: Val::Px(40.0),
-                                                height: Val::Px(40.0),
+                                                left: Val::Px(120.0 + pos.x - CLOCK_NUMBER_OUTER_HALF),
+                                                top: Val::Px(120.0 + pos.y - CLOCK_NUMBER_OUTER_HALF),
+                                                width: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
+                                                height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
                                                 ..default()
@@ -1532,7 +1558,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             height: Val::Px(0.0),
                                             ..default()
                                         },
-                                        Transform::default(),
+                                        UiTransform::default(),
                                     ))
                                     .with_children(|pivot| {
                                         pivot.spawn((
@@ -1597,7 +1623,8 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 .label("Hour")
                                 .value(hour_value)
                                 .outlined()
-                                .input_type(InputType::Number),
+                                .input_type(InputType::Number)
+                                .width(Val::Px(96.0)),
                             TimePickerHourField { picker: entity },
                         );
 
@@ -1608,7 +1635,8 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 .label("Minute")
                                 .value(minute_value)
                                 .outlined()
-                                .input_type(InputType::Number),
+                                .input_type(InputType::Number)
+                                .width(Val::Px(96.0)),
                             TimePickerMinuteField { picker: entity },
                         );
                     });

@@ -278,7 +278,7 @@ fn fab_content_style_system(
 
         for child in children.iter() {
             if let Ok(mut style) = icon_styles.get_mut(child) {
-                style.color = Some(content_color);
+                style.color = content_color;
             }
             if let Ok(mut color) = labels.get_mut(child) {
                 color.0 = content_color;
@@ -309,7 +309,7 @@ fn fab_theme_refresh_system(
         let content_color = fab.content_color(&theme);
         for child in children.iter() {
             if let Ok(mut style) = icon_styles.get_mut(child) {
-                style.color = Some(content_color);
+                style.color = content_color;
             }
             if let Ok(mut color) = labels.get_mut(child) {
                 color.0 = content_color;

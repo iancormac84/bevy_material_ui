@@ -26,6 +26,7 @@ use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
 use bevy::picking::hover::HoverMap;
 use bevy::picking::Pickable;
 use bevy::ecs::system::Command;
+use bevy::ui::UiSystems;
 
 use std::collections::HashSet;
 
@@ -96,13 +97,26 @@ impl Plugin for ScrollPlugin {
         if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
             app.add_plugins(crate::MaterialUiCorePlugin);
         }
+
+        // Ensure wrappers/scrollbars exist before Bevy lays out UI.
+        // This prevents a one-frame flash where content appears unwrapped/unclipped.
         app.add_systems(
-            Update,
+            PostUpdate,
             (
                 ensure_scroll_content_wrapper_system,
                 ensure_scrollbars_system,
+            )
+                .chain()
+                .before(UiSystems::Layout),
+        );
+
+        // Runtime scrolling + visuals. These don't need to run before layout.
+        app.add_systems(
+            Update,
+            (
                 assign_scrollbar_test_ids_system,
                 sync_scroll_state_system,
+                sync_scroll_content_padding_system,
                 mouse_wheel_scroll_system,
                 scrollbar_thumb_drag_system,
                 sync_scroll_position_to_content_system,
@@ -169,16 +183,35 @@ fn ensure_scrollbars_system(
         }
 
         // Toggle visibility based on current container settings.
+        // NOTE: actual auto-hide based on overflow is handled by `update_scrollbars`.
+        // Here we only ensure that disabled scrollbars are hidden, and that enabled
+        // scrollbars start hidden unless `always_show_scrollbars` is set.
         // We do this via commands so we don't require Visibility to already exist.
         for track in existing_tracks_v {
             commands
                 .entity(track)
-                .insert(if wants_v { Visibility::Visible } else { Visibility::Hidden });
+                .insert(if wants_v {
+                    if container.always_show_scrollbars {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
+                    }
+                } else {
+                    Visibility::Hidden
+                });
         }
         for track in existing_tracks_h {
             commands
                 .entity(track)
-                .insert(if wants_h { Visibility::Visible } else { Visibility::Hidden });
+                .insert(if wants_h {
+                    if container.always_show_scrollbars {
+                        Visibility::Inherited
+                    } else {
+                        Visibility::Hidden
+                    }
+                } else {
+                    Visibility::Hidden
+                });
         }
     }
 }
@@ -280,8 +313,13 @@ fn ensure_scroll_content_wrapper_system(
 
         // Reserve space so overlay scrollbars do not overlap content (e.g. list items).
         // This matches the thickness used by `spawn_scrollbars`.
+        //
+        // IMPORTANT: reserve space only when the scrollbar is expected to be visible:
+        // - always visible if `always_show_scrollbars`
+        // - otherwise only when there is overflow to scroll.
         let reserve_right = if container.show_scrollbars
             && matches!(container.direction, ScrollDirection::Vertical | ScrollDirection::Both)
+            && (container.always_show_scrollbars || container.needs_scroll_y())
         {
             SCROLLBAR_THICKNESS
         } else {
@@ -289,6 +327,7 @@ fn ensure_scroll_content_wrapper_system(
         };
         let reserve_bottom = if container.show_scrollbars
             && matches!(container.direction, ScrollDirection::Horizontal | ScrollDirection::Both)
+            && (container.always_show_scrollbars || container.needs_scroll_x())
         {
             SCROLLBAR_THICKNESS
         } else {
@@ -454,6 +493,10 @@ pub struct ScrollContainer {
     pub last_drag_pos: Option<Vec2>,
     /// Whether to show scrollbars
     pub show_scrollbars: bool,
+    /// If true, scrollbars stay visible even when there is no overflow to scroll.
+    ///
+    /// Default: false (auto-hide when nothing is hidden to scroll to).
+    pub always_show_scrollbars: bool,
     /// Scrollbar width
     pub scrollbar_width: f32,
 }
@@ -473,6 +516,7 @@ impl Default for ScrollContainer {
             dragging: false,
             last_drag_pos: None,
             show_scrollbars: true,
+            always_show_scrollbars: false,
             scrollbar_width: 8.0,
         }
     }
@@ -518,6 +562,15 @@ impl ScrollContainer {
     /// Show or hide scrollbars
     pub fn with_scrollbars(mut self, show: bool) -> Self {
         self.show_scrollbars = show;
+        self
+    }
+
+    /// Keep scrollbars visible even when there is no overflow.
+    ///
+    /// When false (default), scrollbars auto-hide when there's nothing hidden
+    /// to scroll to.
+    pub fn always_show_scrollbars(mut self, always_show: bool) -> Self {
+        self.always_show_scrollbars = always_show;
         self
     }
 
@@ -1029,7 +1082,10 @@ fn update_scrollbars(
         for child in children.iter() {
             // Check for vertical track
             if let Ok(mut vis) = track_v_vis.get_mut(child) {
-                *vis = if container.needs_scroll_y() && container.show_scrollbars {
+                *vis = if container.show_scrollbars
+                    && matches!(container.direction, ScrollDirection::Vertical | ScrollDirection::Both)
+                    && (container.always_show_scrollbars || container.needs_scroll_y())
+                {
                     Visibility::Inherited
                 } else {
                     Visibility::Hidden
@@ -1038,7 +1094,10 @@ fn update_scrollbars(
             
             // Check for horizontal track
             if let Ok(mut vis) = track_h_vis.get_mut(child) {
-                *vis = if container.needs_scroll_x() && container.show_scrollbars {
+                *vis = if container.show_scrollbars
+                    && matches!(container.direction, ScrollDirection::Horizontal | ScrollDirection::Both)
+                    && (container.always_show_scrollbars || container.needs_scroll_x())
+                {
                     Visibility::Inherited
                 } else {
                     Visibility::Hidden
@@ -1129,6 +1188,38 @@ fn update_scrollbars(
     }
 }
 
+/// Keep `ScrollContent` padding in sync with scrollbar visibility.
+///
+/// Our scrollbars are overlay UI, so we reserve space on the right/bottom of the
+/// scrollable content to avoid overlap with list items.
+fn sync_scroll_content_padding_system(
+    mut content_nodes: Query<&mut Node, With<ScrollContent>>,
+    containers: Query<(&ScrollContainer, &Children), With<ScrollContainer>>,
+) {
+    for (container, children) in containers.iter() {
+        let show_v = container.show_scrollbars
+            && matches!(container.direction, ScrollDirection::Vertical | ScrollDirection::Both)
+            && (container.always_show_scrollbars || container.needs_scroll_y());
+        let show_h = container.show_scrollbars
+            && matches!(container.direction, ScrollDirection::Horizontal | ScrollDirection::Both)
+            && (container.always_show_scrollbars || container.needs_scroll_x());
+
+        let reserve_right = if show_v { SCROLLBAR_THICKNESS } else { 0.0 };
+        let reserve_bottom = if show_h { SCROLLBAR_THICKNESS } else { 0.0 };
+
+        for child in children.iter() {
+            let Ok(mut node) = content_nodes.get_mut(child) else {
+                continue;
+            };
+
+            // Only touch the reserved edges; preserve caller padding.
+            node.padding.right = Val::Px(reserve_right);
+            node.padding.bottom = Val::Px(reserve_bottom);
+            break;
+        }
+    }
+}
+
 /// Spawn scrollbars for a scroll container
 /// Call this after spawning ScrollContainer to add visual scrollbars
 pub fn spawn_scrollbars(commands: &mut ChildSpawnerCommands, theme: &MaterialTheme, direction: ScrollDirection) {
@@ -1152,6 +1243,7 @@ fn spawn_scrollbar_vertical(
     commands
         .spawn((
             ScrollbarTrackVertical,
+            Visibility::Hidden,
             Node {
                 position_type: PositionType::Absolute,
                 right: Val::Px(0.0),
@@ -1194,6 +1286,7 @@ fn spawn_scrollbar_horizontal(
     commands
         .spawn((
             ScrollbarTrackHorizontal,
+            Visibility::Hidden,
             Node {
                 position_type: PositionType::Absolute,
                 bottom: Val::Px(0.0),
@@ -1231,6 +1324,7 @@ pub struct ScrollContainerBuilder {
     smooth: bool,
     smooth_speed: f32,
     show_scrollbars: bool,
+    always_show_scrollbars: bool,
 }
 
 impl Default for ScrollContainerBuilder {
@@ -1241,6 +1335,7 @@ impl Default for ScrollContainerBuilder {
             smooth: true,
             smooth_speed: 0.2,
             show_scrollbars: true,
+            always_show_scrollbars: false,
         }
     }
 }
@@ -1280,6 +1375,12 @@ impl ScrollContainerBuilder {
         self
     }
 
+    /// Keep scrollbars visible even when there is no overflow.
+    pub fn always_show_scrollbars(mut self, always_show: bool) -> Self {
+        self.always_show_scrollbars = always_show;
+        self
+    }
+
     pub fn build(self) -> ScrollContainer {
         ScrollContainer {
             direction: self.direction,
@@ -1287,6 +1388,7 @@ impl ScrollContainerBuilder {
             smooth: self.smooth,
             smooth_speed: self.smooth_speed,
             show_scrollbars: self.show_scrollbars,
+            always_show_scrollbars: self.always_show_scrollbars,
             ..default()
         }
     }
@@ -1303,6 +1405,7 @@ mod tests {
         assert_eq!(container.offset, Vec2::ZERO);
         assert!(container.smooth);
         assert!(container.show_scrollbars);
+        assert!(!container.always_show_scrollbars);
     }
 
     #[test]
@@ -1326,11 +1429,13 @@ mod tests {
             .sensitivity(50.0)
             .smooth(false)
             .with_scrollbars(false)
+            .always_show_scrollbars(true)
             .build();
         
         assert_eq!(container.sensitivity, 50.0);
         assert!(!container.smooth);
         assert!(!container.show_scrollbars);
+        assert!(container.always_show_scrollbars);
     }
 
     #[test]

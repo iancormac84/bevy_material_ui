@@ -61,7 +61,7 @@ pub mod theme;
 /// HCT color space and dynamic color generation
 pub mod color;
 
-/// Material Symbols icon system
+/// Embedded icon system
 pub mod icons;
 
 /// Typography scale definitions
@@ -202,11 +202,7 @@ pub mod prelude {
     pub use crate::color::{Hct, TonalPalette, MaterialColorScheme};
 
     // Icons
-    pub use crate::icons::{
-        MaterialIcon, IconBundle, IconStyle, IconWeight, IconGrade, IconOpticalSize,
-        MaterialIconFont, MaterialIconsPlugin, MATERIAL_SYMBOLS_FONT_PATH,
-        icon_by_name,
-    };
+    pub use crate::icons::{material_icons, MaterialIcon, MaterialIconsPlugin};
 
     // Button
     pub use crate::button::{
@@ -519,9 +515,6 @@ impl Plugin for MaterialUiCorePlugin {
         }
         if !app.is_plugin_added::<ripple::RipplePlugin>() {
             app.add_plugins(ripple::RipplePlugin);
-        }
-        if !app.is_plugin_added::<icons::icon::IconPlugin>() {
-            app.add_plugins(icons::icon::IconPlugin);
         }
         if !app.is_plugin_added::<icons::MaterialIconsPlugin>() {
             app.add_plugins(icons::MaterialIconsPlugin);

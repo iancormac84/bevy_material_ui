@@ -14,14 +14,10 @@ use crate::{
     tokens::Spacing,
 };
 
-fn resolve_icon_codepoint(icon: &str) -> Option<char> {
+fn resolve_icon_id(icon: &str) -> Option<crate::icons::material_icons::IconId> {
     let icon = icon.trim();
     if icon.is_empty() {
         return None;
-    }
-
-    if icon.chars().count() == 1 {
-        return icon.chars().next();
     }
 
     icon_by_name(icon)
@@ -489,8 +485,13 @@ impl ListBuilder {
                 width: Val::Percent(100.0),
                 height,
                 max_height: height,
+                // Important for scroll containers inside flex columns:
+                // allow shrinking so overflow/scrolling can happen.
+                min_height: Val::Px(0.0),
                 padding: UiRect::vertical(Val::Px(Spacing::SMALL)),
-                overflow: Overflow::scroll_y(),
+                // Bevy's scroll system expects both axes to be `Scroll`.
+                // Actual scroll direction is controlled by `ScrollContainer.direction`.
+                overflow: Overflow::scroll(),
                 ..default()
             },
         )
@@ -761,7 +762,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
         self.spawn(builder.build(theme)).with_children(|item| {
             // Leading content
             if let Some(icon_str) = leading_icon.as_deref() {
-                if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
+                if let Some(icon_id) = resolve_icon_id(icon_str) {
                     item.spawn((
                         ListItemLeading,
                         Node {
@@ -774,7 +775,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                     ))
                     .with_children(|leading| {
                         leading.spawn((
-                            MaterialIcon::new(codepoint),
+                            MaterialIcon::new(icon_id),
                             IconStyle::outlined().with_color(icon_color).with_size(24.0),
                         ));
                     });
@@ -838,9 +839,9 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                     }
 
                     if let Some(icon_str) = trailing_icon.as_deref() {
-                        if let Some(codepoint) = resolve_icon_codepoint(icon_str) {
+                        if let Some(icon_id) = resolve_icon_id(icon_str) {
                             trailing.spawn((
-                                MaterialIcon::new(codepoint),
+                                MaterialIcon::new(icon_id),
                                 IconStyle::outlined().with_color(icon_color).with_size(24.0),
                             ));
                         }

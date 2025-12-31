@@ -12,12 +12,14 @@ use crate::showcase::common::*;
 pub fn spawn_list_section(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     let theme_clone = theme.clone();
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
+            width: Val::Percent(100.0),
+            align_items: AlignItems::Stretch,
             row_gap: Val::Px(16.0),
             ..default()
         })
@@ -65,16 +67,12 @@ pub fn spawn_list_section(
                         false,
                     );
                 });
-
-            let icon_font_clone = icon_font.clone();
-            let list_height_px = 4.0 * bevy_material_ui::list::ListItemVariant::TwoLine.height();
             // Container for list with scrollbar
             section
                 .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Start, // Track aligns to top of list
-                    width: Val::Percent(100.0),
-                    max_width: Val::Px(400.0),
+                    width: Val::Px(420.0),
+                    max_width: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
                     ..default()
                 })
                 .with_children(|container| {
@@ -88,26 +86,12 @@ pub fn spawn_list_section(
                                     4,
                                     bevy_material_ui::list::ListItemVariant::TwoLine,
                                 )
+                                .selection_mode(ListSelectionMode::Single)
                                 .build_scrollable(),
-                            BackgroundColor(theme_clone.surface_container_low),
+                            BackgroundColor(theme_clone.surface),
                             BorderRadius::all(Val::Px(12.0)),
                             Interaction::None, // Enable hover detection
                         ))
-                        // Ensure a deterministic height so the scroll container can't collapse.
-                        // NOTE: `build_scrollable()` already adds a `Node`; using `.insert(Node {..})`
-                        // replaces it without creating duplicate components.
-                        // IMPORTANT: overflow is copied to ScrollContent by ScrollPlugin!
-                        .insert(Node {
-                            flex_direction: FlexDirection::Column,
-                            width: Val::Percent(100.0),
-                            height: Val::Px(list_height_px),
-                            max_height: Val::Px(list_height_px),
-                            // Important for flex + scroll containers; allows shrinking.
-                            min_height: Val::Px(0.0),
-                            padding: UiRect::vertical(Val::Px(Spacing::SMALL)),
-                            overflow: Overflow::scroll(),
-                            ..default()
-                        })
                         .with_children(|list| {
                             // 10 list items
                             let items = [
@@ -124,7 +108,6 @@ pub fn spawn_list_section(
                             ];
 
                             for (i, (headline, supporting)) in items.iter().enumerate() {
-                                let icon_for_item = icon_font_clone.clone();
                                 list.spawn((
                                     SelectableListItem,
                                     TestId::new(format!("list_item_{}", i)),
@@ -132,31 +115,41 @@ pub fn spawn_list_section(
                                         .two_line()
                                         .supporting_text(*supporting)
                                         .build(&theme_clone),
+                                    Interaction::None,
                                 ))
                                 .with_children(|item| {
-                                    // Leading icon with proper font
+                                    // Leading (match library default list item layout)
                                     item.spawn((
-                                        Text::new(ICON_EMAIL.to_string()),
-                                        TextFont {
-                                            font: icon_for_item,
-                                            font_size: 24.0,
-                                            ..default()
-                                        },
-                                        TextColor(theme_clone.on_surface_variant),
+                                        bevy_material_ui::list::ListItemLeading,
                                         Node {
-                                            margin: UiRect::right(Val::Px(16.0)),
+                                            width: Val::Px(56.0),
+                                            height: Val::Px(56.0),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
                                             ..default()
                                         },
-                                    ));
+                                    ))
+                                    .with_children(|leading| {
+                                        if let Some(icon) = MaterialIcon::from_name(ICON_EMAIL) {
+                                            leading.spawn(
+                                                icon.with_size(24.0)
+                                                    .with_color(theme_clone.on_surface_variant),
+                                            );
+                                        }
+                                    });
 
-                                    // Body with text
-                                    item.spawn(Node {
-                                        flex_direction: FlexDirection::Column,
-                                        flex_grow: 1.0,
-                                        ..default()
-                                    })
+                                    // Body (match library markers so styling/selection systems can work)
+                                    item.spawn((
+                                        bevy_material_ui::list::ListItemBody,
+                                        Node {
+                                            flex_direction: FlexDirection::Column,
+                                            flex_grow: 1.0,
+                                            ..default()
+                                        },
+                                    ))
                                     .with_children(|body| {
                                         body.spawn((
+                                            bevy_material_ui::list::ListItemHeadline,
                                             Text::new(*headline),
                                             TextFont {
                                                 font_size: 16.0,
@@ -165,6 +158,7 @@ pub fn spawn_list_section(
                                             TextColor(theme_clone.on_surface),
                                         ));
                                         body.spawn((
+                                            bevy_material_ui::list::ListItemSupportingText,
                                             Text::new(*supporting),
                                             TextFont {
                                                 font_size: 14.0,

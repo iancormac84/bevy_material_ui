@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 
 use crate::theme::MaterialTheme;
+use crate::icons::material_icon_names;
 use crate::tokens::{CornerRadius, Spacing};
 
 mod calendar;
@@ -308,6 +309,11 @@ struct DatePickerMonthNav {
 
 #[derive(Component)]
 struct DatePickerYearToggle {
+    picker: Entity,
+}
+
+#[derive(Component)]
+struct DatePickerYearToggleIcon {
     picker: Entity,
 }
 
@@ -948,7 +954,11 @@ fn date_picker_render_system(
         Option<&DatePickerLabel>,
         Option<&DatePickerMonthLabel>,
         Option<&DatePickerTextInputValue>,
+    )>,
+    mut toggle_icons: Query<(
+        &mut crate::icons::svg::SvgIcon,
         Option<&DatePickerModeToggleLabel>,
+        Option<&DatePickerYearToggleIcon>,
     )>,
     theme: Res<MaterialTheme>,
 ) {
@@ -976,15 +986,7 @@ fn date_picker_render_system(
             _ => String::new(),
         };
 
-        let mode_toggle_text = if picker.input_mode == DateInputMode::Calendar {
-            "✎".to_string()
-        } else {
-            "CAL".to_string()
-        };
-
-        for (mut text, selection_label, month_label, text_input_value, mode_toggle_label) in
-            text_nodes.iter_mut()
-        {
+        for (mut text, selection_label, month_label, text_input_value) in text_nodes.iter_mut() {
             if let Some(label) = selection_label {
                 if label.picker == picker_entity {
                     text.0 = selection_text.clone();
@@ -1000,9 +1002,36 @@ fn date_picker_render_system(
                     text.0 = text_value.clone();
                 }
             }
-            if let Some(label) = mode_toggle_label {
-                if label.picker == picker_entity {
-                    text.0 = mode_toggle_text.clone();
+        }
+
+        // Update toggle icons (input mode + year dropdown) without conflicting queries.
+        // When in calendar mode, show the EDIT icon; when in text mode, show the CALENDAR icon.
+        let mode_toggle_icon_name = if picker.input_mode == DateInputMode::Calendar {
+            material_icon_names::material_ic_edit_black_24dp
+        } else {
+            material_icon_names::material_ic_calendar_black_24dp
+        };
+        let desired_mode_icon = mode_toggle_icon_name;
+
+        // Month dropdown chevron icon (down when years hidden; up when showing years).
+        let year_toggle_icon_name = if picker.showing_years {
+            material_icon_names::material_ic_menu_arrow_up_black_24dp
+        } else {
+            material_icon_names::material_ic_menu_arrow_down_black_24dp
+        };
+        let desired_year_icon = year_toggle_icon_name;
+
+        for (mut icon, mode_marker, year_marker) in toggle_icons.iter_mut() {
+            if let Some(marker) = mode_marker {
+                if marker.picker == picker_entity {
+                    icon.name = desired_mode_icon.to_string();
+                    icon.color = theme.on_surface;
+                }
+            }
+            if let Some(marker) = year_marker {
+                if marker.picker == picker_entity {
+                    icon.name = desired_year_icon.to_string();
+                    icon.color = theme.on_surface;
                 }
             }
         }
@@ -1271,16 +1300,18 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         BackgroundColor(Color::NONE),
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     )).with_children(|btn| {
+                        let mode_toggle_icon_name = if input_mode == DateInputMode::Calendar {
+                            material_icon_names::material_ic_edit_black_24dp
+                        } else {
+                            material_icon_names::material_ic_calendar_black_24dp
+                        };
                         btn.spawn((
                             DatePickerModeToggleLabel {
                                 picker: entity,
                             },
-                            Text::new("✎"),  // Pencil icon for text input
-                            TextFont {
-                                font_size: 20.0,
-                                ..default()
-                            },
-                            TextColor(on_surface),
+                            crate::icons::svg::SvgIcon::new(mode_toggle_icon_name)
+                                .with_size(20.0)
+                                .with_color(on_surface),
                         ));
                     });
                 });
@@ -1311,12 +1342,11 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     )).with_children(|btn| {
                         btn.spawn((
-                            Text::new("<"),
-                            TextFont {
-                                font_size: 20.0,
-                                ..default()
-                            },
-                            TextColor(on_surface),
+                            crate::icons::svg::SvgIcon::new(
+                                material_icon_names::material_ic_keyboard_arrow_previous_black_24dp,
+                            )
+                            .with_size(20.0)
+                            .with_color(on_surface),
                         ));
                     });
                     
@@ -1335,18 +1365,37 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         },
                         BackgroundColor(Color::NONE),
                         BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
-                    )).with_children(|btn| {
-                        btn.spawn((
-                            DatePickerMonthLabel {
-                                picker: entity,
-                            },
-                            Text::new(display_month.display_name()),
-                            TextFont {
-                                font_size: 16.0,
-                                ..default()
-                            },
-                            TextColor(on_surface),
-                        ));
+                    ))
+                    .with_children(|btn| {
+                        btn.spawn(Node {
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            column_gap: Val::Px(4.0),
+                            ..default()
+                        })
+                        .with_children(|row| {
+                            row.spawn((
+                                DatePickerMonthLabel { picker: entity },
+                                Text::new(display_month.display_name()),
+                                TextFont {
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(on_surface),
+                            ));
+
+                            let year_toggle_icon_name = if showing_years {
+                                material_icon_names::material_ic_menu_arrow_up_black_24dp
+                            } else {
+                                material_icon_names::material_ic_menu_arrow_down_black_24dp
+                            };
+                            row.spawn((
+                                DatePickerYearToggleIcon { picker: entity },
+                                crate::icons::svg::SvgIcon::new(year_toggle_icon_name)
+                                    .with_size(18.0)
+                                    .with_color(on_surface),
+                            ));
+                        });
                     });
                     
                     // Next month button
@@ -1368,12 +1417,11 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     )).with_children(|btn| {
                         btn.spawn((
-                            Text::new(">"),
-                            TextFont {
-                                font_size: 20.0,
-                                ..default()
-                            },
-                            TextColor(on_surface),
+                            crate::icons::svg::SvgIcon::new(
+                                material_icon_names::material_ic_keyboard_arrow_next_black_24dp,
+                            )
+                            .with_size(20.0)
+                            .with_color(on_surface),
                         ));
                     });
                 });

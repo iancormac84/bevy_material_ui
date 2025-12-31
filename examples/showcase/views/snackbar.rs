@@ -11,7 +11,7 @@ use crate::showcase::common::*;
 pub fn spawn_snackbar_section(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
-    icon_font: Handle<Font>,
+    _icon_font: Handle<Font>,
 ) {
     parent
         .spawn(Node {
@@ -226,15 +226,12 @@ pub fn spawn_snackbar_section(
                             BorderRadius::all(Val::Px(9999.0)),
                         ))
                         .with_children(|btn| {
-                            btn.spawn((
-                                Text::new(ICON_CLOSE.to_string()),
-                                TextFont {
-                                    font: icon_font.clone(),
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(theme.inverse_on_surface),
-                            ));
+                            if let Some(icon) = MaterialIcon::from_name(ICON_CLOSE) {
+                                btn.spawn(
+                                    icon.with_size(24.0)
+                                        .with_color(theme.inverse_on_surface),
+                                );
+                            }
                         });
                 });
 

@@ -37,8 +37,8 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             root.spawn_toolbar_with(
                 &theme,
                 ToolbarBuilder::new("Inventory")
-                    .navigation_icon(MaterialIcon::new(ICON_MENU))
-                    .action(MaterialIcon::new(ICON_SEARCH), "search"),
+                        .navigation_icon_name(ICON_MENU)
+                        .action_name(ICON_SEARCH, "search"),
             );
 
             // Simple body

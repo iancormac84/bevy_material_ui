@@ -60,7 +60,9 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     col.spawn_search_bar_with(
                         theme,
                         SearchBarBuilder::new("Search...")
-                            .with_navigation(MaterialIcon::new(ICON_MENU)),
+                            .with_navigation(
+                                MaterialIcon::from_name(ICON_MENU).expect("menu icon should exist"),
+                            ),
                     );
 
                     // Search bar with text
@@ -79,7 +81,10 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     col.spawn_search_bar_with(
                         theme,
                         SearchBarBuilder::new("Search...")
-                            .with_navigation(MaterialIcon::new(ICON_ARROW_BACK))
+                            .with_navigation(
+                                MaterialIcon::from_name(ICON_ARROW_BACK)
+                                    .expect("arrow_back icon should exist"),
+                            )
                             .with_text("material design"),
                     );
                 });
@@ -94,7 +99,7 @@ ui.spawn_search_bar(&theme, "Search...");
 ui.spawn_search_bar_with(
     &theme,
     SearchBarBuilder::new("Search...")
-        .with_navigation(MaterialIcon::new(ICON_MENU)),
+            .with_navigation(MaterialIcon::from_name(ICON_MENU).unwrap()),
 );
 
 // With search text

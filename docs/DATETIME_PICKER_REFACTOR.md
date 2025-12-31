@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The current `datetime_picker.rs` implementation combines date and time selection in a single component, which doesn't match Material Design 3 specifications. This document outlines the complete refactoring plan to align with Android Material Components.
+The current `datetime_picker.rs` implementation combines date and time selection in a single component, which doesn't match Material Design 3 specifications. This document outlines the complete refactoring plan to align with the reference Material Components behavior.
 
 ## Critical Issues Identified
 
@@ -337,7 +337,7 @@ TimePickerBuilder::new()
 
 ## Success Criteria
 
-- ✅ Matches Android Material Components behavior
+- ✅ Matches reference Material Components behavior
 - ✅ All P0 features implemented
 - ✅ 90%+ test coverage
 - ✅ Comprehensive documentation
@@ -355,5 +355,5 @@ TimePickerBuilder::new()
 
 - [Material Design 3 Date Picker](https://m3.material.io/components/date-pickers/overview)
 - [Material Design 3 Time Picker](https://m3.material.io/components/time-pickers/overview)
-- [Android MaterialDatePicker.java](https://github.com/material-components/material-components-android/blob/master/lib/java/com/google/android/material/datepicker/MaterialDatePicker.java)
-- [Android MaterialTimePicker.java](https://github.com/material-components/material-components-android/blob/master/lib/java/com/google/android/material/timepicker/MaterialTimePicker.java)
+- Reference implementation: `MaterialDatePicker.java`
+- Reference implementation: `MaterialTimePicker.java`

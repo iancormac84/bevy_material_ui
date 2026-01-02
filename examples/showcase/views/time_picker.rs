@@ -15,7 +15,6 @@ pub fn spawn_time_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
             row_gap: Val::Px(16.0),
             ..default()
         })
-        .insert((Transform::default(), GlobalTransform::default()))
         .with_children(|section| {
             spawn_section_header(
                 section,

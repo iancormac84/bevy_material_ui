@@ -2277,9 +2277,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 display_month.month,
                                                 day_number,
                                             );
-                                            // Note: Initial spawn uses Date::today() placeholder
-                                            // Systems will update highlighting using CurrentDate resource if available
-                                            let is_today = date == Date::today();
+                                            // Note: Initial spawn does not mark any day as "today".
+                                            // Systems will update highlighting using CurrentDate resource if available.
+                                            let is_today = false;
                                             let is_valid =
                                                 builder.constraints.validator.is_valid(date);
 

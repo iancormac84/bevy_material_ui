@@ -358,7 +358,8 @@ fn checkbox_visual_update_system(
 ) {
     let Some(theme) = theme else { return };
 
-    let default_icon_id = icon_by_name(ICON_CHECK).expect("embedded icon 'check' not found");
+    let default_icon_id = icon_by_name(ICON_CHECK)
+        .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
 
     for (_entity, checkbox, children) in checkboxes.iter() {
         // Find checkbox box and icon through children
@@ -420,7 +421,8 @@ fn checkbox_theme_refresh_system(
         return;
     }
 
-    let default_icon_id = icon_by_name(ICON_CHECK).expect("embedded icon 'check' not found");
+    let default_icon_id = icon_by_name(ICON_CHECK)
+        .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
 
     for (_entity, checkbox, children) in checkboxes.iter() {
         // Find checkbox box and icon through children
@@ -549,7 +551,8 @@ impl CheckboxBuilder {
         let icon_color = checkbox.icon_color(theme);
         let icon_name = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
-        let default_icon_id = icon_by_name(ICON_CHECK).expect("embedded icon 'check' not found");
+        let default_icon_id = icon_by_name(ICON_CHECK)
+            .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
         let icon_visibility = if icon_name.is_some() {
             Visibility::Inherited
         } else {
@@ -652,7 +655,8 @@ impl SpawnCheckbox for Commands<'_, '_> {
         let icon_color = checkbox.icon_color(theme);
         let icon_name = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
-        let default_icon_id = icon_by_name(ICON_CHECK).expect("embedded icon 'check' not found");
+        let default_icon_id = icon_by_name(ICON_CHECK)
+            .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
         let icon_visibility = if icon_name.is_some() {
             Visibility::Inherited
         } else {
@@ -776,7 +780,8 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
         let icon_color = checkbox.icon_color(theme);
         let icon_name = checkbox.state.icon();
         let state_layer_color = checkbox.state_layer_color(theme);
-        let default_icon_id = icon_by_name(ICON_CHECK).expect("embedded icon 'check' not found");
+        let default_icon_id = icon_by_name(ICON_CHECK)
+            .expect("embedded icon 'check' not found - ensure google-material-design-icons-bin crate is properly configured");
         let icon_visibility = if icon_name.is_some() {
             Visibility::Inherited
         } else {

@@ -70,6 +70,23 @@
     "showcase.buttons.priority.med": "中",
     "showcase.buttons.priority.high": "高",
     
+    "showcase.checkboxes.option_1": "选项1",
+    "showcase.checkboxes.option_2": "选项2",
+    "showcase.checkboxes.option_3": "选项3",
+    
+    "showcase.switches.wifi": "Wi-Fi",
+    "showcase.switches.bluetooth": "蓝牙",
+    "showcase.switches.dark_mode": "深色模式",
+    
+    "showcase.radios.choice_a": "选择A",
+    "showcase.radios.choice_b": "选择B",
+    "showcase.radios.choice_c": "选择C",
+    
+    "showcase.chips.filter": "筛选",
+    "showcase.chips.selected": "已选择",
+    "showcase.chips.tag": "标签",
+    "showcase.chips.action": "操作",
+    
     "showcase.section.checkboxes.title": "复选框",
     "showcase.section.checkboxes.description": "切换选择并显示勾选反馈",
     "showcase.section.switches.title": "开关",

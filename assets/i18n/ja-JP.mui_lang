@@ -70,6 +70,23 @@
     "showcase.buttons.priority.med": "中",
     "showcase.buttons.priority.high": "高",
     
+    "showcase.checkboxes.option_1": "オプション1",
+    "showcase.checkboxes.option_2": "オプション2",
+    "showcase.checkboxes.option_3": "オプション3",
+    
+    "showcase.switches.wifi": "Wi-Fi",
+    "showcase.switches.bluetooth": "Bluetooth",
+    "showcase.switches.dark_mode": "ダークモード",
+    
+    "showcase.radios.choice_a": "選択A",
+    "showcase.radios.choice_b": "選択B",
+    "showcase.radios.choice_c": "選択C",
+    
+    "showcase.chips.filter": "フィルター",
+    "showcase.chips.selected": "選択済み",
+    "showcase.chips.tag": "タグ",
+    "showcase.chips.action": "アクション",
+    
     "showcase.section.checkboxes.title": "チェックボックス",
     "showcase.section.checkboxes.description": "チェックマークで選択を切り替え",
     "showcase.section.switches.title": "スイッチ",

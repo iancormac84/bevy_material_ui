@@ -70,6 +70,23 @@
     "showcase.buttons.priority.med": "Med",
     "showcase.buttons.priority.high": "High",
     
+    "showcase.checkboxes.option_1": "Option 1",
+    "showcase.checkboxes.option_2": "Option 2",
+    "showcase.checkboxes.option_3": "Option 3",
+    
+    "showcase.switches.wifi": "Wi-Fi",
+    "showcase.switches.bluetooth": "Bluetooth",
+    "showcase.switches.dark_mode": "Dark Mode",
+    
+    "showcase.radios.choice_a": "Choice A",
+    "showcase.radios.choice_b": "Choice B",
+    "showcase.radios.choice_c": "Choice C",
+    
+    "showcase.chips.filter": "Filter",
+    "showcase.chips.selected": "Selected",
+    "showcase.chips.tag": "Tag",
+    "showcase.chips.action": "Action",
+    
     "showcase.section.checkboxes.title": "Checkboxes",
     "showcase.section.checkboxes.description": "Toggle selection with visual checkmark feedback",
     "showcase.section.switches.title": "Switches",

@@ -70,6 +70,23 @@
     "showcase.buttons.priority.med": "Media",
     "showcase.buttons.priority.high": "Alta",
     
+    "showcase.checkboxes.option_1": "Opción 1",
+    "showcase.checkboxes.option_2": "Opción 2",
+    "showcase.checkboxes.option_3": "Opción 3",
+    
+    "showcase.switches.wifi": "Wi-Fi",
+    "showcase.switches.bluetooth": "Bluetooth",
+    "showcase.switches.dark_mode": "Modo Oscuro",
+    
+    "showcase.radios.choice_a": "Opción A",
+    "showcase.radios.choice_b": "Opción B",
+    "showcase.radios.choice_c": "Opción C",
+    
+    "showcase.chips.filter": "Filtro",
+    "showcase.chips.selected": "Seleccionado",
+    "showcase.chips.tag": "Etiqueta",
+    "showcase.chips.action": "Acción",
+    
     "showcase.section.checkboxes.title": "Casillas",
     "showcase.section.checkboxes.description": "Alterna la selección con una marca de verificación",
     "showcase.section.switches.title": "Interruptores",

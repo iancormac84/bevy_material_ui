@@ -70,6 +70,23 @@
     "showcase.buttons.priority.med": "Mittel",
     "showcase.buttons.priority.high": "Hoch",
     
+    "showcase.checkboxes.option_1": "Option 1",
+    "showcase.checkboxes.option_2": "Option 2",
+    "showcase.checkboxes.option_3": "Option 3",
+    
+    "showcase.switches.wifi": "WLAN",
+    "showcase.switches.bluetooth": "Bluetooth",
+    "showcase.switches.dark_mode": "Dunkler Modus",
+    
+    "showcase.radios.choice_a": "Wahl A",
+    "showcase.radios.choice_b": "Wahl B",
+    "showcase.radios.choice_c": "Wahl C",
+    
+    "showcase.chips.filter": "Filter",
+    "showcase.chips.selected": "Ausgewählt",
+    "showcase.chips.tag": "Tag",
+    "showcase.chips.action": "Aktion",
+    
     "showcase.section.checkboxes.title": "Kontrollkästchen",
     "showcase.section.checkboxes.description": "Auswahl per visuellem Häkchen umschalten",
     "showcase.section.switches.title": "Schalter",

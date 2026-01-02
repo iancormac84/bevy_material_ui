@@ -70,6 +70,23 @@
     "showcase.buttons.priority.med": "בינוני",
     "showcase.buttons.priority.high": "גבוה",
     
+    "showcase.checkboxes.option_1": "אפשרות 1",
+    "showcase.checkboxes.option_2": "אפשרות 2",
+    "showcase.checkboxes.option_3": "אפשרות 3",
+    
+    "showcase.switches.wifi": "Wi-Fi",
+    "showcase.switches.bluetooth": "Bluetooth",
+    "showcase.switches.dark_mode": "מצב כהה",
+    
+    "showcase.radios.choice_a": "בחירה A",
+    "showcase.radios.choice_b": "בחירה B",
+    "showcase.radios.choice_c": "בחירה C",
+    
+    "showcase.chips.filter": "מסנן",
+    "showcase.chips.selected": "נבחר",
+    "showcase.chips.tag": "תג",
+    "showcase.chips.action": "פעולה",
+    
     "showcase.section.checkboxes.title": "תיבות סימון",
     "showcase.section.checkboxes.description": "החלפת בחירה עם משוב סימון",
     "showcase.section.switches.title": "מתגים",

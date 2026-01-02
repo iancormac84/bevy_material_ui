@@ -175,6 +175,7 @@ pub fn run() {
                 snackbar_demo_style_system,
                 snackbar_demo_action_log_system,
                 apply_international_font_system,
+                update_font_on_language_change_system,
             ),
         )
         .add_systems(
@@ -821,6 +822,56 @@ fn apply_international_font_system(
         
         // Remove marker to prevent reprocessing
         commands.entity(entity).remove::<common::NeedsInternationalFont>();
+    }
+}
+
+/// Update fonts when language changes.
+/// 
+/// This system runs whenever the language changes and updates all localized text
+/// to use the appropriate font for that language.
+fn update_font_on_language_change_system(
+    font_resource: Option<Res<ShowcaseFont>>,
+    fonts: Res<Assets<Font>>,
+    language: Res<MaterialLanguage>,
+    mut query: Query<&mut TextFont, With<LocalizedText>>,
+) {
+    // Only run when language actually changes
+    if !language.is_changed() {
+        return;
+    }
+
+    let Some(font_resource) = font_resource else {
+        return;
+    };
+
+    // Check if all fonts are loaded
+    let latin_loaded = fonts.get(&font_resource.latin).is_some();
+    let cjk_loaded = fonts.get(&font_resource.cjk).is_some();
+    let hebrew_loaded = fonts.get(&font_resource.hebrew).is_some();
+
+    if !latin_loaded || !cjk_loaded || !hebrew_loaded {
+        return;
+    }
+
+    // Select font based on current language
+    let font_handle = match language.tag.as_str() {
+        "zh-CN" | "ja-JP" => {
+            info!("🔤 Switching to CJK font for {}", language.tag);
+            &font_resource.cjk
+        }
+        "he-IL" => {
+            info!("🔤 Switching to Hebrew font");
+            &font_resource.hebrew
+        }
+        _ => {
+            info!("🔤 Switching to Latin font for {}", language.tag);
+            &font_resource.latin
+        }
+    };
+
+    // Update all localized text to use the appropriate font
+    for mut text_font in query.iter_mut() {
+        text_font.font = font_handle.clone();
     }
 }
 

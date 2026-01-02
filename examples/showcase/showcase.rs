@@ -81,18 +81,18 @@ struct ShowcaseI18nAssets {
 }
 
 /// Global font handle for international text support.
-/// 
+///
 /// **Required Font**: Noto Sans (or another font with comprehensive Unicode coverage)
-/// 
+///
 /// Download from: https://fonts.google.com/noto/specimen/Noto+Sans
 /// Place the font file at: `assets/fonts/NotoSans-Regular.ttf`
-/// 
+///
 /// This font supports:
 /// - Latin (English, Spanish, French, German)
 /// - CJK (Chinese, Japanese, Korean)
 /// - Hebrew, Arabic, Cyrillic, Greek
 /// - And many more scripts
-/// 
+///
 /// **Fallback**: If the font file is not found, Bevy's default font will be used,
 /// but international characters (Chinese, Japanese, Hebrew, etc.) will not render correctly.
 #[derive(Resource, Clone)]
@@ -135,13 +135,11 @@ pub fn run() {
     let asset_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
 
     App::new()
-        .add_plugins(
-            DefaultPlugins.set(AssetPlugin {
-                file_path: asset_root.to_string_lossy().to_string(),
-                watch_for_changes_override: Some(true),
-                ..default()
-            }),
-        )
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            file_path: asset_root.to_string_lossy().to_string(),
+            watch_for_changes_override: Some(true),
+            ..default()
+        }))
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(MaterialUiPlugin)
         .init_resource::<ShowcaseThemeSelection>()
@@ -196,7 +194,13 @@ pub fn run() {
                 settings_dialog_ok_close_system,
             ),
         )
-        .add_systems(Update, (sidebar_scroll_telemetry_system, main_scroll_telemetry_system))
+        .add_systems(
+            Update,
+            (
+                sidebar_scroll_telemetry_system,
+                main_scroll_telemetry_system,
+            ),
+        )
         .add_systems(Update, email_validation_system)
         .add_systems(
             Update,
@@ -363,7 +367,9 @@ fn translations_populate_select_options_system(
             continue;
         }
         let handle = asset_server.load::<MaterialTranslations>(entry.asset_path.clone());
-        assets.handles_by_path.insert(entry.asset_path.clone(), handle);
+        assets
+            .handles_by_path
+            .insert(entry.asset_path.clone(), handle);
     }
 
     let Some((mut select, _loc)) = selects
@@ -375,9 +381,7 @@ fn translations_populate_select_options_system(
 
     let mut options = Vec::with_capacity(state.entries.len());
     for entry in state.entries.iter() {
-        options.push(
-            SelectOption::new(entry.file_name.clone()).value(entry.asset_path.clone()),
-        );
+        options.push(SelectOption::new(entry.file_name.clone()).value(entry.asset_path.clone()));
     }
 
     select.options = options;
@@ -526,11 +530,7 @@ fn translations_select_change_system(
         state.selected_asset_path = Some(asset_path.clone());
 
         // Update language tag to match the file’s declared language.
-        if let Some(entry) = state
-            .entries
-            .iter()
-            .find(|e| e.asset_path == asset_path)
-        {
+        if let Some(entry) = state.entries.iter().find(|e| e.asset_path == asset_path) {
             language.tag = entry.language_tag.clone();
         }
 
@@ -606,19 +606,18 @@ fn translations_create_file_system(
             continue;
         }
 
-        let Some(label_value) = ({
-            editor_fields.p0().iter().next().map(|f| f.value.clone())
-        }) else {
+        let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
+        else {
             continue;
         };
-        let Some(placeholder_value) = ({
-            editor_fields.p1().iter().next().map(|f| f.value.clone())
-        }) else {
+        let Some(placeholder_value) =
+            ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
+        else {
             continue;
         };
-        let Some(supporting_value) = ({
-            editor_fields.p2().iter().next().map(|f| f.value.clone())
-        }) else {
+        let Some(supporting_value) =
+            ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
+        else {
             continue;
         };
 
@@ -685,19 +684,18 @@ fn translations_save_file_system(
 
         let mut strings = parse_translation_file_strings(&disk_path).unwrap_or_default();
 
-        let Some(label_value) = ({
-            editor_fields.p0().iter().next().map(|f| f.value.clone())
-        }) else {
+        let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
+        else {
             continue;
         };
-        let Some(placeholder_value) = ({
-            editor_fields.p1().iter().next().map(|f| f.value.clone())
-        }) else {
+        let Some(placeholder_value) =
+            ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
+        else {
             continue;
         };
-        let Some(supporting_value) = ({
-            editor_fields.p2().iter().next().map(|f| f.value.clone())
-        }) else {
+        let Some(supporting_value) =
+            ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
+        else {
             continue;
         };
 
@@ -725,7 +723,12 @@ fn translations_save_file_system(
             "strings": strings,
         });
 
-        if fs::write(&disk_path, serde_json::to_vec_pretty(&json).unwrap_or_default()).is_ok() {
+        if fs::write(
+            &disk_path,
+            serde_json::to_vec_pretty(&json).unwrap_or_default(),
+        )
+        .is_ok()
+        {
             if let Some(i18n) = i18n.as_deref_mut() {
                 // Immediately apply without relying on file watching.
                 let Some(strings) = parse_translation_file_strings(&disk_path) else {
@@ -759,7 +762,7 @@ fn load_showcase_i18n_assets_system(mut commands: Commands, asset_server: Res<As
     info!("   - NotoSans-Regular.ttf (Latin: English, Spanish, French, German)");
     info!("   - NotoSansSC-Regular.ttf (CJK: Chinese, Japanese)");
     info!("   - NotoSerifHebrew-Regular.ttf (Hebrew)");
-    
+
     commands.insert_resource(ShowcaseFont {
         latin: asset_server.load::<Font>("fonts/NotoSans-Regular.ttf"),
         cjk: asset_server.load::<Font>("fonts/NotoSansSC-Regular.ttf"),
@@ -780,7 +783,7 @@ fn toggle_language_system(keys: Res<ButtonInput<KeyCode>>, mut language: ResMut<
 }
 
 /// Apply international font to text nodes marked with `NeedsInternationalFont`.
-/// 
+///
 /// This system runs for each marked text node, waiting until the font has loaded
 /// before applying it. Only removes the marker once the font is successfully applied.
 fn apply_international_font_system(
@@ -808,7 +811,10 @@ fn apply_international_font_system(
     // Log once when all fonts are successfully loaded
     if !*logged {
         let count = query.iter().count();
-        info!("✅ All international fonts loaded! Applying to {} text elements", count);
+        info!(
+            "✅ All international fonts loaded! Applying to {} text elements",
+            count
+        );
         *logged = true;
     }
 
@@ -822,14 +828,16 @@ fn apply_international_font_system(
     // Apply appropriate font to all marked entities
     for (entity, mut text_font) in query.iter_mut() {
         text_font.font = font_handle.clone();
-        
+
         // Remove marker to prevent reprocessing
-        commands.entity(entity).remove::<common::NeedsInternationalFont>();
+        commands
+            .entity(entity)
+            .remove::<common::NeedsInternationalFont>();
     }
 }
 
 /// Update fonts when language changes.
-/// 
+///
 /// This system runs whenever the language changes and updates all localized text
 /// to use the appropriate font for that language.
 fn update_font_on_language_change_system(
@@ -885,7 +893,9 @@ fn fps_overlay_system(
     language: Res<MaterialLanguage>,
     mut fps: Query<(&mut Text, &mut TextColor), With<FpsText>>,
 ) {
-    let Some((mut text, mut color)) = fps.iter_mut().next() else { return };
+    let Some((mut text, mut color)) = fps.iter_mut().next() else {
+        return;
+    };
 
     // Keep it legible across theme changes.
     color.0 = theme.on_surface;
@@ -932,14 +942,8 @@ fn ensure_automation_test_ids_clickables_system(
         Query<(Entity, &UiGlobalTransform), (With<MaterialChip>, Without<TestId>)>,
         Query<(Entity, &UiGlobalTransform), (With<MaterialFab>, Without<TestId>)>,
         Query<(Entity, &UiGlobalTransform), (With<MaterialBadge>, Without<TestId>)>,
-        Query<
-            (Entity, &UiGlobalTransform),
-            (With<MaterialLinearProgress>, Without<TestId>),
-        >,
-        Query<
-            (Entity, &UiGlobalTransform),
-            (With<MaterialCircularProgress>, Without<TestId>),
-        >,
+        Query<(Entity, &UiGlobalTransform), (With<MaterialLinearProgress>, Without<TestId>)>,
+        Query<(Entity, &UiGlobalTransform), (With<MaterialCircularProgress>, Without<TestId>)>,
         Query<(Entity, &UiGlobalTransform), (With<MaterialCard>, Without<TestId>)>,
         Query<(Entity, &UiGlobalTransform), (With<MaterialDivider>, Without<TestId>)>,
     )>,
@@ -952,8 +956,11 @@ fn ensure_automation_test_ids_clickables_system(
 
     match selected.current {
         ComponentSection::Buttons => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p0().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p0()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -975,8 +982,11 @@ fn ensure_automation_test_ids_clickables_system(
                 });
             }
 
-            let mut fab_items: Vec<(Entity, f32)> =
-                queries.p2().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut fab_items: Vec<(Entity, f32)> = queries
+                .p2()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             fab_items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in fab_items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -986,8 +996,11 @@ fn ensure_automation_test_ids_clickables_system(
             }
         }
         ComponentSection::Chips => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p1().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p1()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -997,8 +1010,11 @@ fn ensure_automation_test_ids_clickables_system(
             }
         }
         ComponentSection::Fab => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p2().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p2()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1008,8 +1024,11 @@ fn ensure_automation_test_ids_clickables_system(
             }
         }
         ComponentSection::Badges => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p3().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p3()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1046,8 +1065,11 @@ fn ensure_automation_test_ids_clickables_system(
             }
         }
         ComponentSection::Cards => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p6().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p6()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1057,8 +1079,11 @@ fn ensure_automation_test_ids_clickables_system(
             }
         }
         ComponentSection::Dividers => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p7().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p7()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1111,7 +1136,10 @@ fn ensure_automation_test_ids_inputs_system(
     )>,
     select_options: Query<
         (Entity, &UiGlobalTransform),
-        (With<bevy_material_ui::select::SelectOptionItem>, Without<TestId>),
+        (
+            With<bevy_material_ui::select::SelectOptionItem>,
+            Without<TestId>,
+        ),
     >,
 ) {
     if !telemetry.enabled {
@@ -1148,8 +1176,11 @@ fn ensure_automation_test_ids_inputs_system(
             }
         }
         ComponentSection::RadioButtons => {
-            let mut items: Vec<(Entity, f32)> =
-                queries.p2().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p2()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1160,8 +1191,11 @@ fn ensure_automation_test_ids_inputs_system(
         }
         ComponentSection::Sliders => {
             // Slider root entities (for mapping slider_0_value, etc.)
-            let mut items: Vec<(Entity, f32)> =
-                queries.p3().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut items: Vec<(Entity, f32)> = queries
+                .p3()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1213,8 +1247,11 @@ fn ensure_automation_test_ids_inputs_system(
             }
         }
         ComponentSection::Select => {
-            let mut roots: Vec<(Entity, f32)> =
-                queries.p7().iter().map(|(e, t)| (e, t.translation.y)).collect();
+            let mut roots: Vec<(Entity, f32)> = queries
+                .p7()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             roots.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in roots.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1401,12 +1438,11 @@ fn ensure_automation_test_ids_overlays_system(
                 });
             }
 
-            let mut items: Vec<(Entity, f32)> =
-                overlays_menu
-                    .p2()
-                    .iter()
-                    .map(|(e, t)| (e, t.translation.y))
-                    .collect();
+            let mut items: Vec<(Entity, f32)> = overlays_menu
+                .p2()
+                .iter()
+                .map(|(e, t)| (e, t.translation.y))
+                .collect();
             items.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
             for (i, (entity, _)) in items.into_iter().enumerate() {
                 commands.queue(InsertTestIdIfExists {
@@ -1464,13 +1500,18 @@ fn telemetry_from_component_events_system(
         telemetry.log_event(&format!("Checkbox changed: {:?}", ev.entity));
     }
     for ev in switch_events.read() {
-        telemetry.log_event(&format!("Switch changed: {:?} -> {}", ev.entity, ev.selected));
+        telemetry.log_event(&format!(
+            "Switch changed: {:?} -> {}",
+            ev.entity, ev.selected
+        ));
     }
     for ev in radio_events.read() {
         telemetry.log_event(&format!("Radio changed: {:?}", ev.entity));
     }
     for ev in tab_events.read() {
-        telemetry.states.insert("tab_selected".to_string(), ev.index.to_string());
+        telemetry
+            .states
+            .insert("tab_selected".to_string(), ev.index.to_string());
         telemetry.log_event(&format!("Tab changed: {}", ev.index));
     }
     for ev in slider_events.read() {
@@ -1481,7 +1522,10 @@ fn telemetry_from_component_events_system(
                     .insert(format!("slider_{}_value", idx), format!("{:.2}", ev.value));
             }
         }
-        telemetry.log_event(&format!("Slider changed: {:?} -> {:.2}", ev.entity, ev.value));
+        telemetry.log_event(&format!(
+            "Slider changed: {:?} -> {:.2}",
+            ev.entity, ev.value
+        ));
     }
 }
 
@@ -1500,7 +1544,8 @@ fn telemetry_list_selection_state_system(
     }
 
     // Only recompute when something changed OR if the key is missing (first entry).
-    let needs_update = !items_changed.is_empty() || !telemetry.states.contains_key("list_selected_items");
+    let needs_update =
+        !items_changed.is_empty() || !telemetry.states.contains_key("list_selected_items");
     if !needs_update {
         return;
     }
@@ -1606,7 +1651,10 @@ fn telemetry_snapshot_system(
 fn debug_lists_visibility_system(
     selected: Res<SelectedSection>,
     lists: Query<(Entity, Option<&Children>, Option<&ComputedNode>), With<ListDemoRoot>>,
-    scroll_contents: Query<(Entity, Option<&Children>, Option<&ComputedNode>), With<bevy_material_ui::scroll::ScrollContent>>,
+    scroll_contents: Query<
+        (Entity, Option<&Children>, Option<&ComputedNode>),
+        With<bevy_material_ui::scroll::ScrollContent>,
+    >,
     items: Query<Entity, With<bevy_material_ui::list::MaterialListItem>>,
     icons: Query<(), With<MaterialIcon>>,
     texts: Query<(), With<Text>>,
@@ -1662,10 +1710,7 @@ fn debug_lists_visibility_system(
 
     let list_child_count = list_children.map(|c| c.len()).unwrap_or(0);
     let list_size = list_computed.map(|c| c.size());
-    let list_scroll = scroll_positions
-        .get(list_entity)
-        .ok()
-        .map(|p| (**p));
+    let list_scroll = scroll_positions.get(list_entity).ok().map(|p| (**p));
     bevy::log::info!(
         "[lists debug] ListDemoRoot={:?} children={} size={:?} scroll={:?}",
         list_entity,
@@ -1691,13 +1736,11 @@ fn debug_lists_visibility_system(
     }
 
     if let Some(content) = content_entity {
-        let (content_e, content_children, content_computed) = scroll_contents.get(content).ok().unwrap();
+        let (content_e, content_children, content_computed) =
+            scroll_contents.get(content).ok().unwrap();
         let content_child_count = content_children.map(|c| c.len()).unwrap_or(0);
         let content_size = content_computed.map(|c| c.size());
-        let content_scroll = scroll_positions
-            .get(content_e)
-            .ok()
-            .map(|p| (**p));
+        let content_scroll = scroll_positions.get(content_e).ok().map(|p| (**p));
         bevy::log::info!(
             "[lists debug] ScrollContent={:?} children={} size={:?} scroll={:?}",
             content_e,
@@ -1722,7 +1765,10 @@ fn debug_lists_visibility_system(
             current = parents.get(e).ok().map(|p| p.0);
         }
     }
-    bevy::log::info!("[lists debug] MaterialListItem descendants under list: {}", item_count);
+    bevy::log::info!(
+        "[lists debug] MaterialListItem descendants under list: {}",
+        item_count
+    );
 
     // Inspect a representative list item so we know whether it has visible content.
     // (If item nodes have non-zero size and contain Text, rendering should be happening.)
@@ -1995,7 +2041,8 @@ fn setup_ui(
 
             // Settings icon button.
             let icon_name = "settings";
-            let button = MaterialIconButton::new(icon_name).with_variant(IconButtonVariant::Standard);
+            let button =
+                MaterialIconButton::new(icon_name).with_variant(IconButtonVariant::Standard);
             let bg_color = button.background_color(&theme);
             let border_color = button.border_color(&theme);
             let icon_color = button.icon_color(&theme);
@@ -2012,7 +2059,11 @@ fn setup_ui(
                         height: Val::Px(ICON_BUTTON_SIZE),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        border: UiRect::all(Val::Px(if border_color == Color::NONE { 0.0 } else { 1.0 })),
+                        border: UiRect::all(Val::Px(if border_color == Color::NONE {
+                            0.0
+                        } else {
+                            1.0
+                        })),
                         ..default()
                     },
                     BackgroundColor(bg_color),
@@ -2034,10 +2085,7 @@ fn setup_ui(
     let dialog_entity = commands
         .spawn((
             SettingsDialog,
-            DialogBuilder::new()
-                .title("")
-                .modal(true)
-                .build(&theme),
+            DialogBuilder::new().title("").modal(true).build(&theme),
         ))
         .with_children(|dialog| {
             // Headline
@@ -2114,7 +2162,11 @@ fn setup_ui(
                                         justify_content: justify,
                                         align_items: AlignItems::Center,
                                         padding: UiRect::horizontal(Val::Px(2.0)),
-                                        border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                                        border: UiRect::all(Val::Px(if has_border {
+                                            2.0
+                                        } else {
+                                            0.0
+                                        })),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),
@@ -2355,13 +2407,7 @@ fn spawn_ui_root(
                         ))
                         .with_children(|detail| {
                             spawn_detail_scroller(
-                                detail,
-                                theme,
-                                selected,
-                                icon_font,
-                                tab_cache,
-                                seed_argb,
-                                materials,
+                                detail, theme, selected, icon_font, tab_cache, seed_argb, materials,
                             );
                         });
                 },
@@ -2418,13 +2464,7 @@ fn spawn_detail_scroller(
                 ))
                 .with_children(|surface| {
                     spawn_selected_section(
-                        surface,
-                        theme,
-                        selected,
-                        icon_font,
-                        tab_cache,
-                        seed_argb,
-                        materials,
+                        surface, theme, selected, icon_font, tab_cache, seed_argb, materials,
                     );
                 });
 
@@ -2633,7 +2673,10 @@ fn date_picker_demo_system(
         let label = if let Ok(picker) = pickers.p1().get(display.0) {
             match picker.selection() {
                 Some(DateSelection::Single(date)) => {
-                    format!("{prefix} {}-{:02}-{:02}", date.year, date.month as u8, date.day)
+                    format!(
+                        "{prefix} {}-{:02}-{:02}",
+                        date.year, date.month as u8, date.day
+                    )
                 }
                 Some(DateSelection::Range { start, end }) => {
                     if let Some(end) = end {
@@ -2649,9 +2692,7 @@ fn date_picker_demo_system(
                     } else {
                         format!(
                             "{prefix} {}-{:02}-{:02} {selecting}",
-                            start.year,
-                            start.month as u8,
-                            start.day
+                            start.year, start.month as u8, start.day
                         )
                     }
                 }
@@ -2796,8 +2837,14 @@ fn snackbar_demo_trigger_system(
 fn snackbar_demo_style_system(
     theme: Res<MaterialTheme>,
     options: Res<SnackbarDemoOptions>,
-    mut duration_chips: Query<(&SnackbarDurationOption, &mut MaterialChip), Without<SnackbarActionToggle>>,
-    mut action_toggle_chip: Query<&mut MaterialChip, (With<SnackbarActionToggle>, Without<SnackbarDurationOption>)>,
+    mut duration_chips: Query<
+        (&SnackbarDurationOption, &mut MaterialChip),
+        Without<SnackbarActionToggle>,
+    >,
+    mut action_toggle_chip: Query<
+        &mut MaterialChip,
+        (With<SnackbarActionToggle>, Without<SnackbarDurationOption>),
+    >,
 ) {
     if !theme.is_changed() && !options.is_changed() {
         return;
@@ -2867,8 +2914,19 @@ fn tooltip_demo_apply_system(
 fn tooltip_demo_style_system(
     theme: Res<MaterialTheme>,
     options: Res<TooltipDemoOptions>,
-    mut position_buttons: Query<(Entity, &TooltipPositionOption, &mut MaterialButton, &Children), Without<TooltipDelayOption>>,
-    mut delay_buttons: Query<(Entity, &TooltipDelayOption, &mut MaterialButton, &Children), Without<TooltipPositionOption>>,
+    mut position_buttons: Query<
+        (
+            Entity,
+            &TooltipPositionOption,
+            &mut MaterialButton,
+            &Children,
+        ),
+        Without<TooltipDelayOption>,
+    >,
+    mut delay_buttons: Query<
+        (Entity, &TooltipDelayOption, &mut MaterialButton, &Children),
+        Without<TooltipPositionOption>,
+    >,
     mut label_colors: Query<&mut TextColor, With<ButtonLabel>>,
 ) {
     if !theme.is_changed() && !options.is_changed() {
@@ -3121,14 +3179,20 @@ fn spawn_selected_section(
         ComponentSection::AppBar => spawn_app_bar_section(parent, theme, icon_font),
         ComponentSection::Toolbar => spawn_toolbar_section(parent, theme, icon_font),
         ComponentSection::Layouts => spawn_layouts_section(parent, theme, icon_font),
-        ComponentSection::LoadingIndicator => spawn_loading_indicator_section(parent, theme, materials),
+        ComponentSection::LoadingIndicator => {
+            spawn_loading_indicator_section(parent, theme, materials)
+        }
         ComponentSection::Search => spawn_search_section(parent, theme),
         ComponentSection::ThemeColors => spawn_theme_section(parent, theme, seed_argb),
         ComponentSection::Translations => spawn_translations_section(parent, theme),
     }
 }
 
-fn clear_children_recursive(commands: &mut Commands, children_q: &Query<&Children>, entity: Entity) {
+fn clear_children_recursive(
+    commands: &mut Commands,
+    children_q: &Query<&Children>,
+    entity: Entity,
+) {
     let Ok(children) = children_q.get(entity) else {
         return;
     };
@@ -3259,10 +3323,13 @@ fn create_d10_mesh() -> Mesh {
         );
     }
 
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::RENDER_WORLD)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD,
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 fn add_triangle(
@@ -3290,4 +3357,3 @@ fn add_triangle(
     indices.push(start + 1);
     indices.push(start + 2);
 }
-

@@ -995,4 +995,3 @@ fn copy_to_clipboard_best_effort(text: &str) -> Result<(), String> {
         Err(format!("clip exited with status {status}"))
     }
 }
-

@@ -76,14 +76,7 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             TextColor(theme.on_surface_variant),
                             NeedsInternationalFont,
                         ));
-                        container.spawn_discrete_slider(
-                            theme,
-                            0.0,
-                            100.0,
-                            60.0,
-                            20.0,
-                            None,
-                        );
+                        container.spawn_discrete_slider(theme, 0.0, 100.0, 60.0, 20.0, None);
                     });
 
                     // Vertical slider

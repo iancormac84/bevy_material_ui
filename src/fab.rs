@@ -33,9 +33,9 @@ impl Plugin for FabPlugin {
                 fab_shadow_system,
             ),
         );
-            if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
-                app.add_plugins(crate::MaterialUiCorePlugin);
-            }
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
     }
 }
 

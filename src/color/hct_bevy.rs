@@ -9,14 +9,8 @@
 use bevy::prelude::Color;
 
 /// HCT color (Hue, Chroma, Tone), backed by the `hct-cam16` crate.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Hct(hct_cam16::Hct);
-
-impl Default for Hct {
-    fn default() -> Self {
-        Self(hct_cam16::Hct::default())
-    }
-}
 
 impl Hct {
     /// Create HCT from hue, chroma, and tone.

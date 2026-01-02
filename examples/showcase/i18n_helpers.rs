@@ -3,14 +3,14 @@
 //! These functions replicate the library's spawn helpers but add LocalizedText
 //! to labels for internationalization support.
 
+use crate::showcase::common::NeedsInternationalFont;
 use bevy::prelude::*;
-use bevy_material_ui::prelude::*;
 use bevy_material_ui::checkbox::{CheckboxBox, CheckboxIcon, CheckboxStateLayer};
-use bevy_material_ui::switch::SwitchHandle;
-use bevy_material_ui::radio::{RadioOuter, RadioInner, RadioStateLayer};
 use bevy_material_ui::chip::ChipLabel;
 use bevy_material_ui::icons::{icon_by_name, MaterialIcon, ICON_CHECK};
-use crate::showcase::common::NeedsInternationalFont;
+use bevy_material_ui::prelude::*;
+use bevy_material_ui::radio::{RadioInner, RadioOuter, RadioStateLayer};
+use bevy_material_ui::switch::SwitchHandle;
 
 // Constants from library
 const CHECKBOX_TOUCH_TARGET: f32 = 40.0;
@@ -46,9 +46,7 @@ pub fn spawn_checkbox_i18n(
     } else {
         Visibility::Hidden
     };
-    let icon_id = icon_name
-        .and_then(icon_by_name)
-        .unwrap_or(default_icon_id);
+    let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
     parent
         .spawn(Node {
@@ -223,11 +221,7 @@ pub fn spawn_radio_i18n(
 ) {
     let radio = MaterialRadio::new().selected(selected).group(group);
     let border_color = radio.outer_color(theme);
-    let inner_color = if selected {
-        theme.primary
-    } else {
-        Color::NONE
-    };
+    let inner_color = if selected { theme.primary } else { Color::NONE };
     let state_layer_color = radio.state_layer_color(theme);
 
     parent
@@ -390,8 +384,8 @@ pub fn spawn_extended_fab_i18n(
     default_text: &str,
 ) {
     use bevy_material_ui::fab::{FabLabel, MaterialFab};
-    use bevy_material_ui::icons::{MaterialIcon, IconStyle};
-    
+    use bevy_material_ui::icons::{IconStyle, MaterialIcon};
+
     let icon_name = icon.into();
     let fab = MaterialFab::new(icon_name.clone()).extended(default_text);
     let icon_color = fab.content_color(theme);

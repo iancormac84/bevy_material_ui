@@ -67,10 +67,9 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     ));
                     col.spawn_search_bar_with(
                         theme,
-                        SearchBarBuilder::new("Search...")
-                            .with_navigation(
-                                MaterialIcon::from_name(ICON_MENU).expect("menu icon should exist"),
-                            ),
+                        SearchBarBuilder::new("Search...").with_navigation(
+                            MaterialIcon::from_name(ICON_MENU).expect("menu icon should exist"),
+                        ),
                     );
 
                     // Search bar with text

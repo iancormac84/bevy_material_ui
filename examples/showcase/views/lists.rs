@@ -134,14 +134,17 @@ pub fn spawn_list_section(
                                             ..default()
                                         },
                                     ))
-                                    .with_children(|leading| {
-                                        if let Some(icon) = MaterialIcon::from_name(ICON_EMAIL) {
-                                            leading.spawn(
-                                                icon.with_size(24.0)
-                                                    .with_color(theme_clone.on_surface_variant),
-                                            );
-                                        }
-                                    });
+                                    .with_children(
+                                        |leading| {
+                                            if let Some(icon) = MaterialIcon::from_name(ICON_EMAIL)
+                                            {
+                                                leading
+                                                    .spawn(icon.with_size(24.0).with_color(
+                                                        theme_clone.on_surface_variant,
+                                                    ));
+                                            }
+                                        },
+                                    );
 
                                     // Body (match library markers so styling/selection systems can work)
                                     item.spawn((
@@ -352,7 +355,8 @@ fn spawn_list_mode_option(
                     "Single" => "showcase.lists.mode_single",
                     "Multi" => "showcase.lists.mode_multi",
                     _ => label,
-                }).with_default(label),
+                })
+                .with_default(label),
                 TextFont {
                     font_size: 12.0,
                     ..default()
@@ -362,4 +366,3 @@ fn spawn_list_mode_option(
             ));
         });
 }
-

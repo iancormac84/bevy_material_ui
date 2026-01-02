@@ -5,12 +5,12 @@
 //!
 //! Reference: <https://m3.material.io/components/app-bars/overview>
 
-use bevy::prelude::*;
 use bevy::ecs::relationship::Relationship;
+use bevy::prelude::*;
 
 use crate::{
-    icons::{IconStyle, MaterialIcon},
     i18n::LocalizedText,
+    icons::{IconStyle, MaterialIcon},
     ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},

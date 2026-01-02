@@ -172,4 +172,3 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             });
         });
 }
-

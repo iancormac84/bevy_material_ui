@@ -81,8 +81,7 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                 .with_children(|editor| {
                     editor.spawn((
                         Text::new(""),
-                        LocalizedText::new("showcase.translations.greeting")
-                            .with_default("Hello!"),
+                        LocalizedText::new("showcase.translations.greeting").with_default("Hello!"),
                         TextFont {
                             font_size: 16.0,
                             ..default()

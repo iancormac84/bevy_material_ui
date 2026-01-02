@@ -32,75 +32,71 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ))
         .insert_test_id("divider_demo/root", &telemetry)
         .with_children(|root| {
-            root.spawn((
-                Node {
-                    width: Val::Px(420.0),
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(12.0),
-                    ..default()
-                },
-            ))
-            .with_children(|col| {
-                col.spawn((
-                    Text::new("Above"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
-                    TextColor(theme.on_surface),
-                ));
+            root.spawn((Node {
+                width: Val::Px(420.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(12.0),
+                ..default()
+            },))
+                .with_children(|col| {
+                    col.spawn((
+                        Text::new("Above"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
 
-                col.spawn_horizontal_divider(&theme);
+                    col.spawn_horizontal_divider(&theme);
 
-                col.spawn((
-                    Text::new("Between"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
-                    TextColor(theme.on_surface),
-                ));
+                    col.spawn((
+                        Text::new("Between"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
 
-                col.spawn_inset_divider(&theme);
+                    col.spawn_inset_divider(&theme);
 
-                col.spawn((
-                    Text::new("Below"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
-                    TextColor(theme.on_surface),
-                ));
-            });
+                    col.spawn((
+                        Text::new("Below"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
+                });
 
-            root.spawn((
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(12.0),
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-            ))
-            .with_children(|row| {
-                row.spawn((
-                    Text::new("Left"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
-                    TextColor(theme.on_surface),
-                ));
+            root.spawn((Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(12.0),
+                align_items: AlignItems::Center,
+                ..default()
+            },))
+                .with_children(|row| {
+                    row.spawn((
+                        Text::new("Left"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
 
-                row.spawn_vertical_divider(&theme);
+                    row.spawn_vertical_divider(&theme);
 
-                row.spawn((
-                    Text::new("Right"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
-                    TextColor(theme.on_surface),
-                ));
-            });
+                    row.spawn((
+                        Text::new("Right"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
+                });
         });
 }

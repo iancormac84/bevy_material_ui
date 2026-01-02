@@ -32,9 +32,9 @@
 //! let scheme = MaterialColorScheme::dark_from_argb(0xFF6750A4);
 //! ```
 
+mod hct_bevy;
 mod palette;
 mod scheme;
-mod hct_bevy;
 
 pub use hct_bevy::Hct;
 pub use palette::TonalPalette;

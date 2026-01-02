@@ -35,9 +35,9 @@ impl Plugin for CheckboxPlugin {
             )
                 .chain(),
         );
-            if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
-                app.add_plugins(crate::MaterialUiCorePlugin);
-            }
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
     }
 }
 
@@ -389,7 +389,8 @@ fn checkbox_visual_update_system(
                         for ggc in great_grandchildren.iter() {
                             if let Ok((mut icon, mut visibility)) = icons.get_mut(ggc) {
                                 if let Some(icon_name) = checkbox.state.icon() {
-                                    let icon_id = icon_by_name(icon_name).unwrap_or(default_icon_id);
+                                    let icon_id =
+                                        icon_by_name(icon_name).unwrap_or(default_icon_id);
                                     icon.id = icon_id;
                                     icon.color = checkbox.icon_color(&theme);
                                     *visibility = Visibility::Inherited;
@@ -450,7 +451,8 @@ fn checkbox_theme_refresh_system(
                         for ggc in great_grandchildren.iter() {
                             if let Ok((mut icon, mut visibility)) = icons.get_mut(ggc) {
                                 if let Some(icon_name) = checkbox.state.icon() {
-                                    let icon_id = icon_by_name(icon_name).unwrap_or(default_icon_id);
+                                    let icon_id =
+                                        icon_by_name(icon_name).unwrap_or(default_icon_id);
                                     icon.id = icon_id;
                                     icon.color = checkbox.icon_color(&theme);
                                     *visibility = Visibility::Inherited;
@@ -553,9 +555,7 @@ impl CheckboxBuilder {
         } else {
             Visibility::Hidden
         };
-        let icon_id = icon_name
-            .and_then(icon_by_name)
-            .unwrap_or(default_icon_id);
+        let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
         commands
             .spawn((
@@ -658,9 +658,7 @@ impl SpawnCheckbox for Commands<'_, '_> {
         } else {
             Visibility::Hidden
         };
-        let icon_id = icon_name
-            .and_then(icon_by_name)
-            .unwrap_or(default_icon_id);
+        let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
         self.spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -784,9 +782,7 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
         } else {
             Visibility::Hidden
         };
-        let icon_id = icon_name
-            .and_then(icon_by_name)
-            .unwrap_or(default_icon_id);
+        let icon_id = icon_name.and_then(icon_by_name).unwrap_or(default_icon_id);
 
         self.spawn(Node {
             flex_direction: FlexDirection::Row,

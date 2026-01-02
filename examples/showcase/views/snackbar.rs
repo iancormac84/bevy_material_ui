@@ -230,8 +230,7 @@ pub fn spawn_snackbar_section(
                         .with_children(|btn| {
                             if let Some(icon) = MaterialIcon::from_name(ICON_CLOSE) {
                                 btn.spawn(
-                                    icon.with_size(24.0)
-                                        .with_color(theme.inverse_on_surface),
+                                    icon.with_size(24.0).with_color(theme.inverse_on_surface),
                                 );
                             }
                         });

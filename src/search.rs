@@ -6,8 +6,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    icons::{IconStyle, MaterialIcon},
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
+    icons::{IconStyle, MaterialIcon},
     ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},

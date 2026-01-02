@@ -8,7 +8,7 @@ use bevy_material_ui::{
 
 fn main() {
     App::new()
-    .add_plugins((DefaultPlugins, MaterialUiPlugin, TelemetryPlugin))
+        .add_plugins((DefaultPlugins, MaterialUiPlugin, TelemetryPlugin))
         .add_systems(Startup, setup)
         .run();
 }

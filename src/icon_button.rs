@@ -26,9 +26,9 @@ impl Plugin for IconButtonPlugin {
                 icon_button_theme_refresh_system,
             ),
         );
-            if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
-                app.add_plugins(crate::MaterialUiCorePlugin);
-            }
+        if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
+            app.add_plugins(crate::MaterialUiCorePlugin);
+        }
     }
 }
 

@@ -134,7 +134,7 @@ impl CompositeValidator {
         }
     }
 
-    pub fn add(mut self, validator: Box<dyn DateValidator>) -> Self {
+    pub fn add_validator(mut self, validator: Box<dyn DateValidator>) -> Self {
         self.validators.push(validator);
         self
     }

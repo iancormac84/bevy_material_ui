@@ -48,10 +48,8 @@ fn sanitize_test_id_component(raw: &str) -> String {
         let c = ch.to_ascii_lowercase();
         if c.is_ascii_alphanumeric() {
             out.push(c);
-        } else if c.is_ascii_whitespace() || c == '-' {
-            if !out.ends_with('_') {
-                out.push('_');
-            }
+        } else if (c.is_ascii_whitespace() || c == '-') && !out.ends_with('_') {
+            out.push('_');
         }
     }
 

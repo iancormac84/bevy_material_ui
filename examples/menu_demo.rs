@@ -25,7 +25,14 @@ fn main() {
         .add_plugins(MaterialUiPlugin)
         .add_plugins(TelemetryPlugin)
         .add_systems(Startup, setup)
-        .add_systems(Update, (toggle_menu_system, close_menu_on_item_system, position_menu_system))
+        .add_systems(
+            Update,
+            (
+                toggle_menu_system,
+                close_menu_on_item_system,
+                position_menu_system,
+            ),
+        )
         .run();
 }
 
@@ -191,10 +198,7 @@ fn close_menu_on_item_system(
     menu.open = false;
 }
 
-fn position_menu_system(
-    entities: Res<MenuEntities>,
-    mut nodes: Query<&mut Node, With<DemoMenu>>,
-) {
+fn position_menu_system(entities: Res<MenuEntities>, mut nodes: Query<&mut Node, With<DemoMenu>>) {
     let Ok(mut node) = nodes.get_mut(entities.menu) else {
         return;
     };

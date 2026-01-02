@@ -56,7 +56,9 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             root.spawn((
                 OpenDialogButton,
                 Interaction::None,
-                MaterialButtonBuilder::new(open_label).filled().build(&theme),
+                MaterialButtonBuilder::new(open_label)
+                    .filled()
+                    .build(&theme),
             ))
             .insert_test_id("dialog_demo/open_button", &telemetry)
             .with_children(|btn| {
@@ -75,7 +77,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
     let dialog_entity = commands
         .spawn((
             GlobalZIndex(1001),
-            DialogBuilder::new().title("Confirm Action").modal(true).build(&theme),
+            DialogBuilder::new()
+                .title("Confirm Action")
+                .modal(true)
+                .build(&theme),
         ))
         .insert_test_id("dialog_demo/dialog", &telemetry)
         .with_children(|dialog| {
@@ -108,7 +113,9 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         .spawn((
                             CancelDialogButton,
                             Interaction::None,
-                            MaterialButtonBuilder::new(cancel_label).text().build(&theme),
+                            MaterialButtonBuilder::new(cancel_label)
+                                .text()
+                                .build(&theme),
                         ))
                         .insert_test_id("dialog_demo/dialog/cancel", &telemetry)
                         .with_children(|btn| {
@@ -132,7 +139,9 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         .spawn((
                             ConfirmDialogButton,
                             Interaction::None,
-                            MaterialButtonBuilder::new(confirm_label).filled().build(&theme),
+                            MaterialButtonBuilder::new(confirm_label)
+                                .filled()
+                                .build(&theme),
                         ))
                         .insert_test_id("dialog_demo/dialog/confirm", &telemetry)
                         .with_children(|btn| {
@@ -155,7 +164,9 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .spawn(create_dialog_scrim_for(&theme, dialog_entity, true))
         .insert_test_id("dialog_demo/dialog/scrim", &telemetry);
 
-    commands.insert_resource(DialogEntities { dialog: dialog_entity });
+    commands.insert_resource(DialogEntities {
+        dialog: dialog_entity,
+    });
 }
 
 fn open_dialog_system(
@@ -184,9 +195,7 @@ fn close_dialog_system(
         return;
     };
 
-    let should_close = cancel
-        .iter_mut()
-        .any(|i| *i == Interaction::Pressed)
+    let should_close = cancel.iter_mut().any(|i| *i == Interaction::Pressed)
         || confirm.iter_mut().any(|i| *i == Interaction::Pressed);
 
     if should_close {

@@ -37,8 +37,20 @@ pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                 })
                 .with_children(|col| {
                     spawn_switch_i18n(col, theme, true, "showcase.switches.wifi", "Wi-Fi");
-                    spawn_switch_i18n(col, theme, false, "showcase.switches.bluetooth", "Bluetooth");
-                    spawn_switch_i18n(col, theme, false, "showcase.switches.dark_mode", "Dark Mode");
+                    spawn_switch_i18n(
+                        col,
+                        theme,
+                        false,
+                        "showcase.switches.bluetooth",
+                        "Bluetooth",
+                    );
+                    spawn_switch_i18n(
+                        col,
+                        theme,
+                        false,
+                        "showcase.switches.dark_mode",
+                        "Dark Mode",
+                    );
                 });
 
             spawn_code_block(

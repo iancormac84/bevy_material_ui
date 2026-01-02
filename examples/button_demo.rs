@@ -34,11 +34,31 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .insert_test_id("button_demo/root", &telemetry)
         .with_children(|root| {
             let buttons = [
-                ("Elevated", ButtonVariant::Elevated, MaterialButtonBuilder::new("Elevated").elevated()),
-                ("Filled", ButtonVariant::Filled, MaterialButtonBuilder::new("Filled").filled()),
-                ("Filled Tonal", ButtonVariant::FilledTonal, MaterialButtonBuilder::new("Filled Tonal").filled_tonal()),
-                ("Outlined", ButtonVariant::Outlined, MaterialButtonBuilder::new("Outlined").outlined()),
-                ("Text", ButtonVariant::Text, MaterialButtonBuilder::new("Text").text()),
+                (
+                    "Elevated",
+                    ButtonVariant::Elevated,
+                    MaterialButtonBuilder::new("Elevated").elevated(),
+                ),
+                (
+                    "Filled",
+                    ButtonVariant::Filled,
+                    MaterialButtonBuilder::new("Filled").filled(),
+                ),
+                (
+                    "Filled Tonal",
+                    ButtonVariant::FilledTonal,
+                    MaterialButtonBuilder::new("Filled Tonal").filled_tonal(),
+                ),
+                (
+                    "Outlined",
+                    ButtonVariant::Outlined,
+                    MaterialButtonBuilder::new("Outlined").outlined(),
+                ),
+                (
+                    "Text",
+                    ButtonVariant::Text,
+                    MaterialButtonBuilder::new("Text").text(),
+                ),
             ];
 
             for (id, variant, builder) in buttons {

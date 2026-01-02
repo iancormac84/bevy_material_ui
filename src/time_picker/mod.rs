@@ -6,11 +6,13 @@ use bevy::prelude::*;
 use bevy::ui::{ComputedNode, FocusPolicy, UiGlobalTransform};
 use std::f32::consts::PI;
 
-use crate::theme::MaterialTheme;
 use crate::i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride};
 use crate::icons::material_icon_names;
+use crate::text_field::{
+    spawn_text_field_control_with, InputType, MaterialTextField, TextFieldBuilder,
+};
+use crate::theme::MaterialTheme;
 use crate::tokens::{CornerRadius, Spacing};
-use crate::text_field::{spawn_text_field_control_with, InputType, MaterialTextField, TextFieldBuilder};
 use bevy::ui::UiTransform;
 use std::f32::consts::TAU;
 
@@ -527,7 +529,7 @@ fn time_picker_mode_toggle_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(toggle.picker) {
             if picker.open {
                 picker.input_mode = match picker.input_mode {
@@ -651,11 +653,11 @@ fn time_picker_period_toggle_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(toggle.picker) {
             if picker.open && picker.format == TimeFormat::H12 {
                 picker.period = toggle.period;
-                
+
                 // Update hour to match new period
                 let hour_12 = picker.hour_12h();
                 let minute = picker.minute;
@@ -674,7 +676,7 @@ fn time_picker_selection_mode_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(chip.picker) {
             if picker.open {
                 picker.selection_mode = chip.mode;
@@ -756,7 +758,7 @@ fn time_picker_clock_interaction_system(
             TimeSelectionMode::Hour => {
                 // Determine value based on angle
                 let value = ((angle / (2.0 * PI) * 12.0).round() as u8) % 12;
-                
+
                 match picker.format {
                     TimeFormat::H12 => {
                         // Simple 12-hour clock
@@ -842,7 +844,7 @@ fn time_picker_action_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(scrim.picker) {
             if picker.open && picker.dismiss_on_scrim_click {
                 picker.open = false;
@@ -852,18 +854,18 @@ fn time_picker_action_system(
             }
         }
     }
-    
+
     // Handle action buttons
     for (interaction, action) in actions.iter() {
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(action.picker) {
             if !picker.open {
                 continue;
             }
-            
+
             if action.is_confirm {
                 picker.open = false;
                 submit_events.write(TimePickerSubmitEvent {
@@ -953,103 +955,103 @@ fn time_picker_render_system(
         {
             let mut styled_nodes = styled_nodes.p0();
             for (mut bg, children, mut node, chip, toggle, number) in styled_nodes.iter_mut() {
-            if let Some(chip) = chip {
-                if chip.picker != picker_entity {
-                    continue;
-                }
-
-                let is_active = chip.mode == picker.selection_mode;
-                let (bg_color, text_color) = if is_active {
-                    (theme.primary_container, theme.on_primary_container)
-                } else {
-                    (Color::NONE, theme.on_surface)
-                };
-
-                *bg = BackgroundColor(bg_color);
-                for child in children.iter() {
-                    if let Ok(mut tc) = text_colors.get_mut(child) {
-                        *tc = TextColor(text_color);
+                if let Some(chip) = chip {
+                    if chip.picker != picker_entity {
+                        continue;
                     }
-                }
 
-                continue;
-            }
+                    let is_active = chip.mode == picker.selection_mode;
+                    let (bg_color, text_color) = if is_active {
+                        (theme.primary_container, theme.on_primary_container)
+                    } else {
+                        (Color::NONE, theme.on_surface)
+                    };
 
-            if let Some(toggle) = toggle {
-                if toggle.picker != picker_entity {
-                    continue;
-                }
-
-                let is_active = picker.format == TimeFormat::H12 && picker.period == toggle.period;
-                let (bg_color, text_color) = if is_active {
-                    (theme.primary, theme.on_primary)
-                } else {
-                    (Color::NONE, theme.on_surface)
-                };
-
-                *bg = BackgroundColor(bg_color);
-                for child in children.iter() {
-                    if let Ok(mut tc) = text_colors.get_mut(child) {
-                        *tc = TextColor(text_color);
-                    }
-                }
-
-                continue;
-            }
-
-            if let Some(number) = number {
-                if number.picker != picker_entity {
-                    continue;
-                }
-
-                let should_show = match picker.selection_mode {
-                    TimeSelectionMode::Hour => {
-                        number.kind == TimePickerClockNumberKind::Hour
-                            && number
-                                .format
-                                .map(|f| f == picker.format)
-                                .unwrap_or(true)
-                    }
-                    TimeSelectionMode::Minute => number.kind == TimePickerClockNumberKind::Minute,
-                };
-                node.display = if should_show {
-                    Display::Flex
-                } else {
-                    Display::None
-                };
-
-                if !should_show {
-                    continue;
-                }
-
-                let is_selected = match picker.selection_mode {
-                    TimeSelectionMode::Hour => {
-                        if picker.format == TimeFormat::H12 {
-                            number.value == picker.hour_12h()
-                        } else {
-                            number.value == picker.hour
+                    *bg = BackgroundColor(bg_color);
+                    for child in children.iter() {
+                        if let Ok(mut tc) = text_colors.get_mut(child) {
+                            *tc = TextColor(text_color);
                         }
                     }
-                    TimeSelectionMode::Minute => {
-                        let snapped = (((picker.minute as u16 + 2) / 5) * 5) % 60;
-                        number.value == snapped as u8
+
+                    continue;
+                }
+
+                if let Some(toggle) = toggle {
+                    if toggle.picker != picker_entity {
+                        continue;
                     }
-                };
 
-                let (bg_color, text_color) = if is_selected {
-                    (theme.primary, theme.on_primary)
-                } else {
-                    (Color::NONE, theme.on_surface)
-                };
+                    let is_active =
+                        picker.format == TimeFormat::H12 && picker.period == toggle.period;
+                    let (bg_color, text_color) = if is_active {
+                        (theme.primary, theme.on_primary)
+                    } else {
+                        (Color::NONE, theme.on_surface)
+                    };
 
-                *bg = BackgroundColor(bg_color);
-                for child in children.iter() {
-                    if let Ok(mut tc) = text_colors.get_mut(child) {
-                        *tc = TextColor(text_color);
+                    *bg = BackgroundColor(bg_color);
+                    for child in children.iter() {
+                        if let Ok(mut tc) = text_colors.get_mut(child) {
+                            *tc = TextColor(text_color);
+                        }
+                    }
+
+                    continue;
+                }
+
+                if let Some(number) = number {
+                    if number.picker != picker_entity {
+                        continue;
+                    }
+
+                    let should_show = match picker.selection_mode {
+                        TimeSelectionMode::Hour => {
+                            number.kind == TimePickerClockNumberKind::Hour
+                                && number.format.map(|f| f == picker.format).unwrap_or(true)
+                        }
+                        TimeSelectionMode::Minute => {
+                            number.kind == TimePickerClockNumberKind::Minute
+                        }
+                    };
+                    node.display = if should_show {
+                        Display::Flex
+                    } else {
+                        Display::None
+                    };
+
+                    if !should_show {
+                        continue;
+                    }
+
+                    let is_selected = match picker.selection_mode {
+                        TimeSelectionMode::Hour => {
+                            if picker.format == TimeFormat::H12 {
+                                number.value == picker.hour_12h()
+                            } else {
+                                number.value == picker.hour
+                            }
+                        }
+                        TimeSelectionMode::Minute => {
+                            let snapped = (((picker.minute as u16 + 2) / 5) * 5) % 60;
+                            number.value == snapped as u8
+                        }
+                    };
+
+                    let (bg_color, text_color) = if is_selected {
+                        (theme.primary, theme.on_primary)
+                    } else {
+                        (Color::NONE, theme.on_surface)
+                    };
+
+                    *bg = BackgroundColor(bg_color);
+                    for child in children.iter() {
+                        if let Ok(mut tc) = text_colors.get_mut(child) {
+                            *tc = TextColor(text_color);
+                        }
                     }
                 }
             }
-        }
         }
 
         // Update clock hand rotation.
@@ -1151,7 +1153,7 @@ fn time_picker_theme_system(
     if !theme.is_changed() {
         return;
     }
-    
+
     for (mut bg, scrim, dialog) in backgrounds.iter_mut() {
         if scrim.is_some() {
             *bg = BackgroundColor(theme.scrim.with_alpha(0.32));
@@ -1182,7 +1184,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
         let initial_hour = picker.hour;
         let initial_minute = picker.minute;
         let initial_period = picker.period;
-        
+
         // Spawn root container
         let mut root = self.spawn((
             picker,
@@ -1203,13 +1205,11 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
             GlobalZIndex(9999),
         ));
         let entity = root.id();
-        
+
         root.with_children(|root| {
             // Scrim overlay
             root.spawn((
-                TimePickerScrim {
-                    picker: entity,
-                },
+                TimePickerScrim { picker: entity },
                 Interaction::None,
                 Node {
                     position_type: PositionType::Absolute,
@@ -1222,7 +1222,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                 BackgroundColor(theme.scrim.with_alpha(0.32)),
                 ZIndex(0),
             ));
-            
+
             // Dialog container
             root.spawn((
                 TimePickerDialog,
@@ -1241,7 +1241,8 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                 BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                 BoxShadow::default(),
                 ZIndex(1),
-            )).with_children(|dialog| {
+            ))
+            .with_children(|dialog| {
                 // Title row + mode toggle
                 dialog
                     .spawn(Node {
@@ -1278,8 +1279,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                             btn.spawn((
                                 TimePickerModeToggleLabel { picker: entity },
                                 crate::icons::svg::SvgIcon::new(match initial_input_mode {
-                                    TimeInputMode::Clock => material_icon_names::ic_keyboard_black_24dp,
-                                    TimeInputMode::Keyboard => material_icon_names::ic_clock_black_24dp,
+                                    TimeInputMode::Clock => {
+                                        material_icon_names::ic_keyboard_black_24dp
+                                    }
+                                    TimeInputMode::Keyboard => {
+                                        material_icon_names::ic_clock_black_24dp
+                                    }
                                 })
                                 .with_size(18.0)
                                 .with_color(on_surface),
@@ -1503,8 +1508,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
-                                                left: Val::Px(120.0 + pos.x - CLOCK_NUMBER_OUTER_HALF),
-                                                top: Val::Px(120.0 + pos.y - CLOCK_NUMBER_OUTER_HALF),
+                                                left: Val::Px(
+                                                    120.0 + pos.x - CLOCK_NUMBER_OUTER_HALF,
+                                                ),
+                                                top: Val::Px(
+                                                    120.0 + pos.y - CLOCK_NUMBER_OUTER_HALF,
+                                                ),
                                                 width: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
@@ -1555,8 +1564,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
-                                                left: Val::Px(120.0 + pos_inner.x - CLOCK_NUMBER_INNER_HALF),
-                                                top: Val::Px(120.0 + pos_inner.y - CLOCK_NUMBER_INNER_HALF),
+                                                left: Val::Px(
+                                                    120.0 + pos_inner.x - CLOCK_NUMBER_INNER_HALF,
+                                                ),
+                                                top: Val::Px(
+                                                    120.0 + pos_inner.y - CLOCK_NUMBER_INNER_HALF,
+                                                ),
                                                 width: Val::Px(CLOCK_NUMBER_INNER_SIZE),
                                                 height: Val::Px(CLOCK_NUMBER_INNER_SIZE),
                                                 justify_content: JustifyContent::Center,
@@ -1592,8 +1605,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
-                                                left: Val::Px(120.0 + pos_outer.x - CLOCK_NUMBER_OUTER_HALF),
-                                                top: Val::Px(120.0 + pos_outer.y - CLOCK_NUMBER_OUTER_HALF),
+                                                left: Val::Px(
+                                                    120.0 + pos_outer.x - CLOCK_NUMBER_OUTER_HALF,
+                                                ),
+                                                top: Val::Px(
+                                                    120.0 + pos_outer.y - CLOCK_NUMBER_OUTER_HALF,
+                                                ),
                                                 width: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
@@ -1634,8 +1651,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display: Display::None,
-                                                left: Val::Px(120.0 + pos.x - CLOCK_NUMBER_OUTER_HALF),
-                                                top: Val::Px(120.0 + pos.y - CLOCK_NUMBER_OUTER_HALF),
+                                                left: Val::Px(
+                                                    120.0 + pos.x - CLOCK_NUMBER_OUTER_HALF,
+                                                ),
+                                                top: Val::Px(
+                                                    120.0 + pos.y - CLOCK_NUMBER_OUTER_HALF,
+                                                ),
                                                 width: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
@@ -1751,55 +1772,57 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                             TimePickerMinuteField { picker: entity },
                         );
                     });
-                
+
                 // Action buttons
-                dialog.spawn(Node {
-                    justify_content: JustifyContent::End,
-                    column_gap: Val::Px(Spacing::SMALL),
-                    margin: UiRect::top(Val::Px(Spacing::MEDIUM)),
-                    ..default()
-                }).with_children(|actions| {
-                    // Cancel button
-                    actions.spawn((
-                        TimePickerAction {
-                            picker: entity,
-                            is_confirm: false,
-                        },
-                        Interaction::None,
-                        Text::new("Cancel"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(primary),
-                        Node {
-                            padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
-                            ..default()
-                        },
-                    ));
-                    
-                    // OK button
-                    actions.spawn((
-                        TimePickerAction {
-                            picker: entity,
-                            is_confirm: true,
-                        },
-                        Interaction::None,
-                        Text::new("OK"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(primary),
-                        Node {
-                            padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
-                            ..default()
-                        },
-                    ));
-                });
+                dialog
+                    .spawn(Node {
+                        justify_content: JustifyContent::End,
+                        column_gap: Val::Px(Spacing::SMALL),
+                        margin: UiRect::top(Val::Px(Spacing::MEDIUM)),
+                        ..default()
+                    })
+                    .with_children(|actions| {
+                        // Cancel button
+                        actions.spawn((
+                            TimePickerAction {
+                                picker: entity,
+                                is_confirm: false,
+                            },
+                            Interaction::None,
+                            Text::new("Cancel"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(primary),
+                            Node {
+                                padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
+                                ..default()
+                            },
+                        ));
+
+                        // OK button
+                        actions.spawn((
+                            TimePickerAction {
+                                picker: entity,
+                                is_confirm: true,
+                            },
+                            Interaction::None,
+                            Text::new("OK"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(primary),
+                            Node {
+                                padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
+                                ..default()
+                            },
+                        ));
+                    });
             });
         });
-        
+
         entity
     }
 }

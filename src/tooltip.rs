@@ -125,7 +125,7 @@ fn tooltip_localization_system(
 
                 if let Ok(kids) = children.get(tooltip_entity) {
                     for child in kids.iter() {
-                            if let Ok(mut text) = tooltip_texts.get_mut(child) {
+                        if let Ok(mut text) = tooltip_texts.get_mut(child) {
                             *text = Text::new(next.clone());
                         }
                     }

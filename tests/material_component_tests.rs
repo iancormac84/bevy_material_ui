@@ -12,7 +12,9 @@
 
 use bevy_material_ui::badge::{BadgeSize, MaterialBadge};
 use bevy_material_ui::button::{ButtonVariant, IconGravity, MaterialButton};
-use bevy_material_ui::button_group::{ButtonGroupBuilder, ButtonGroupOrientation, MaterialButtonGroup};
+use bevy_material_ui::button_group::{
+    ButtonGroupBuilder, ButtonGroupOrientation, MaterialButtonGroup,
+};
 use bevy_material_ui::checkbox::{CheckboxState, MaterialCheckbox};
 use bevy_material_ui::chip::{ChipElevation, ChipVariant, MaterialChip};
 use bevy_material_ui::dialog::{DialogType, MaterialDialog};

@@ -39,9 +39,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .insert_test_id("select_demo/root", &telemetry)
         .with_children(|root| {
             let options = vec![
-                SelectOption::new("Apple")
-                    .value("apple")
-                    .icon("nutrition"),
+                SelectOption::new("Apple").value("apple").icon("nutrition"),
                 SelectOption::new("Banana")
                     .value("banana")
                     .icon("emoji_food_beverage"),

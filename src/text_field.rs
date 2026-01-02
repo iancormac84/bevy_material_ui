@@ -6,12 +6,12 @@
 use bevy::prelude::*;
 
 use crate::{
-    icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
+    icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
+    locale::{DateFieldOrder, DateInputPattern},
     ripple::RippleHost,
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
-    locale::{DateInputPattern, DateFieldOrder},
 };
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
@@ -119,9 +119,7 @@ fn text_field_localization_system(
 
     let global_changed = i18n.is_changed() || language.is_changed();
 
-    let apply = |entity: Entity,
-                     mut field: Mut<MaterialTextField>,
-                     loc: &TextFieldLocalization| {
+    let apply = |entity: Entity, mut field: Mut<MaterialTextField>, loc: &TextFieldLocalization| {
         if loc.is_empty() {
             return;
         }
@@ -549,13 +547,11 @@ impl MaterialTextField {
     pub fn effective_trailing_icon(&self) -> Option<&str> {
         match self.end_icon_mode {
             EndIconMode::None => self.trailing_icon.as_deref(),
-            EndIconMode::PasswordToggle => {
-                Some(if self.password_visible {
-                    "visibility"
-                } else {
-                    "visibility_off"
-                })
-            }
+            EndIconMode::PasswordToggle => Some(if self.password_visible {
+                "visibility"
+            } else {
+                "visibility_off"
+            }),
             EndIconMode::ClearText => {
                 if self.has_content {
                     Some(ICON_CLOSE)
@@ -719,11 +715,11 @@ fn is_valid_complete_date_by_pattern(input: &str, pattern: DateInputPattern) -> 
     // Keep this intentionally "basic" (format-level validation).
     // Higher-level widgets (like date pickers) can do constraint validation.
     use crate::date_picker::Date;
-    
+
     let Some((year, month, day)) = pattern.try_parse_complete(input) else {
         return false;
     };
-    
+
     Date::new(year, month, day).is_valid()
 }
 
@@ -1807,10 +1803,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                     });
 
                 // End icon (trailing icon)
-                let end_icon_visible = end_icon_text
-                    .as_deref()
-                    .and_then(resolve_icon_id)
-                    .is_some();
+                let end_icon_visible = end_icon_text.as_deref().and_then(resolve_icon_id).is_some();
                 container
                     .spawn((
                         TextFieldEndIconButton,
@@ -2071,10 +2064,7 @@ pub fn spawn_text_field_control(
                     });
 
                 // End icon (trailing icon)
-                let end_icon_visible = end_icon_text
-                    .as_deref()
-                    .and_then(resolve_icon_id)
-                    .is_some();
+                let end_icon_visible = end_icon_text.as_deref().and_then(resolve_icon_id).is_some();
                 container
                     .spawn((
                         TextFieldEndIconButton,
@@ -2333,10 +2323,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                     });
 
                 // End icon (trailing icon)
-                let end_icon_visible = end_icon_text
-                    .as_deref()
-                    .and_then(resolve_icon_id)
-                    .is_some();
+                let end_icon_visible = end_icon_text.as_deref().and_then(resolve_icon_id).is_some();
                 container
                     .spawn((
                         TextFieldEndIconButton,
@@ -2486,9 +2473,7 @@ fn text_field_icon_system(
         }
 
         // End icon (trailing)
-        let end_icon_id = field
-            .effective_trailing_icon()
-            .and_then(resolve_icon_id);
+        let end_icon_id = field.effective_trailing_icon().and_then(resolve_icon_id);
         for (owner, mut icon, mut style) in end_icons.iter_mut() {
             if owner.0 != field_entity {
                 continue;

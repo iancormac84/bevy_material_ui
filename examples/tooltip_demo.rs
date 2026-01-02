@@ -70,17 +70,15 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 ))
                 .id();
 
-            root.commands()
-                .entity(help_box)
-                .with_children(|n| {
-                    n.spawn((
-                        Text::new("?"),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(theme.on_surface),
-                    ));
-                });
+            root.commands().entity(help_box).with_children(|n| {
+                n.spawn((
+                    Text::new("?"),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_surface),
+                ));
+            });
         });
 }

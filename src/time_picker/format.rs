@@ -35,20 +35,20 @@ mod tests {
     #[test]
     fn test_24_to_12_conversion() {
         assert_eq!(hour_24_to_12(0), (12, false)); // 12 AM
-        assert_eq!(hour_24_to_12(1), (1, false));  // 1 AM
+        assert_eq!(hour_24_to_12(1), (1, false)); // 1 AM
         assert_eq!(hour_24_to_12(11), (11, false)); // 11 AM
-        assert_eq!(hour_24_to_12(12), (12, true));  // 12 PM
-        assert_eq!(hour_24_to_12(13), (1, true));   // 1 PM
-        assert_eq!(hour_24_to_12(23), (11, true));  // 11 PM
+        assert_eq!(hour_24_to_12(12), (12, true)); // 12 PM
+        assert_eq!(hour_24_to_12(13), (1, true)); // 1 PM
+        assert_eq!(hour_24_to_12(23), (11, true)); // 11 PM
     }
 
     #[test]
     fn test_12_to_24_conversion() {
-        assert_eq!(hour_12_to_24(12, false), 0);  // 12 AM -> 0
-        assert_eq!(hour_12_to_24(1, false), 1);   // 1 AM -> 1
+        assert_eq!(hour_12_to_24(12, false), 0); // 12 AM -> 0
+        assert_eq!(hour_12_to_24(1, false), 1); // 1 AM -> 1
         assert_eq!(hour_12_to_24(11, false), 11); // 11 AM -> 11
-        assert_eq!(hour_12_to_24(12, true), 12);  // 12 PM -> 12
-        assert_eq!(hour_12_to_24(1, true), 13);   // 1 PM -> 13
-        assert_eq!(hour_12_to_24(11, true), 23);  // 11 PM -> 23
+        assert_eq!(hour_12_to_24(12, true), 12); // 12 PM -> 12
+        assert_eq!(hour_12_to_24(1, true), 13); // 1 PM -> 13
+        assert_eq!(hour_12_to_24(11, true), 23); // 11 PM -> 23
     }
 }

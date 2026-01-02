@@ -19,7 +19,12 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<TelemetryConfig>, mut rows: ResMut<CheckboxDemoRows>) {
+fn setup(
+    mut commands: Commands,
+    theme: Res<MaterialTheme>,
+    telemetry: Res<TelemetryConfig>,
+    mut rows: ResMut<CheckboxDemoRows>,
+) {
     commands.spawn(Camera2d);
 
     commands
@@ -51,7 +56,11 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
     let checkbox_defs = [
         ("unchecked", CheckboxState::Unchecked, "Unchecked"),
         ("checked", CheckboxState::Checked, "Checked"),
-        ("indeterminate", CheckboxState::Indeterminate, "Indeterminate"),
+        (
+            "indeterminate",
+            CheckboxState::Indeterminate,
+            "Indeterminate",
+        ),
     ];
 
     // A simple column for the checkboxes.

@@ -146,6 +146,12 @@ pub struct ButtonGroupBuilder {
     group: MaterialButtonGroup,
 }
 
+impl Default for ButtonGroupBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ButtonGroupBuilder {
     pub fn new() -> Self {
         Self {
@@ -184,7 +190,10 @@ impl ButtonGroupBuilder {
 }
 
 fn button_group_layout_system(
-    mut groups: Query<(&MaterialButtonGroup, &mut Node), Or<(Added<MaterialButtonGroup>, Changed<MaterialButtonGroup>)>>,
+    mut groups: Query<
+        (&MaterialButtonGroup, &mut Node),
+        Or<(Added<MaterialButtonGroup>, Changed<MaterialButtonGroup>)>,
+    >,
 ) {
     for (group, mut node) in groups.iter_mut() {
         node.flex_direction = match group.orientation {
@@ -209,7 +218,10 @@ fn button_group_layout_system(
 fn button_group_toggle_system(
     groups: Query<&MaterialButtonGroup>,
     mut buttons: ParamSet<(
-        Query<(Entity, &Interaction, &ChildOf), (Changed<Interaction>, With<Button>, With<MaterialButton>)>,
+        Query<
+            (Entity, &Interaction, &ChildOf),
+            (Changed<Interaction>, With<Button>, With<MaterialButton>),
+        >,
         Query<(Entity, &ChildOf, &MaterialButton), (With<Button>, With<MaterialButton>)>,
         Query<(Entity, &ChildOf, &mut MaterialButton), (With<Button>, With<MaterialButton>)>,
     )>,
@@ -337,7 +349,14 @@ fn button_group_toggle_system(
 
 fn button_group_corner_radius_system(
     mut commands: Commands,
-    groups: Query<(&MaterialButtonGroup, &Children), Or<(Added<MaterialButtonGroup>, Changed<MaterialButtonGroup>, Changed<Children>)>>,
+    groups: Query<
+        (&MaterialButtonGroup, &Children),
+        Or<(
+            Added<MaterialButtonGroup>,
+            Changed<MaterialButtonGroup>,
+            Changed<Children>,
+        )>,
+    >,
     buttons: Query<&MaterialButton>,
     mut radii: Query<&mut BorderRadius>,
 ) {

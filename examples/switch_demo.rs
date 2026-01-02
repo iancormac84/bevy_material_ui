@@ -44,7 +44,8 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ));
     });
 
-    let switch_default = commands.spawn_switch_with(&theme, SwitchBuilder::new().selected(false), "Default");
+    let switch_default =
+        commands.spawn_switch_with(&theme, SwitchBuilder::new().selected(false), "Default");
     commands
         .entity(switch_default)
         .insert_test_id("switch_demo/switch/default", &telemetry);

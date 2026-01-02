@@ -85,7 +85,11 @@ impl DateInputPattern {
     }
 
     pub fn normalize_digits(self, input: &str) -> String {
-        let digits: String = input.chars().filter(|c| c.is_ascii_digit()).take(8).collect();
+        let digits: String = input
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .take(8)
+            .collect();
         let len = digits.len();
 
         match self.order {
@@ -94,12 +98,7 @@ impl DateInputPattern {
                     return digits;
                 }
                 if len <= 4 {
-                    return format!(
-                        "{}{}{}",
-                        &digits[0..2],
-                        self.separator,
-                        &digits[2..len]
-                    );
+                    return format!("{}{}{}", &digits[0..2], self.separator, &digits[2..len]);
                 }
 
                 format!(
@@ -116,12 +115,7 @@ impl DateInputPattern {
                     return digits;
                 }
                 if len <= 6 {
-                    return format!(
-                        "{}{}{}",
-                        &digits[0..4],
-                        self.separator,
-                        &digits[4..len]
-                    );
+                    return format!("{}{}{}", &digits[0..4], self.separator, &digits[4..len]);
                 }
 
                 format!(
@@ -171,10 +165,7 @@ pub fn date_input_pattern_for_locale(tag: &str) -> DateInputPattern {
     let mut parts = normalized.split('-');
 
     let language = parts.next().unwrap_or("").to_ascii_lowercase();
-    let region = parts
-        .next()
-        .unwrap_or("")
-        .to_ascii_uppercase();
+    let region = parts.next().unwrap_or("").to_ascii_uppercase();
 
     if matches!(region.as_str(), "US" | "PH" | "BZ") {
         return DateInputPattern::new(DateFieldOrder::Mdy, '/');

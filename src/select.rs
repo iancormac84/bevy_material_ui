@@ -6,8 +6,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    icons::{icon_by_name, MaterialIcon, ICON_EXPAND_MORE},
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
+    icons::{icon_by_name, MaterialIcon, ICON_EXPAND_MORE},
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
     tokens::{CornerRadius, Spacing},
@@ -62,7 +62,9 @@ impl SelectLocalization {
     }
 
     fn is_enabled(&self) -> bool {
-        self.label_key.is_some() || self.supporting_text_key.is_some() || self.error_text_key.is_some()
+        self.label_key.is_some()
+            || self.supporting_text_key.is_some()
+            || self.error_text_key.is_some()
     }
 }
 
@@ -950,10 +952,7 @@ fn select_dropdown_rebuild_options_system(
 
     for (select_entity, select, children) in selects.iter() {
         // Find dropdown child.
-        let Some(dropdown_entity) = children
-            .iter()
-            .find(|e| dropdowns.get(*e).is_ok())
-        else {
+        let Some(dropdown_entity) = children.iter().find(|e| dropdowns.get(*e).is_ok()) else {
             continue;
         };
 
@@ -1027,13 +1026,13 @@ fn select_dropdown_rebuild_options_system(
                             if let Some(id) = icon_by_name(icon.as_str()) {
                                 row.spawn((
                                     SelectOptionIcon,
-                                    MaterialIcon::new(id)
-                                        .with_size(20.0)
-                                        .with_color(if is_disabled {
+                                    MaterialIcon::new(id).with_size(20.0).with_color(
+                                        if is_disabled {
                                             option_text_color.with_alpha(0.38)
                                         } else {
                                             option_text_color
-                                        }),
+                                        },
+                                    ),
                                 ));
                             }
                         }
@@ -1061,15 +1060,9 @@ fn select_dropdown_rebuild_options_system(
 fn select_dropdown_sync_system(
     mut selects: Query<(Entity, &MaterialSelect, &Children), Changed<MaterialSelect>>,
     mut dropdowns: Query<&mut Visibility, With<SelectDropdown>>,
-    mut display_texts: Query<
-        &mut Text,
-        (With<SelectDisplayText>, Without<SelectOptionLabelText>),
-    >,
+    mut display_texts: Query<&mut Text, (With<SelectDisplayText>, Without<SelectOptionLabelText>)>,
     mut option_rows: Query<(&SelectOwner, &mut SelectOptionItem, &Children)>,
-    mut option_labels: Query<
-        &mut Text,
-        (With<SelectOptionLabelText>, Without<SelectDisplayText>),
-    >,
+    mut option_labels: Query<&mut Text, (With<SelectOptionLabelText>, Without<SelectDisplayText>)>,
 ) {
     for (select_entity, select, children) in selects.iter_mut() {
         // Update dropdown visibility
@@ -1308,13 +1301,13 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                     if let Some(id) = icon_by_name(icon.as_str()) {
                                         row.spawn((
                                             SelectOptionIcon,
-                                            MaterialIcon::new(id)
-                                                .with_size(20.0)
-                                                .with_color(if is_disabled {
+                                            MaterialIcon::new(id).with_size(20.0).with_color(
+                                                if is_disabled {
                                                     option_text_color.with_alpha(0.38)
                                                 } else {
                                                     option_text_color
-                                                }),
+                                                },
+                                            ),
                                         ));
                                     }
                                 }

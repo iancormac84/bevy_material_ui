@@ -40,9 +40,27 @@ pub fn spawn_checkboxes_section(
                     ..default()
                 })
                 .with_children(|col| {
-                    spawn_checkbox_i18n(col, theme, CheckboxState::Checked, "showcase.checkboxes.option_1", "Option 1");
-                    spawn_checkbox_i18n(col, theme, CheckboxState::Unchecked, "showcase.checkboxes.option_2", "Option 2");
-                    spawn_checkbox_i18n(col, theme, CheckboxState::Unchecked, "showcase.checkboxes.option_3", "Option 3");
+                    spawn_checkbox_i18n(
+                        col,
+                        theme,
+                        CheckboxState::Checked,
+                        "showcase.checkboxes.option_1",
+                        "Option 1",
+                    );
+                    spawn_checkbox_i18n(
+                        col,
+                        theme,
+                        CheckboxState::Unchecked,
+                        "showcase.checkboxes.option_2",
+                        "Option 2",
+                    );
+                    spawn_checkbox_i18n(
+                        col,
+                        theme,
+                        CheckboxState::Unchecked,
+                        "showcase.checkboxes.option_3",
+                        "Option 3",
+                    );
                 });
 
             spawn_code_block(

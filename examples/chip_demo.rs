@@ -33,24 +33,22 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ))
         .insert_test_id("chip_demo/root", &telemetry)
         .with_children(|root| {
-            root.spawn((
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(12.0),
-                    flex_wrap: FlexWrap::Wrap,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-            ))
-            .with_children(|row| {
-                row.spawn_chip_with(&theme, ChipBuilder::assist("Assist"));
+            root.spawn((Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(12.0),
+                flex_wrap: FlexWrap::Wrap,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },))
+                .with_children(|row| {
+                    row.spawn_chip_with(&theme, ChipBuilder::assist("Assist"));
 
-                row.spawn_chip_with(&theme, ChipBuilder::filter("Filter").selected(true));
+                    row.spawn_chip_with(&theme, ChipBuilder::filter("Filter").selected(true));
 
-                row.spawn_chip_with(&theme, ChipBuilder::input("Input").deletable(true));
+                    row.spawn_chip_with(&theme, ChipBuilder::input("Input").deletable(true));
 
-                row.spawn_chip_with(&theme, ChipBuilder::suggestion("Suggestion"));
-            });
+                    row.spawn_chip_with(&theme, ChipBuilder::suggestion("Suggestion"));
+                });
         });
 }
 
@@ -63,6 +61,9 @@ fn log_chip_events_system(
     }
 
     for ev in deletes.read() {
-        info!("Chip delete clicked: {}", ev.value.as_deref().unwrap_or("(none)"));
+        info!(
+            "Chip delete clicked: {}",
+            ev.value.as_deref().unwrap_or("(none)")
+        );
     }
 }

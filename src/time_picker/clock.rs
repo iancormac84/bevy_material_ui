@@ -25,7 +25,7 @@ impl ClockFaceLayout {
         } else {
             self.radius * 0.85 // Slightly inside the edge
         };
-        
+
         Vec2::new(r * angle.cos(), r * angle.sin())
     }
 
@@ -37,7 +37,7 @@ impl ClockFaceLayout {
         } else {
             self.radius * 0.7
         };
-        
+
         (angle, length)
     }
 }
@@ -60,7 +60,7 @@ impl ClockHand {
         } else {
             (hour % 12, 12)
         };
-        
+
         let angle = (value as f32 / total as f32) * 2.0 * PI - PI / 2.0;
         Self::new(angle, 100.0) // Length will be scaled
     }

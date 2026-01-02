@@ -3,7 +3,7 @@
 //! Demonstrates Material Design 3 top and bottom app bars.
 
 use bevy::prelude::*;
-use bevy_material_ui::app_bar::{spawn_top_app_bar_with_right_content};
+use bevy_material_ui::app_bar::spawn_top_app_bar_with_right_content;
 use bevy_material_ui::prelude::*;
 
 fn main() {
@@ -44,7 +44,9 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         |_right| {},
     );
 
-    commands.entity(top).insert_test_id("app_bar_demo/top", &telemetry);
+    commands
+        .entity(top)
+        .insert_test_id("app_bar_demo/top", &telemetry);
     commands.entity(root_id).add_child(top);
 
     // Spacer

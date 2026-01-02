@@ -527,7 +527,11 @@ fn slider_interaction_system(
             let physical_per_logical = 1.0 / logical_per_physical;
 
             // Layout may not be computed yet (or may be zero during first-frame interactions).
-            if slider_size.x <= 0.0 || slider_size.y <= 0.0 || track_size.x <= 0.0 || track_size.y <= 0.0 {
+            if slider_size.x <= 0.0
+                || slider_size.y <= 0.0
+                || track_size.x <= 0.0
+                || track_size.y <= 0.0
+            {
                 continue;
             }
 
@@ -548,14 +552,14 @@ fn slider_interaction_system(
             // Constrain the usable drag range to both:
             // - the track extents, inset by the thumb radius
             // - the slider root extents, inset by the thumb radius (keeps thumb clickable)
-            let usable_left = (track_left + handle_radius_physical)
-                .max(slider_left + handle_radius_physical);
-            let usable_right = (track_right - handle_radius_physical)
-                .min(slider_right - handle_radius_physical);
-            let usable_top = (track_top + handle_radius_physical)
-                .max(slider_top + handle_radius_physical);
-            let usable_bottom = (track_bottom - handle_radius_physical)
-                .min(slider_bottom - handle_radius_physical);
+            let usable_left =
+                (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
+            let usable_right =
+                (track_right - handle_radius_physical).min(slider_right - handle_radius_physical);
+            let usable_top =
+                (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
+            let usable_bottom =
+                (track_bottom - handle_radius_physical).min(slider_bottom - handle_radius_physical);
 
             let position_percent = match slider.orientation {
                 SliderOrientation::Horizontal => {
@@ -865,7 +869,8 @@ fn slider_geometry_update_system(
         // beyond bounds while dragging.
         let mut handle_radius_logical = slider.thumb_radius.max(0.0);
         if slider.dragging {
-            handle_radius_logical = (handle_radius_logical + 2.0).min(SLIDER_HANDLE_SIZE_PRESSED / 2.0);
+            handle_radius_logical =
+                (handle_radius_logical + 2.0).min(SLIDER_HANDLE_SIZE_PRESSED / 2.0);
         }
         let handle_radius_physical = handle_radius_logical * physical_per_logical;
 
@@ -881,28 +886,34 @@ fn slider_geometry_update_system(
         match slider.orientation {
             SliderOrientation::Horizontal => {
                 // Usable range is track, inset by thumb radius, and clamped to slider bounds.
-                let usable_left = (track_left + handle_radius_physical)
-                    .max(slider_left + handle_radius_physical);
+                let usable_left =
+                    (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
                 let usable_right = (track_right - handle_radius_physical)
                     .min(slider_right - handle_radius_physical);
                 if usable_right <= usable_left {
                     continue;
                 }
 
-                let thumb_center_x = (usable_left + (usable_right - usable_left) * position_percent)
-                    .clamp(slider_left + handle_radius_physical, slider_right - handle_radius_physical);
-                let thumb_center_y = track_center
-                    .y
-                    .clamp(slider_top + handle_radius_physical, slider_bottom - handle_radius_physical);
+                let thumb_center_x =
+                    (usable_left + (usable_right - usable_left) * position_percent).clamp(
+                        slider_left + handle_radius_physical,
+                        slider_right - handle_radius_physical,
+                    );
+                let thumb_center_y = track_center.y.clamp(
+                    slider_top + handle_radius_physical,
+                    slider_bottom - handle_radius_physical,
+                );
 
                 // Handle
                 if let Ok(mut handle_node) = nodes.get_mut(parts.handle) {
                     handle_node.position_type = PositionType::Absolute;
                     handle_node.left = Val::Px(
-                        (thumb_center_x - slider_left - handle_radius_physical) * logical_per_physical,
+                        (thumb_center_x - slider_left - handle_radius_physical)
+                            * logical_per_physical,
                     );
                     handle_node.top = Val::Px(
-                        (thumb_center_y - slider_top - handle_radius_physical) * logical_per_physical,
+                        (thumb_center_y - slider_top - handle_radius_physical)
+                            * logical_per_physical,
                     );
                     handle_node.margin = UiRect::all(Val::Px(0.0));
                     handle_node.width = Val::Px(handle_radius_logical * 2.0);
@@ -952,8 +963,8 @@ fn slider_geometry_update_system(
                 }
             }
             SliderOrientation::Vertical => {
-                let usable_top = (track_top + handle_radius_physical)
-                    .max(slider_top + handle_radius_physical);
+                let usable_top =
+                    (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
                 let usable_bottom = (track_bottom - handle_radius_physical)
                     .min(slider_bottom - handle_radius_physical);
                 if usable_bottom <= usable_top {
@@ -961,19 +972,25 @@ fn slider_geometry_update_system(
                 }
 
                 let thumb_center_y = (usable_top + (usable_bottom - usable_top) * position_percent)
-                    .clamp(slider_top + handle_radius_physical, slider_bottom - handle_radius_physical);
-                let thumb_center_x = track_center
-                    .x
-                    .clamp(slider_left + handle_radius_physical, slider_right - handle_radius_physical);
+                    .clamp(
+                        slider_top + handle_radius_physical,
+                        slider_bottom - handle_radius_physical,
+                    );
+                let thumb_center_x = track_center.x.clamp(
+                    slider_left + handle_radius_physical,
+                    slider_right - handle_radius_physical,
+                );
 
                 // Handle
                 if let Ok(mut handle_node) = nodes.get_mut(parts.handle) {
                     handle_node.position_type = PositionType::Absolute;
                     handle_node.left = Val::Px(
-                        (thumb_center_x - slider_left - handle_radius_physical) * logical_per_physical,
+                        (thumb_center_x - slider_left - handle_radius_physical)
+                            * logical_per_physical,
                     );
                     handle_node.top = Val::Px(
-                        (thumb_center_y - slider_top - handle_radius_physical) * logical_per_physical,
+                        (thumb_center_y - slider_top - handle_radius_physical)
+                            * logical_per_physical,
                     );
                     handle_node.margin = UiRect::all(Val::Px(0.0));
                     handle_node.width = Val::Px(handle_radius_logical * 2.0);
@@ -981,7 +998,8 @@ fn slider_geometry_update_system(
                 }
 
                 // Active track
-                let active_left_physical = track_center.x - slider_left - track_height_physical / 2.0;
+                let active_left_physical =
+                    track_center.x - slider_left - track_height_physical / 2.0;
                 let (active_top_physical, active_height_physical) = match slider.direction {
                     SliderDirection::StartToEnd => {
                         let start = track_top;

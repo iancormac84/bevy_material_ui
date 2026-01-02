@@ -6,7 +6,6 @@
 use bevy::prelude::*;
 use bevy::ui::FocusPolicy;
 
-use crate::theme::MaterialTheme;
 use crate::i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride};
 use crate::icons::material_icon_names;
 use crate::locale::{
@@ -14,9 +13,10 @@ use crate::locale::{
     MaterialLocaleOverride,
 };
 use crate::text_field::{
-    spawn_text_field_control_with, MaterialTextField, TextFieldBuilder, TextFieldFormatter,
-    TextFieldChangeEvent,
+    spawn_text_field_control_with, MaterialTextField, TextFieldBuilder, TextFieldChangeEvent,
+    TextFieldFormatter,
 };
+use crate::theme::MaterialTheme;
 use crate::tokens::{CornerRadius, Spacing};
 
 mod calendar;
@@ -559,7 +559,7 @@ fn date_picker_mode_toggle_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(toggle.picker) {
             if !picker.open {
                 continue;
@@ -586,14 +586,12 @@ fn date_picker_month_nav_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(nav.picker) {
-            if picker.open
-                && picker.input_mode == DateInputMode::Calendar
-                && !picker.showing_years
+            if picker.open && picker.input_mode == DateInputMode::Calendar && !picker.showing_years
             {
                 picker.display_month = picker.display_month.add_months(nav.delta);
-                
+
                 // Clamp to constraints
                 if picker.display_month < picker.constraints.start {
                     picker.display_month = picker.constraints.start;
@@ -614,7 +612,7 @@ fn date_picker_year_selector_toggle_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(toggle.picker) {
             if picker.open && picker.input_mode == DateInputMode::Calendar {
                 picker.showing_years = !picker.showing_years;
@@ -631,7 +629,7 @@ fn date_picker_year_selection_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(cell.picker) {
             if picker.open && picker.showing_years {
                 picker.display_month = Month::new(cell.year, picker.display_month.month);
@@ -649,15 +647,18 @@ fn date_picker_day_selection_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Some(date) = cell.date {
             if let Ok(mut picker) = pickers.get_mut(cell.picker) {
-                if picker.open && !picker.showing_years && picker.input_mode == DateInputMode::Calendar {
+                if picker.open
+                    && !picker.showing_years
+                    && picker.input_mode == DateInputMode::Calendar
+                {
                     // Validate date
                     if !picker.constraints.validator.is_valid(date) {
                         continue;
                     }
-                    
+
                     // Update selection based on mode
                     let current = picker.selector.selection();
                     match picker.mode {
@@ -787,7 +788,8 @@ fn date_picker_rebuild_content_system(
             commands.entity(view_entity).with_children(|calendar| {
                 // Days of week header (rotated based on first day of week)
                 let all_days = ["S", "M", "T", "W", "T", "F", "S"];
-                let first_day_of_week_index = crate::date_picker::types::weekday_index(first_day_of_week) as usize;
+                let first_day_of_week_index =
+                    crate::date_picker::types::weekday_index(first_day_of_week) as usize;
                 let mut rotated = Vec::with_capacity(7);
                 for i in 0..7 {
                     rotated.push(all_days[(first_day_of_week_index + i) % 7]);
@@ -826,7 +828,10 @@ fn date_picker_rebuild_content_system(
 
                 // Calculate offset: how many cells before day 1
                 let offset = (first_weekday_index - first_day_of_week_index as i32 + 7) % 7;
-                let days_in_month = crate::date_picker::types::days_in_month(display_month.year, display_month.month);
+                let days_in_month = crate::date_picker::types::days_in_month(
+                    display_month.year,
+                    display_month.month,
+                );
 
                 // Calendar grid (6 weeks x 7 days = 42 cells)
                 for week_idx in 0..6 {
@@ -839,12 +844,16 @@ fn date_picker_rebuild_content_system(
                         .with_children(|week| {
                             for day_idx in 0..7 {
                                 let cell_idx = week_idx * 7 + day_idx;
-                                let day_offset = cell_idx as i32 - offset as i32;
+                                let day_offset = cell_idx - offset as i32;
 
                                 // Calculate if this cell contains a valid day
                                 if day_offset >= 0 && day_offset < days_in_month as i32 {
                                     let day_number = (day_offset + 1) as u8;
-                                    let date = Date::new(display_month.year, display_month.month, day_number);
+                                    let date = Date::new(
+                                        display_month.year,
+                                        display_month.month,
+                                        day_number,
+                                    );
                                     let is_today = date == today;
                                     let is_valid = picker.constraints.validator.is_valid(date);
 
@@ -862,25 +871,25 @@ fn date_picker_rebuild_content_system(
                                             (Color::NONE, base_text_color)
                                         };
 
-                                        week
-                                            .spawn((
-                                                Button,
-                                                DatePickerDayCell {
-                                                    picker: picker_entity,
-                                                    date: Some(date),
-                                                },
-                                                Interaction::None,
-                                                Node {
-                                                    width: Val::Px(40.0),
-                                                    height: Val::Px(40.0),
-                                                    justify_content: JustifyContent::Center,
-                                                    align_items: AlignItems::Center,
-                                                    ..default()
-                                                },
-                                                BackgroundColor(bg_color),
-                                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                                            ))
-                                            .with_children(|cell| {
+                                        week.spawn((
+                                            Button,
+                                            DatePickerDayCell {
+                                                picker: picker_entity,
+                                                date: Some(date),
+                                            },
+                                            Interaction::None,
+                                            Node {
+                                                width: Val::Px(40.0),
+                                                height: Val::Px(40.0),
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                ..default()
+                                            },
+                                            BackgroundColor(bg_color),
+                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                        ))
+                                        .with_children(
+                                            |cell| {
                                                 cell.spawn((
                                                     Text::new(day_number.to_string()),
                                                     TextFont {
@@ -889,20 +898,21 @@ fn date_picker_rebuild_content_system(
                                                     },
                                                     TextColor(text_color),
                                                 ));
-                                            });
+                                            },
+                                        );
                                     } else {
-                                        week
-                                            .spawn((
-                                                Node {
-                                                    width: Val::Px(40.0),
-                                                    height: Val::Px(40.0),
-                                                    justify_content: JustifyContent::Center,
-                                                    align_items: AlignItems::Center,
-                                                    ..default()
-                                                },
-                                                BackgroundColor(Color::NONE),
-                                            ))
-                                            .with_children(|cell| {
+                                        week.spawn((
+                                            Node {
+                                                width: Val::Px(40.0),
+                                                height: Val::Px(40.0),
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                ..default()
+                                            },
+                                            BackgroundColor(Color::NONE),
+                                        ))
+                                        .with_children(
+                                            |cell| {
                                                 cell.spawn((
                                                     Text::new(day_number.to_string()),
                                                     TextFont {
@@ -911,7 +921,8 @@ fn date_picker_rebuild_content_system(
                                                     },
                                                     TextColor(base_text_color),
                                                 ));
-                                            });
+                                            },
+                                        );
                                     }
                                 } else {
                                     // Empty cell for days outside current month
@@ -996,34 +1007,33 @@ fn date_picker_rebuild_content_system(
                                     (Color::NONE, on_surface)
                                 };
 
-                                row
-                                    .spawn((
-                                        Button,
-                                        DatePickerYearCell {
-                                            picker: picker_entity,
-                                            year,
-                                        },
-                                        Interaction::None,
-                                        Node {
-                                            width: Val::Px(90.0),
-                                            height: Val::Px(40.0),
-                                            justify_content: JustifyContent::Center,
-                                            align_items: AlignItems::Center,
+                                row.spawn((
+                                    Button,
+                                    DatePickerYearCell {
+                                        picker: picker_entity,
+                                        year,
+                                    },
+                                    Interaction::None,
+                                    Node {
+                                        width: Val::Px(90.0),
+                                        height: Val::Px(40.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(bg_color),
+                                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                ))
+                                .with_children(|btn| {
+                                    btn.spawn((
+                                        Text::new(year.to_string()),
+                                        TextFont {
+                                            font_size: 14.0,
                                             ..default()
                                         },
-                                        BackgroundColor(bg_color),
-                                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                                    ))
-                                    .with_children(|btn| {
-                                        btn.spawn((
-                                            Text::new(year.to_string()),
-                                            TextFont {
-                                                font_size: 14.0,
-                                                ..default()
-                                            },
-                                            TextColor(text_color),
-                                        ));
-                                    });
+                                        TextColor(text_color),
+                                    ));
+                                });
                             }
                         });
                 }
@@ -1044,7 +1054,7 @@ fn date_picker_action_system(
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(scrim.picker) {
             if picker.open && picker.dismiss_on_scrim_click {
                 picker.open = false;
@@ -1054,18 +1064,18 @@ fn date_picker_action_system(
             }
         }
     }
-    
+
     // Handle action buttons
     for (interaction, action) in actions.iter() {
         if *interaction != Interaction::Pressed {
             continue;
         }
-        
+
         if let Ok(mut picker) = pickers.get_mut(action.picker) {
             if !picker.open {
                 continue;
             }
-            
+
             if action.is_confirm {
                 if let Some(selection) = picker.selector.selection() {
                     let is_complete = match &selection {
@@ -1119,13 +1129,22 @@ fn format_date_for_pattern(date: Date, pattern: DateInputPattern) -> String {
     let sep = pattern.separator;
     match pattern.order {
         DateFieldOrder::Mdy => {
-            format!("{:02}{}{:02}{}{:04}", date.month, sep, date.day, sep, date.year)
+            format!(
+                "{:02}{}{:02}{}{:04}",
+                date.month, sep, date.day, sep, date.year
+            )
         }
         DateFieldOrder::Dmy => {
-            format!("{:02}{}{:02}{}{:04}", date.day, sep, date.month, sep, date.year)
+            format!(
+                "{:02}{}{:02}{}{:04}",
+                date.day, sep, date.month, sep, date.year
+            )
         }
         DateFieldOrder::Ymd => {
-            format!("{:04}{}{:02}{}{:02}", date.year, sep, date.month, sep, date.day)
+            format!(
+                "{:04}{}{:02}{}{:02}",
+                date.year, sep, date.month, sep, date.day
+            )
         }
     }
 }
@@ -1377,7 +1396,8 @@ fn date_picker_render_system(
             let (range_start_text_value, range_end_text_value) = match selection.as_ref() {
                 Some(DateSelection::Range { start, end }) => (
                     format_date_for_pattern(*start, pattern),
-                    end.map(|e| format_date_for_pattern(e, pattern)).unwrap_or_default(),
+                    end.map(|e| format_date_for_pattern(e, pattern))
+                        .unwrap_or_default(),
                 ),
                 _ => (String::new(), String::new()),
             };
@@ -1445,13 +1465,16 @@ fn date_picker_render_system(
         }
 
         let pattern = resolve_date_input_pattern(picker_entity, &locale, &locale_overrides);
-        
+
         let selection = picker.selector.selection();
 
         // Update selection header label
         let selection_text = match selection.as_ref() {
             Some(DateSelection::Single(date)) => format!("{}", date),
-            Some(DateSelection::Range { start, end: Some(end) }) => format!("{} - {}", start, end),
+            Some(DateSelection::Range {
+                start,
+                end: Some(end),
+            }) => format!("{} - {}", start, end),
             Some(DateSelection::Range { start, end: None }) => format!("{} - ...", start),
             None => "Select date".to_string(),
         };
@@ -1465,7 +1488,8 @@ fn date_picker_render_system(
         let (range_start_text_value, range_end_text_value) = match selection.as_ref() {
             Some(DateSelection::Range { start, end }) => (
                 format_date_for_pattern(*start, pattern),
-                end.map(|e| format_date_for_pattern(e, pattern)).unwrap_or_default(),
+                end.map(|e| format_date_for_pattern(e, pattern))
+                    .unwrap_or_default(),
             ),
             _ => (String::new(), String::new()),
         };
@@ -1571,31 +1595,32 @@ fn date_picker_render_system(
                 }
             }
         }
-        
+
         // Update day cell highlighting based on selection
         for (cell, mut bg, children) in day_cells.iter_mut() {
             if cell.picker != picker_entity {
                 continue;
             }
-            
+
             if let Some(date) = cell.date {
                 let is_today = date == today;
                 let is_valid = picker.constraints.validator.is_valid(date);
                 let is_selected = match &selection {
                     Some(DateSelection::Single(selected)) => date == *selected,
                     Some(DateSelection::Range { start, end }) => {
-                        date == *start || end.map_or(false, |e| date == e)
+                        date == *start || *end == Some(date)
                     }
                     None => false,
                 };
-                
+
                 let in_range = match &selection {
-                    Some(DateSelection::Range { start, end: Some(end) }) => {
-                        date > *start && date < *end
-                    }
+                    Some(DateSelection::Range {
+                        start,
+                        end: Some(end),
+                    }) => date > *start && date < *end,
                     _ => false,
                 };
-                
+
                 // Apply colors based on state
                 let (bg_color, text_color) = if !is_valid {
                     (Color::NONE, theme.on_surface.with_alpha(0.38))
@@ -1608,9 +1633,9 @@ fn date_picker_render_system(
                 } else {
                     (Color::NONE, theme.on_surface)
                 };
-                
+
                 *bg = BackgroundColor(bg_color);
-                
+
                 // Update text color
                 for child in children.iter() {
                     if let Ok(mut text_color_comp) = texts.get_mut(child) {
@@ -1641,11 +1666,12 @@ fn date_picker_view_visibility_system(
                 if view.picker != picker_entity {
                     continue;
                 }
-                node.display = if picker.input_mode == DateInputMode::Calendar && !picker.showing_years {
-                    Display::Flex
-                } else {
-                    Display::None
-                };
+                node.display =
+                    if picker.input_mode == DateInputMode::Calendar && !picker.showing_years {
+                        Display::Flex
+                    } else {
+                        Display::None
+                    };
             }
         }
 
@@ -1690,7 +1716,7 @@ fn date_picker_theme_system(
     if !theme.is_changed() {
         return;
     }
-    
+
     for (mut bg, scrim, dialog) in backgrounds.iter_mut() {
         if scrim.is_some() {
             *bg = BackgroundColor(theme.scrim.with_alpha(0.32));
@@ -1714,13 +1740,13 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
         let width = builder.width;
         let bg_color = theme.surface_container_high;
         let on_surface = theme.on_surface;
-        
+
         // Capture picker values before moving it
         let display_month = picker.display_month;
         let first_day_of_week = picker.first_day_of_week;
         let showing_years = picker.showing_years;
         let input_mode = picker.input_mode;
-        
+
         // Create simplified placeholder UI - full implementation in future update
         let mut root = self.spawn((
             picker,
@@ -1743,15 +1769,13 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
             root.insert(MaterialLocaleOverride::new(tag));
         }
         let entity = root.id();
-        
+
         let default_pattern = DateInputPattern::new(DateFieldOrder::Mdy, '/');
 
         root.with_children(|root| {
             // Scrim overlay
             root.spawn((
-                DatePickerScrim {
-                    picker: entity,
-                },
+                DatePickerScrim { picker: entity },
                 Interaction::None,
                 Node {
                     position_type: PositionType::Absolute,
@@ -1764,7 +1788,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                 BackgroundColor(theme.scrim.with_alpha(0.32)),
                 ZIndex(0),
             ));
-            
+
             // Dialog container with calendar
             root.spawn((
                 DatePickerDialog,
@@ -1782,11 +1806,15 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                 BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                 BoxShadow::default(),
                 ZIndex(1),
-            )).with_children(|dialog| {
+            ))
+            .with_children(|dialog| {
                 // Selection header
                 let selection_text = match builder.initial_selection.as_ref() {
                     Some(DateSelection::Single(date)) => format!("{}", date),
-                    Some(DateSelection::Range { start, end: Some(end) }) => {
+                    Some(DateSelection::Range {
+                        start,
+                        end: Some(end),
+                    }) => {
                         format!("{} - {}", start, end)
                     }
                     Some(DateSelection::Range { start, end: None }) => {
@@ -1794,11 +1822,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     }
                     None => "Select date".to_string(),
                 };
-                
+
                 dialog.spawn((
-                    DatePickerLabel {
-                        picker: entity,
-                    },
+                    DatePickerLabel { picker: entity },
                     Text::new(selection_text),
                     TextFont {
                         font_size: 18.0,
@@ -1810,179 +1836,182 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         ..default()
                     },
                 ));
-                
+
                 // Title row with mode toggle
-                dialog.spawn(Node {
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::Center,
-                    margin: UiRect::bottom(Val::Px(Spacing::SMALL)),
-                    ..default()
-                }).with_children(|title_row| {
-                    title_row.spawn((
-                        Text::new("Select Date"),
-                        TextFont {
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(on_surface),
-                    ));
-                    
-                    // Input mode toggle button (calendar <-> text)
-                    title_row.spawn((
-                        Button,
-                        DatePickerModeToggle {
-                            picker: entity,
-                        },
-                        Interaction::None,
-                        Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                    )).with_children(|btn| {
-                        let mode_toggle_icon_name = if input_mode == DateInputMode::Calendar {
-                            material_icon_names::material_ic_edit_black_24dp
-                        } else {
-                            material_icon_names::material_ic_calendar_black_24dp
-                        };
-                        btn.spawn((
-                            DatePickerModeToggleLabel {
-                                picker: entity,
+                dialog
+                    .spawn(Node {
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(Spacing::SMALL)),
+                        ..default()
+                    })
+                    .with_children(|title_row| {
+                        title_row.spawn((
+                            Text::new("Select Date"),
+                            TextFont {
+                                font_size: 24.0,
+                                ..default()
                             },
-                            crate::icons::svg::SvgIcon::new(mode_toggle_icon_name)
-                                .with_size(20.0)
-                                .with_color(on_surface),
+                            TextColor(on_surface),
                         ));
+
+                        // Input mode toggle button (calendar <-> text)
+                        title_row
+                            .spawn((
+                                Button,
+                                DatePickerModeToggle { picker: entity },
+                                Interaction::None,
+                                Node {
+                                    width: Val::Px(40.0),
+                                    height: Val::Px(40.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            ))
+                            .with_children(|btn| {
+                                let mode_toggle_icon_name = if input_mode == DateInputMode::Calendar
+                                {
+                                    material_icon_names::material_ic_edit_black_24dp
+                                } else {
+                                    material_icon_names::material_ic_calendar_black_24dp
+                                };
+                                btn.spawn((
+                                    DatePickerModeToggleLabel { picker: entity },
+                                    crate::icons::svg::SvgIcon::new(mode_toggle_icon_name)
+                                        .with_size(20.0)
+                                        .with_color(on_surface),
+                                ));
+                            });
                     });
-                });
-                
+
                 // Month navigation header
-                dialog.spawn(Node {
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::Center,
-                    margin: UiRect::bottom(Val::Px(Spacing::SMALL)),
-                    ..default()
-                }).with_children(|nav_row| {
-                    // Previous month button
-                    nav_row.spawn((
-                        Button,
-                        DatePickerMonthNav {
-                            picker: entity,
-                            delta: -1,
-                        },
-                        Interaction::None,
-                        Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                    )).with_children(|btn| {
-                        btn.spawn((
+                dialog
+                    .spawn(Node {
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(Spacing::SMALL)),
+                        ..default()
+                    })
+                    .with_children(|nav_row| {
+                        // Previous month button
+                        nav_row
+                            .spawn((
+                                Button,
+                                DatePickerMonthNav {
+                                    picker: entity,
+                                    delta: -1,
+                                },
+                                Interaction::None,
+                                Node {
+                                    width: Val::Px(40.0),
+                                    height: Val::Px(40.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            ))
+                            .with_children(|btn| {
+                                btn.spawn((
                             crate::icons::svg::SvgIcon::new(
                                 material_icon_names::material_ic_keyboard_arrow_previous_black_24dp,
                             )
                             .with_size(20.0)
                             .with_color(on_surface),
                         ));
-                    });
-                    
-                    // Month/year display (clickable to toggle year selector)
-                    nav_row.spawn((
-                        Button,
-                        DatePickerYearToggle {
-                            picker: entity,
-                        },
-                        Interaction::None,
-                        Node {
-                            padding: UiRect::all(Val::Px(Spacing::SMALL)),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
-                    ))
-                    .with_children(|btn| {
-                        btn.spawn(Node {
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            column_gap: Val::Px(4.0),
-                            ..default()
-                        })
-                        .with_children(|row| {
-                            row.spawn((
-                                DatePickerMonthLabel { picker: entity },
-                                Text::new(display_month.display_name()),
-                                TextFont {
-                                    font_size: 16.0,
+                            });
+
+                        // Month/year display (clickable to toggle year selector)
+                        nav_row
+                            .spawn((
+                                Button,
+                                DatePickerYearToggle { picker: entity },
+                                Interaction::None,
+                                Node {
+                                    padding: UiRect::all(Val::Px(Spacing::SMALL)),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
                                     ..default()
                                 },
-                                TextColor(on_surface),
-                            ));
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+                            ))
+                            .with_children(|btn| {
+                                btn.spawn(Node {
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    column_gap: Val::Px(4.0),
+                                    ..default()
+                                })
+                                .with_children(|row| {
+                                    row.spawn((
+                                        DatePickerMonthLabel { picker: entity },
+                                        Text::new(display_month.display_name()),
+                                        TextFont {
+                                            font_size: 16.0,
+                                            ..default()
+                                        },
+                                        TextColor(on_surface),
+                                    ));
 
-                            let year_toggle_icon_name = if showing_years {
-                                material_icon_names::material_ic_menu_arrow_up_black_24dp
-                            } else {
-                                material_icon_names::material_ic_menu_arrow_down_black_24dp
-                            };
-                            row.spawn((
-                                DatePickerYearToggleIcon { picker: entity },
-                                crate::icons::svg::SvgIcon::new(year_toggle_icon_name)
-                                    .with_size(18.0)
-                                    .with_color(on_surface),
-                            ));
-                        });
+                                    let year_toggle_icon_name = if showing_years {
+                                        material_icon_names::material_ic_menu_arrow_up_black_24dp
+                                    } else {
+                                        material_icon_names::material_ic_menu_arrow_down_black_24dp
+                                    };
+                                    row.spawn((
+                                        DatePickerYearToggleIcon { picker: entity },
+                                        crate::icons::svg::SvgIcon::new(year_toggle_icon_name)
+                                            .with_size(18.0)
+                                            .with_color(on_surface),
+                                    ));
+                                });
+                            });
+
+                        // Next month button
+                        nav_row
+                            .spawn((
+                                Button,
+                                DatePickerMonthNav {
+                                    picker: entity,
+                                    delta: 1,
+                                },
+                                Interaction::None,
+                                Node {
+                                    width: Val::Px(40.0),
+                                    height: Val::Px(40.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::NONE),
+                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            ))
+                            .with_children(|btn| {
+                                btn.spawn((crate::icons::svg::SvgIcon::new(
+                                    material_icon_names::material_ic_keyboard_arrow_next_black_24dp,
+                                )
+                                .with_size(20.0)
+                                .with_color(on_surface),));
+                            });
                     });
-                    
-                    // Next month button
-                    nav_row.spawn((
-                        Button,
-                        DatePickerMonthNav {
-                            picker: entity,
-                            delta: 1,
-                        },
-                        Interaction::None,
-                        Node {
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                    )).with_children(|btn| {
-                        btn.spawn((
-                            crate::icons::svg::SvgIcon::new(
-                                material_icon_names::material_ic_keyboard_arrow_next_black_24dp,
-                            )
-                            .with_size(20.0)
-                            .with_color(on_surface),
-                        ));
-                    });
-                });
-                
+
                 // Always spawn all three views with appropriate initial display state
-                
+
                 // Text input view
                 let text_display = if input_mode == DateInputMode::Text {
                     Display::Flex
                 } else {
                     Display::None
                 };
-                
-                dialog.spawn((
-                        DatePickerTextView {
-                            picker: entity,
-                        },
+
+                dialog
+                    .spawn((
+                        DatePickerTextView { picker: entity },
                         Node {
                             flex_direction: FlexDirection::Column,
                             row_gap: Val::Px(Spacing::MEDIUM),
@@ -1990,107 +2019,106 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             display: text_display,
                             ..default()
                         },
-                    )).with_children(|text_area| {
-                        match builder.mode {
-                            DatePickerMode::Single => {
-                                let date_text = match builder.initial_selection.as_ref() {
-                                    Some(DateSelection::Single(date)) => format!(
-                                        "{:02}/{:02}/{:04}",
-                                        date.month as u8, date.day, date.year
-                                    ),
-                                    Some(DateSelection::Range { start, .. }) => format!(
-                                        "{:02}/{:02}/{:04}",
-                                        start.month as u8, start.day, start.year
-                                    ),
-                                    _ => String::new(),
-                                };
+                    ))
+                    .with_children(|text_area| match builder.mode {
+                        DatePickerMode::Single => {
+                            let date_text = match builder.initial_selection.as_ref() {
+                                Some(DateSelection::Single(date)) => format!(
+                                    "{:02}/{:02}/{:04}",
+                                    date.month, date.day, date.year
+                                ),
+                                Some(DateSelection::Range { start, .. }) => format!(
+                                    "{:02}/{:02}/{:04}",
+                                    start.month, start.day, start.year
+                                ),
+                                _ => String::new(),
+                            };
 
-                                spawn_text_field_control_with(
-                                    text_area,
-                                    theme,
-                                    TextFieldBuilder::new()
-                                        .outlined()
-                                        .width(Val::Percent(100.0))
-                                        .date_pattern(default_pattern)
-                                        .value(date_text)
-                                        .supporting_text(format!(
-                                            "Enter date in {} format",
-                                            default_pattern.hint()
-                                        )),
-                                    DatePickerTextInputValue {
-                                        picker: entity,
-                                        kind: DatePickerTextInputKind::Single,
-                                    },
-                                );
-                            }
-                            DatePickerMode::Range => {
-                                let (start_text, end_text) = match builder.initial_selection.as_ref() {
-                                    Some(DateSelection::Range { start, end }) => (
-                                        format!(
-                                            "{:02}/{:02}/{:04}",
-                                            start.month as u8, start.day, start.year
-                                        ),
-                                        end.map(|e| {
-                                            format!(
-                                                "{:02}/{:02}/{:04}",
-                                                e.month as u8, e.day, e.year
-                                            )
-                                        })
-                                        .unwrap_or_default(),
+                            spawn_text_field_control_with(
+                                text_area,
+                                theme,
+                                TextFieldBuilder::new()
+                                    .outlined()
+                                    .width(Val::Percent(100.0))
+                                    .date_pattern(default_pattern)
+                                    .value(date_text)
+                                    .supporting_text(format!(
+                                        "Enter date in {} format",
+                                        default_pattern.hint()
+                                    )),
+                                DatePickerTextInputValue {
+                                    picker: entity,
+                                    kind: DatePickerTextInputKind::Single,
+                                },
+                            );
+                        }
+                        DatePickerMode::Range => {
+                            let (start_text, end_text) = match builder.initial_selection.as_ref() {
+                                Some(DateSelection::Range { start, end }) => (
+                                    format!(
+                                        "{:02}/{:02}/{:04}",
+                                        start.month, start.day, start.year
                                     ),
-                                    _ => (String::new(), String::new()),
-                                };
-
-                                text_area
-                                    .spawn(Node {
-                                        flex_direction: FlexDirection::Row,
-                                        column_gap: Val::Px(Spacing::MEDIUM),
-                                        ..default()
+                                    end.map(|e| {
+                                        format!("{:02}/{:02}/{:04}", e.month, e.day, e.year)
                                     })
-                                    .with_children(|row| {
-                                        spawn_text_field_control_with(
-                                            row,
-                                            theme,
-                                            TextFieldBuilder::new()
-                                                .label("Start")
-                                                .outlined()
-                                                .width(Val::Percent(50.0))
-                                                .date_pattern(default_pattern)
-                                                .value(start_text)
-                                                .supporting_text(default_pattern.hint()),
-                                            DatePickerTextInputValue {
-                                                picker: entity,
-                                                kind: DatePickerTextInputKind::RangeStart,
-                                            },
-                                        );
+                                    .unwrap_or_default(),
+                                ),
+                                _ => (String::new(), String::new()),
+                            };
 
-                                        spawn_text_field_control_with(
-                                            row,
-                                            theme,
-                                            TextFieldBuilder::new()
-                                                .label("End")
-                                                .outlined()
-                                                .width(Val::Percent(50.0))
-                                                .date_pattern(default_pattern)
-                                                .value(end_text)
-                                                .supporting_text(default_pattern.hint()),
-                                            DatePickerTextInputValue {
-                                                picker: entity,
-                                                kind: DatePickerTextInputKind::RangeEnd,
-                                            },
-                                        );
-                                    });
-                            }
+                            text_area
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    column_gap: Val::Px(Spacing::MEDIUM),
+                                    ..default()
+                                })
+                                .with_children(|row| {
+                                    spawn_text_field_control_with(
+                                        row,
+                                        theme,
+                                        TextFieldBuilder::new()
+                                            .label("Start")
+                                            .outlined()
+                                            .width(Val::Percent(50.0))
+                                            .date_pattern(default_pattern)
+                                            .value(start_text)
+                                            .supporting_text(default_pattern.hint()),
+                                        DatePickerTextInputValue {
+                                            picker: entity,
+                                            kind: DatePickerTextInputKind::RangeStart,
+                                        },
+                                    );
+
+                                    spawn_text_field_control_with(
+                                        row,
+                                        theme,
+                                        TextFieldBuilder::new()
+                                            .label("End")
+                                            .outlined()
+                                            .width(Val::Percent(50.0))
+                                            .date_pattern(default_pattern)
+                                            .value(end_text)
+                                            .supporting_text(default_pattern.hint()),
+                                        DatePickerTextInputValue {
+                                            picker: entity,
+                                            kind: DatePickerTextInputKind::RangeEnd,
+                                        },
+                                    );
+                                });
                         }
                     });
-                
+
                 // Year selector view
-                let year_display = if showing_years { Display::Flex } else { Display::None };
-                
-                dialog.spawn((
-                        DatePickerYearView {
-                            picker: entity,
-                        },
+                let year_display = if showing_years {
+                    Display::Flex
+                } else {
+                    Display::None
+                };
+
+                dialog
+                    .spawn((
+                        DatePickerYearView { picker: entity },
                         DatePickerYearBuiltState {
                             current_year: display_month.year,
                             start_year: builder.constraints.start.year,
@@ -2104,73 +2132,78 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             display: year_display,
                             ..default()
                         },
-                    )).with_children(|year_grid| {
+                    ))
+                    .with_children(|year_grid| {
                         let current_year = display_month.year;
                         let start_year = builder.constraints.start.year;
                         let end_year = builder.constraints.end.year;
-                        
+
                         // Create year buttons in rows of 3
                         let mut years = Vec::new();
                         for year in start_year..=end_year {
                             years.push(year);
                         }
-                        
+
                         for year_row in years.chunks(3) {
-                            year_grid.spawn(Node {
-                                justify_content: JustifyContent::SpaceAround,
-                                column_gap: Val::Px(Spacing::MEDIUM),
-                                ..default()
-                            }).with_children(|row| {
-                                for &year in year_row {
-                                    let is_current = year == current_year;
-                                    let (bg_color, text_color) = if is_current {
-                                        (theme.primary, theme.on_primary)
-                                    } else {
-                                        (Color::NONE, on_surface)
-                                    };
-                                    
-                                    row.spawn((
-                                        Button,
-                                        DatePickerYearCell {
-                                            picker: entity,
-                                            year,
-                                        },
-                                        Interaction::None,
-                                        Node {
-                                            width: Val::Px(90.0),
-                                            height: Val::Px(40.0),
-                                            justify_content: JustifyContent::Center,
-                                            align_items: AlignItems::Center,
-                                            ..default()
-                                        },
-                                        BackgroundColor(bg_color),
-                                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                                    )).with_children(|btn| {
-                                        btn.spawn((
-                                            Text::new(year.to_string()),
-                                            TextFont {
-                                                font_size: 14.0,
+                            year_grid
+                                .spawn(Node {
+                                    justify_content: JustifyContent::SpaceAround,
+                                    column_gap: Val::Px(Spacing::MEDIUM),
+                                    ..default()
+                                })
+                                .with_children(|row| {
+                                    for &year in year_row {
+                                        let is_current = year == current_year;
+                                        let (bg_color, text_color) = if is_current {
+                                            (theme.primary, theme.on_primary)
+                                        } else {
+                                            (Color::NONE, on_surface)
+                                        };
+
+                                        row.spawn((
+                                            Button,
+                                            DatePickerYearCell {
+                                                picker: entity,
+                                                year,
+                                            },
+                                            Interaction::None,
+                                            Node {
+                                                width: Val::Px(90.0),
+                                                height: Val::Px(40.0),
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
                                                 ..default()
                                             },
-                                            TextColor(text_color),
-                                        ));
-                                    });
-                                }
-                            });
+                                            BackgroundColor(bg_color),
+                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                        ))
+                                        .with_children(
+                                            |btn| {
+                                                btn.spawn((
+                                                    Text::new(year.to_string()),
+                                                    TextFont {
+                                                        font_size: 14.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(text_color),
+                                                ));
+                                            },
+                                        );
+                                    }
+                                });
                         }
                     });
-                
+
                 // Calendar grid view
                 let calendar_display = if input_mode == DateInputMode::Calendar && !showing_years {
                     Display::Flex
                 } else {
                     Display::None
                 };
-                
-                dialog.spawn((
-                        DatePickerCalendarView {
-                            picker: entity,
-                        },
+
+                dialog
+                    .spawn((
+                        DatePickerCalendarView { picker: entity },
                         DatePickerCalendarBuiltState {
                             month: display_month,
                             first_day_of_week,
@@ -2181,169 +2214,191 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             display: calendar_display,
                             ..default()
                         },
-                    )).with_children(|calendar| {
-                    // Days of week header
-                    calendar.spawn(Node {
-                        justify_content: JustifyContent::SpaceAround,
-                        column_gap: Val::Px(Spacing::SMALL),
-                        ..default()
-                    }).with_children(|header| {
-                        for day in ["S", "M", "T", "W", "T", "F", "S"] {
-                            header.spawn((
-                                Text::new(day),
-                                TextFont {
-                                    font_size: 12.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface_variant),
-                                Node {
-                                    width: Val::Px(40.0),
-                                    height: Val::Px(24.0),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ));
-                        }
-                    });
-                    
-                    // Calculate calendar grid layout
-                    let first_day = display_month.first_day();
-                    let first_weekday = crate::date_picker::types::weekday_for_date(first_day);
-                    let first_weekday_index = crate::date_picker::types::weekday_index(first_weekday);
-                    let first_day_of_week_index = crate::date_picker::types::weekday_index(first_day_of_week);
-                    
-                    // Calculate offset: how many cells before day 1
-                    let offset = (first_weekday_index - first_day_of_week_index + 7) % 7;
-                    let days_in_month = crate::date_picker::types::days_in_month(
-                        display_month.year,
-                        display_month.month
-                    );
-                    
-                    // Calendar grid (6 weeks x 7 days = 42 cells)
-                    for week_idx in 0..6 {
-                        calendar.spawn(Node {
-                            justify_content: JustifyContent::SpaceAround,
-                            column_gap: Val::Px(Spacing::SMALL),
-                            ..default()
-                        }).with_children(|week| {
-                            for day_idx in 0..7 {
-                                let position = week_idx * 7 + day_idx;
-                                let day_offset = position - offset;
-                                
-                                // Calculate if this cell contains a valid day
-                                if day_offset >= 0 && day_offset < days_in_month as i32 {
-                                    let day_number = (day_offset + 1) as u8;
-                                    let date = Date::new(display_month.year, display_month.month, day_number);
-                                    // Note: Initial spawn uses Date::today() placeholder
-                                    // Systems will update highlighting using CurrentDate resource if available
-                                    let is_today = date == Date::today();
-                                    let is_valid = builder.constraints.validator.is_valid(date);
-                                    
-                                    // Determine cell colors based on state
-                                    let (bg_color, text_color, enabled) = if !is_valid {
-                                        // Disabled date - outside constraints
-                                        (Color::NONE, theme.on_surface.with_alpha(0.38), false)
-                                    } else if is_today {
-                                        (theme.primary_container, theme.on_primary_container, true)
-                                    } else {
-                                        (Color::NONE, on_surface, true)
-                                    };
-                                    
-                                    let mut cell_spawn = week.spawn((
-                                        Button,
-                                        DatePickerDayCell {
-                                            picker: entity,
-                                            date: Some(date),
+                    ))
+                    .with_children(|calendar| {
+                        // Days of week header
+                        calendar
+                            .spawn(Node {
+                                justify_content: JustifyContent::SpaceAround,
+                                column_gap: Val::Px(Spacing::SMALL),
+                                ..default()
+                            })
+                            .with_children(|header| {
+                                for day in ["S", "M", "T", "W", "T", "F", "S"] {
+                                    header.spawn((
+                                        Text::new(day),
+                                        TextFont {
+                                            font_size: 12.0,
+                                            ..default()
                                         },
-                                        Interaction::None,
+                                        TextColor(theme.on_surface_variant),
                                         Node {
                                             width: Val::Px(40.0),
-                                            height: Val::Px(40.0),
+                                            height: Val::Px(24.0),
                                             justify_content: JustifyContent::Center,
                                             align_items: AlignItems::Center,
                                             ..default()
                                         },
-                                        BackgroundColor(bg_color),
-                                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ));
-                                    
-                                    // Only enable interaction if date is valid
-                                    if !enabled {
-                                        cell_spawn.insert(Interaction::None);
-                                    }
-                                    
-                                    cell_spawn.with_children(|cell| {
-                                        cell.spawn((
-                                            Text::new(day_number.to_string()),
-                                            TextFont {
-                                                font_size: 14.0,
-                                                ..default()
-                                            },
-                                            TextColor(text_color),
-                                        ));
-                                    });
-                                } else {
-                                    // Empty cell for days outside current month
-                                    week.spawn(Node {
-                                        width: Val::Px(40.0),
-                                        height: Val::Px(40.0),
-                                        ..default()
-                                    });
                                 }
-                            }
-                        });
-                    }
-                });
-                
+                            });
+
+                        // Calculate calendar grid layout
+                        let first_day = display_month.first_day();
+                        let first_weekday = crate::date_picker::types::weekday_for_date(first_day);
+                        let first_weekday_index =
+                            crate::date_picker::types::weekday_index(first_weekday);
+                        let first_day_of_week_index =
+                            crate::date_picker::types::weekday_index(first_day_of_week);
+
+                        // Calculate offset: how many cells before day 1
+                        let offset = (first_weekday_index - first_day_of_week_index + 7) % 7;
+                        let days_in_month = crate::date_picker::types::days_in_month(
+                            display_month.year,
+                            display_month.month,
+                        );
+
+                        // Calendar grid (6 weeks x 7 days = 42 cells)
+                        for week_idx in 0..6 {
+                            calendar
+                                .spawn(Node {
+                                    justify_content: JustifyContent::SpaceAround,
+                                    column_gap: Val::Px(Spacing::SMALL),
+                                    ..default()
+                                })
+                                .with_children(|week| {
+                                    for day_idx in 0..7 {
+                                        let position = week_idx * 7 + day_idx;
+                                        let day_offset = position - offset;
+
+                                        // Calculate if this cell contains a valid day
+                                        if day_offset >= 0 && day_offset < days_in_month as i32 {
+                                            let day_number = (day_offset + 1) as u8;
+                                            let date = Date::new(
+                                                display_month.year,
+                                                display_month.month,
+                                                day_number,
+                                            );
+                                            // Note: Initial spawn uses Date::today() placeholder
+                                            // Systems will update highlighting using CurrentDate resource if available
+                                            let is_today = date == Date::today();
+                                            let is_valid =
+                                                builder.constraints.validator.is_valid(date);
+
+                                            // Determine cell colors based on state
+                                            let (bg_color, text_color, enabled) = if !is_valid {
+                                                // Disabled date - outside constraints
+                                                (
+                                                    Color::NONE,
+                                                    theme.on_surface.with_alpha(0.38),
+                                                    false,
+                                                )
+                                            } else if is_today {
+                                                (
+                                                    theme.primary_container,
+                                                    theme.on_primary_container,
+                                                    true,
+                                                )
+                                            } else {
+                                                (Color::NONE, on_surface, true)
+                                            };
+
+                                            let mut cell_spawn = week.spawn((
+                                                Button,
+                                                DatePickerDayCell {
+                                                    picker: entity,
+                                                    date: Some(date),
+                                                },
+                                                Interaction::None,
+                                                Node {
+                                                    width: Val::Px(40.0),
+                                                    height: Val::Px(40.0),
+                                                    justify_content: JustifyContent::Center,
+                                                    align_items: AlignItems::Center,
+                                                    ..default()
+                                                },
+                                                BackgroundColor(bg_color),
+                                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                            ));
+
+                                            // Only enable interaction if date is valid
+                                            if !enabled {
+                                                cell_spawn.insert(Interaction::None);
+                                            }
+
+                                            cell_spawn.with_children(|cell| {
+                                                cell.spawn((
+                                                    Text::new(day_number.to_string()),
+                                                    TextFont {
+                                                        font_size: 14.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(text_color),
+                                                ));
+                                            });
+                                        } else {
+                                            // Empty cell for days outside current month
+                                            week.spawn(Node {
+                                                width: Val::Px(40.0),
+                                                height: Val::Px(40.0),
+                                                ..default()
+                                            });
+                                        }
+                                    }
+                                });
+                        }
+                    });
+
                 // Action buttons
-                dialog.spawn(Node {
-                    justify_content: JustifyContent::End,
-                    column_gap: Val::Px(Spacing::SMALL),
-                    margin: UiRect::top(Val::Px(Spacing::MEDIUM)),
-                    ..default()
-                }).with_children(|actions| {
-                    // Cancel button
-                    actions.spawn((
-                        DatePickerAction {
-                            picker: entity,
-                            is_confirm: false,
-                        },
-                        Interaction::None,
-                        Text::new("Cancel"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(theme.primary),
-                        Node {
-                            padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
-                            ..default()
-                        },
-                    ));
-                    
-                    // OK button
-                    actions.spawn((
-                        DatePickerAction {
-                            picker: entity,
-                            is_confirm: true,
-                        },
-                        Interaction::None,
-                        Text::new("OK"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(theme.primary),
-                        Node {
-                            padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
-                            ..default()
-                        },
-                    ));
-                });  
+                dialog
+                    .spawn(Node {
+                        justify_content: JustifyContent::End,
+                        column_gap: Val::Px(Spacing::SMALL),
+                        margin: UiRect::top(Val::Px(Spacing::MEDIUM)),
+                        ..default()
+                    })
+                    .with_children(|actions| {
+                        // Cancel button
+                        actions.spawn((
+                            DatePickerAction {
+                                picker: entity,
+                                is_confirm: false,
+                            },
+                            Interaction::None,
+                            Text::new("Cancel"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(theme.primary),
+                            Node {
+                                padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
+                                ..default()
+                            },
+                        ));
+
+                        // OK button
+                        actions.spawn((
+                            DatePickerAction {
+                                picker: entity,
+                                is_confirm: true,
+                            },
+                            Interaction::None,
+                            Text::new("OK"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(theme.primary),
+                            Node {
+                                padding: UiRect::axes(Val::Px(16.0), Val::Px(8.0)),
+                                ..default()
+                            },
+                        ));
+                    });
             });
         });
-        
+
         entity
     }
 }

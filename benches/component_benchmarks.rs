@@ -481,10 +481,7 @@ fn bench_list(c: &mut Criterion) {
 
     group.bench_function("create_list_item_with_icon", |b| {
         b.iter(|| {
-            black_box(
-                MaterialListItem::new(black_box("Item"))
-                    .leading_icon(black_box("person")),
-            )
+            black_box(MaterialListItem::new(black_box("Item")).leading_icon(black_box("person")))
         })
     });
 

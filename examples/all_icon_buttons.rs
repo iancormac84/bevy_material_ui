@@ -84,4 +84,3 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
         });
 }
 // (No font/codepoint scanning; icons are embedded bitmaps.)
-

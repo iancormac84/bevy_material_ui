@@ -45,13 +45,7 @@ pub fn spawn_icon_buttons_section(
                         "Standard",
                     );
                     // Filled icon button
-                    spawn_icon_button_demo(
-                        row,
-                        theme,
-                        "add",
-                        IconButtonVariant::Filled,
-                        "Filled",
-                    );
+                    spawn_icon_button_demo(row, theme, "add", IconButtonVariant::Filled, "Filled");
                     // Filled Tonal icon button
                     spawn_icon_button_demo(
                         row,
@@ -138,8 +132,8 @@ fn spawn_icon_button_demo(
                 BorderRadius::all(Val::Px(20.0)),
             ))
             .with_children(|btn| {
-                if let Some(icon) = MaterialIcon::from_name(icon_name)
-                    .or_else(|| MaterialIcon::from_name("star"))
+                if let Some(icon) =
+                    MaterialIcon::from_name(icon_name).or_else(|| MaterialIcon::from_name("star"))
                 {
                     btn.spawn(icon.with_size(24.0).with_color(icon_color));
                 }

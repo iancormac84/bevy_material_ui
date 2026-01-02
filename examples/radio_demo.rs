@@ -19,7 +19,12 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<TelemetryConfig>, mut rows: ResMut<RadioDemoRows>) {
+fn setup(
+    mut commands: Commands,
+    theme: Res<MaterialTheme>,
+    telemetry: Res<TelemetryConfig>,
+    mut rows: ResMut<RadioDemoRows>,
+) {
     commands.spawn(Camera2d);
 
     commands

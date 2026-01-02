@@ -112,9 +112,8 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                                 ..default()
                             })
                             .with_children(|slot| {
-                                let slider = MaterialSlider::new(0.0, 100.0)
-                                    .with_value(40.0)
-                                    .vertical();
+                                let slider =
+                                    MaterialSlider::new(0.0, 100.0).with_value(40.0).vertical();
                                 let slider_entity = spawn_slider_control(slot, &theme, slider);
                                 sliders.push(("vertical", slider_entity));
                             });

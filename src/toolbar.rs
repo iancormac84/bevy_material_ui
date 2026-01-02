@@ -221,9 +221,7 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
                 toolbar
                     .spawn((
                         ToolbarNavigation,
-                        IconButtonBuilder::new(icon_name)
-                            .standard()
-                            .build(theme),
+                        IconButtonBuilder::new(icon_name).standard().build(theme),
                     ))
                     .with_children(|btn| {
                         btn.spawn((
@@ -360,8 +358,8 @@ mod tests {
 
     #[test]
     fn test_toolbar_actions() {
-        let toolbar = MaterialToolbar::new("Title")
-            .add_action(ToolbarAction::new(ICON_MENU, "menu"));
+        let toolbar =
+            MaterialToolbar::new("Title").add_action(ToolbarAction::new(ICON_MENU, "menu"));
         assert_eq!(toolbar.actions.len(), 1);
         assert_eq!(toolbar.actions[0].id, "menu");
     }

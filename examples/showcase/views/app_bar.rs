@@ -1,12 +1,10 @@
 //! App Bar view for the showcase application.
 
 use bevy::prelude::*;
-use bevy_material_ui::icons::{
-    ICON_ADD, ICON_CHECK, ICON_CLOSE, ICON_MENU, ICON_SEARCH,
-};
+use bevy_material_ui::app_bar::SpawnTopAppBarWithRightContentChild;
+use bevy_material_ui::icons::{ICON_ADD, ICON_CHECK, ICON_CLOSE, ICON_MENU, ICON_SEARCH};
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::text_field::{spawn_text_field_control, InputType};
-use bevy_material_ui::app_bar::SpawnTopAppBarWithRightContentChild;
 
 use crate::showcase::common::*;
 
@@ -20,7 +18,11 @@ fn spawn_standard_icon_button(
     let icon_color = icon_btn.icon_color(theme);
 
     parent
-        .spawn(IconButtonBuilder::new(icon_name.to_string()).standard().build(theme))
+        .spawn(
+            IconButtonBuilder::new(icon_name.to_string())
+                .standard()
+                .build(theme),
+        )
         .with_children(|btn| {
             if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(icon_name) {
                 btn.spawn(icon.with_size(24.0).with_color(icon_color));
@@ -158,7 +160,9 @@ pub fn spawn_app_bar_section(
                                 BorderRadius::all(Val::Px(16.0)),
                             ))
                             .with_children(|btn| {
-                                if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(ICON_ADD) {
+                                if let Some(icon) =
+                                    bevy_material_ui::icons::MaterialIcon::from_name(ICON_ADD)
+                                {
                                     btn.spawn(icon.with_size(24.0).with_color(icon_color));
                                 }
                             });

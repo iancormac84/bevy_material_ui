@@ -152,7 +152,15 @@ pub mod svg {
 
     pub(super) fn svg_icon_sync_system(
         mut commands: Commands,
-        mut icons: Query<(Entity, &SvgIcon, Option<&mut MaterialIcon>, Option<&mut Visibility>), Or<(Added<SvgIcon>, Changed<SvgIcon>)>>,
+        mut icons: Query<
+            (
+                Entity,
+                &SvgIcon,
+                Option<&mut MaterialIcon>,
+                Option<&mut Visibility>,
+            ),
+            Or<(Added<SvgIcon>, Changed<SvgIcon>)>,
+        >,
     ) {
         for (entity, svg, material_icon, visibility) in icons.iter_mut() {
             let Some(id) = icon_by_name(&svg.name) else {
@@ -169,9 +177,11 @@ pub mod svg {
                 material_icon.size = svg.size;
                 material_icon.color = svg.color;
             } else {
-                commands
-                    .entity(entity)
-                    .insert(MaterialIcon::new(id).with_size(svg.size).with_color(svg.color));
+                commands.entity(entity).insert(
+                    MaterialIcon::new(id)
+                        .with_size(svg.size)
+                        .with_color(svg.color),
+                );
             }
 
             if let Some(mut visibility) = visibility {
@@ -250,7 +260,12 @@ fn material_icon_system(
     mut images: ResMut<Assets<Image>>,
     mut cache: ResMut<MaterialIconImageCache>,
     mut icons: Query<
-        (Entity, &MaterialIcon, Option<&mut ImageNode>, Option<&mut Node>),
+        (
+            Entity,
+            &MaterialIcon,
+            Option<&mut ImageNode>,
+            Option<&mut Node>,
+        ),
         Or<(Added<MaterialIcon>, Changed<MaterialIcon>)>,
     >,
 ) {
@@ -302,7 +317,12 @@ fn material_icon_repair_system(
     mut images: ResMut<Assets<Image>>,
     mut cache: ResMut<MaterialIconImageCache>,
     mut icons: Query<
-        (Entity, &MaterialIcon, Option<&mut ImageNode>, Option<&mut Node>),
+        (
+            Entity,
+            &MaterialIcon,
+            Option<&mut ImageNode>,
+            Option<&mut Node>,
+        ),
         Or<(Without<ImageNode>, Without<Node>)>,
     >,
 ) {

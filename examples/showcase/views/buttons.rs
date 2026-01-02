@@ -32,11 +32,41 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     ..default()
                 })
                 .with_children(|row| {
-                    spawn_interactive_button(row, theme, "showcase.buttons.variant.filled", "Filled", ButtonVariant::Filled);
-                    spawn_interactive_button(row, theme, "showcase.buttons.variant.outlined", "Outlined", ButtonVariant::Outlined);
-                    spawn_interactive_button(row, theme, "showcase.buttons.variant.text", "Text", ButtonVariant::Text);
-                    spawn_interactive_button(row, theme, "showcase.buttons.variant.elevated", "Elevated", ButtonVariant::Elevated);
-                    spawn_interactive_button(row, theme, "showcase.buttons.variant.tonal", "Tonal", ButtonVariant::FilledTonal);
+                    spawn_interactive_button(
+                        row,
+                        theme,
+                        "showcase.buttons.variant.filled",
+                        "Filled",
+                        ButtonVariant::Filled,
+                    );
+                    spawn_interactive_button(
+                        row,
+                        theme,
+                        "showcase.buttons.variant.outlined",
+                        "Outlined",
+                        ButtonVariant::Outlined,
+                    );
+                    spawn_interactive_button(
+                        row,
+                        theme,
+                        "showcase.buttons.variant.text",
+                        "Text",
+                        ButtonVariant::Text,
+                    );
+                    spawn_interactive_button(
+                        row,
+                        theme,
+                        "showcase.buttons.variant.elevated",
+                        "Elevated",
+                        ButtonVariant::Elevated,
+                    );
+                    spawn_interactive_button(
+                        row,
+                        theme,
+                        "showcase.buttons.variant.tonal",
+                        "Tonal",
+                        ButtonVariant::FilledTonal,
+                    );
                 });
 
             section.spawn((
@@ -70,14 +100,30 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             .single_selection(true)
                             .selection_required(true)
                             .horizontal(),
-                        Node {
-                            ..default()
-                        },
+                        Node { ..default() },
                     ))
                     .with_children(|group| {
-                        spawn_toggle_button(group, theme, "showcase.buttons.period.day", "Day", true);
-                        spawn_toggle_button(group, theme, "showcase.buttons.period.week", "Week", false);
-                        spawn_toggle_button(group, theme, "showcase.buttons.period.month", "Month", false);
+                        spawn_toggle_button(
+                            group,
+                            theme,
+                            "showcase.buttons.period.day",
+                            "Day",
+                            true,
+                        );
+                        spawn_toggle_button(
+                            group,
+                            theme,
+                            "showcase.buttons.period.week",
+                            "Week",
+                            false,
+                        );
+                        spawn_toggle_button(
+                            group,
+                            theme,
+                            "showcase.buttons.period.month",
+                            "Month",
+                            false,
+                        );
                     });
 
                     // Vertical segmented (single selection)
@@ -86,14 +132,30 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             .single_selection(true)
                             .selection_required(true)
                             .vertical(),
-                        Node {
-                            ..default()
-                        },
+                        Node { ..default() },
                     ))
                     .with_children(|group| {
-                        spawn_toggle_button(group, theme, "showcase.buttons.priority.low", "Low", false);
-                        spawn_toggle_button(group, theme, "showcase.buttons.priority.med", "Med", true);
-                        spawn_toggle_button(group, theme, "showcase.buttons.priority.high", "High", false);
+                        spawn_toggle_button(
+                            group,
+                            theme,
+                            "showcase.buttons.priority.low",
+                            "Low",
+                            false,
+                        );
+                        spawn_toggle_button(
+                            group,
+                            theme,
+                            "showcase.buttons.priority.med",
+                            "Med",
+                            true,
+                        );
+                        spawn_toggle_button(
+                            group,
+                            theme,
+                            "showcase.buttons.priority.high",
+                            "High",
+                            false,
+                        );
                     });
                 });
 

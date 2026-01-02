@@ -65,7 +65,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                     group
                         .spawn(builder.build(&theme))
-                        .insert_test_id(format!("button_group_demo/group/horizontal/tab/{i}"), &telemetry)
+                        .insert_test_id(
+                            format!("button_group_demo/group/horizontal/tab/{i}"),
+                            &telemetry,
+                        )
                         .with_children(|b| {
                             b.spawn((
                                 ButtonLabel,
@@ -100,19 +103,17 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         .checkable(true)
                         .checked(i == 1);
 
-                    group
-                        .spawn(builder.build(&theme))
-                        .with_children(|b| {
-                            b.spawn((
-                                ButtonLabel,
-                                Text::new(label),
-                                TextFont {
-                                    font_size: 14.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
-                        });
+                    group.spawn(builder.build(&theme)).with_children(|b| {
+                        b.spawn((
+                            ButtonLabel,
+                            Text::new(label),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface),
+                        ));
+                    });
                 }
             });
         });

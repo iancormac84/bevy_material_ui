@@ -26,7 +26,10 @@ impl Plugin for TabsPlugin {
             .add_systems(Update, sync_tabs_selection_system)
             .add_systems(Update, tab_label_and_indicator_system)
             .add_systems(Update, tab_content_visibility_system)
-            .add_systems(Update, tabs_telemetry_system.after(tab_label_and_indicator_system));
+            .add_systems(
+                Update,
+                tabs_telemetry_system.after(tab_label_and_indicator_system),
+            );
     }
 }
 

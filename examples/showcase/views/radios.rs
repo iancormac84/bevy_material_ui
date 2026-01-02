@@ -39,9 +39,30 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     },
                 ))
                 .with_children(|col| {
-                    spawn_radio_i18n(col, theme, true, "example_group", "showcase.radios.choice_a", "Choice A");
-                    spawn_radio_i18n(col, theme, false, "example_group", "showcase.radios.choice_b", "Choice B");
-                    spawn_radio_i18n(col, theme, false, "example_group", "showcase.radios.choice_c", "Choice C");
+                    spawn_radio_i18n(
+                        col,
+                        theme,
+                        true,
+                        "example_group",
+                        "showcase.radios.choice_a",
+                        "Choice A",
+                    );
+                    spawn_radio_i18n(
+                        col,
+                        theme,
+                        false,
+                        "example_group",
+                        "showcase.radios.choice_b",
+                        "Choice B",
+                    );
+                    spawn_radio_i18n(
+                        col,
+                        theme,
+                        false,
+                        "example_group",
+                        "showcase.radios.choice_c",
+                        "Choice C",
+                    );
                 });
 
             spawn_code_block(

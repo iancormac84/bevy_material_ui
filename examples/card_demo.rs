@@ -40,18 +40,23 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             ];
 
             for (id, builder) in cards {
-                root.spawn(builder.width(Val::Px(220.0)).height(Val::Px(140.0)).build(&theme))
-                    .insert_test_id(format!("card_demo/card/{id}"), &telemetry)
-                    .with_children(|card| {
-                        card.spawn((
-                            Text::new(format!("{id} card")),
-                            TextFont {
-                                font_size: 16.0,
-                                ..default()
-                            },
-                            TextColor(theme.on_surface),
-                        ));
-                    });
+                root.spawn(
+                    builder
+                        .width(Val::Px(220.0))
+                        .height(Val::Px(140.0))
+                        .build(&theme),
+                )
+                .insert_test_id(format!("card_demo/card/{id}"), &telemetry)
+                .with_children(|card| {
+                    card.spawn((
+                        Text::new(format!("{id} card")),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
+                });
             }
         });
 }

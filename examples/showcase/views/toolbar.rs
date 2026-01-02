@@ -54,14 +54,16 @@ pub fn spawn_toolbar_section(
                         let icon_color = icon_btn.icon_color(theme);
 
                         parent
-                            .spawn((
-                                IconButtonBuilder::new(icon_name.to_string())
-                                    .standard()
-                                    .build(theme),
-                            ))
+                            .spawn((IconButtonBuilder::new(icon_name.to_string())
+                                .standard()
+                                .build(theme),))
                             .with_children(|btn| {
-                                if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(icon_name) {
-                                    btn.spawn(icon.with_size(TOOLBAR_ICON_SIZE).with_color(icon_color));
+                                if let Some(icon) =
+                                    bevy_material_ui::icons::MaterialIcon::from_name(icon_name)
+                                {
+                                    btn.spawn(
+                                        icon.with_size(TOOLBAR_ICON_SIZE).with_color(icon_color),
+                                    );
                                 }
                             });
                     }

@@ -9,8 +9,8 @@
 use std::collections::HashMap;
 
 use bevy::asset::{io::Reader, AssetLoader, LoadContext};
-use bevy::prelude::*;
 use bevy::ecs::system::Command;
+use bevy::prelude::*;
 
 #[derive(Debug, Clone, Resource)]
 pub struct MaterialLanguage {
@@ -262,7 +262,12 @@ fn localized_text_apply_system(
     language: Res<MaterialLanguage>,
     child_of: Query<&ChildOf>,
     overrides: Query<&MaterialLanguageOverride>,
-    mut texts: Query<(Entity, &LocalizedText, &mut Text, Option<&mut LocalizedTextState>)>,
+    mut texts: Query<(
+        Entity,
+        &LocalizedText,
+        &mut Text,
+        Option<&mut LocalizedTextState>,
+    )>,
     mut commands: Commands,
 ) {
     // If nothing changed globally, we can still have per-entity key changes.
@@ -325,6 +330,9 @@ impl Plugin for MaterialI18nPlugin {
             .init_resource::<MaterialI18n>()
             .init_asset::<MaterialTranslations>()
             .register_asset_loader(MaterialTranslationsLoader)
-            .add_systems(Update, (i18n_ingest_assets_system, localized_text_apply_system));
+            .add_systems(
+                Update,
+                (i18n_ingest_assets_system, localized_text_apply_system),
+            );
     }
 }

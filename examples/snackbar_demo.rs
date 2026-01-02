@@ -17,7 +17,10 @@ fn main() {
         .add_plugins(MaterialUiPlugin)
         .add_plugins(TelemetryPlugin)
         .add_systems(Startup, setup)
-        .add_systems(Update, (show_snackbar_on_click_system, handle_snackbar_action_system))
+        .add_systems(
+            Update,
+            (show_snackbar_on_click_system, handle_snackbar_action_system),
+        )
         .run();
 }
 
@@ -91,7 +94,13 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 }
 
 fn show_snackbar_on_click_system(
-    mut clicks: Query<(&Interaction, Option<&ShowActionSnackbarButton>), (Changed<Interaction>, Or<(With<ShowSnackbarButton>, With<ShowActionSnackbarButton>)>)>,
+    mut clicks: Query<
+        (&Interaction, Option<&ShowActionSnackbarButton>),
+        (
+            Changed<Interaction>,
+            Or<(With<ShowSnackbarButton>, With<ShowActionSnackbarButton>)>,
+        ),
+    >,
     mut show: MessageWriter<ShowSnackbar>,
 ) {
     for (interaction, action) in clicks.iter_mut() {
@@ -100,10 +109,7 @@ fn show_snackbar_on_click_system(
         }
 
         if action.is_some() {
-            show.write(ShowSnackbar::with_action(
-                "Saved successfully",
-                "UNDO",
-            ));
+            show.write(ShowSnackbar::with_action("Saved successfully", "UNDO"));
         } else {
             show.write(ShowSnackbar::message("Hello from snackbar!"));
         }

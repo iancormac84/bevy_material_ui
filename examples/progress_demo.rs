@@ -62,8 +62,13 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     TextColor(theme.on_surface_variant),
                 ));
 
-                col.spawn(LinearProgressBuilder::new().progress(0.65).width(Val::Px(320.0)).build(&theme))
-                    .insert_test_id("progress_demo/linear/determinate", &telemetry);
+                col.spawn(
+                    LinearProgressBuilder::new()
+                        .progress(0.65)
+                        .width(Val::Px(320.0))
+                        .build(&theme),
+                )
+                .insert_test_id("progress_demo/linear/determinate", &telemetry);
 
                 col.spawn((
                     Text::new("Linear (indeterminate)"),
@@ -74,8 +79,13 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     TextColor(theme.on_surface_variant),
                 ));
 
-                col.spawn(LinearProgressBuilder::new().indeterminate().width(Val::Px(320.0)).build(&theme))
-                    .insert_test_id("progress_demo/linear/indeterminate", &telemetry);
+                col.spawn(
+                    LinearProgressBuilder::new()
+                        .indeterminate()
+                        .width(Val::Px(320.0))
+                        .build(&theme),
+                )
+                .insert_test_id("progress_demo/linear/indeterminate", &telemetry);
 
                 col.spawn((
                     Text::new("Circular (determinate)"),

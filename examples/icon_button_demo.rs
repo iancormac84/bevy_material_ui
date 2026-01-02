@@ -36,7 +36,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             let buttons = [
                 ("standard", IconButtonBuilder::new(ICON_SEARCH).standard()),
                 ("filled", IconButtonBuilder::new(ICON_FAVORITE).filled()),
-                ("filled_tonal", IconButtonBuilder::new(ICON_SETTINGS).filled_tonal()),
+                (
+                    "filled_tonal",
+                    IconButtonBuilder::new(ICON_SETTINGS).filled_tonal(),
+                ),
                 ("outlined", IconButtonBuilder::new(ICON_SEARCH).outlined()),
             ];
 

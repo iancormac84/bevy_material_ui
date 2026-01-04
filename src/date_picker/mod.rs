@@ -2037,10 +2037,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         DatePickerMode::Single => {
                             let date_text = match builder.initial_selection.as_ref() {
                                 Some(DateSelection::Single(date)) => {
-                                    format!("{:02}/{:02}/{:04}", date.month, date.day, date.year)
+                                    format_date_for_pattern(*date, default_pattern)
                                 }
                                 Some(DateSelection::Range { start, .. }) => {
-                                    format!("{:02}/{:02}/{:04}", start.month, start.day, start.year)
+                                    format_date_for_pattern(*start, default_pattern)
                                 }
                                 _ => String::new(),
                             };
@@ -2066,14 +2066,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         DatePickerMode::Range => {
                             let (start_text, end_text) = match builder.initial_selection.as_ref() {
                                 Some(DateSelection::Range { start, end }) => (
-                                    format!(
-                                        "{:02}/{:02}/{:04}",
-                                        start.month, start.day, start.year
-                                    ),
-                                    end.map(|e| {
-                                        format!("{:02}/{:02}/{:04}", e.month, e.day, e.year)
-                                    })
-                                    .unwrap_or_default(),
+                                    format_date_for_pattern(*start, default_pattern),
+                                    end.map(|e| format_date_for_pattern(e, default_pattern))
+                                        .unwrap_or_default(),
                                 ),
                                 _ => (String::new(), String::new()),
                             };

@@ -2,6 +2,7 @@
 //!
 //! A standalone time picker with clock face and keyboard input modes.
 
+use bevy::picking::Pickable;
 use bevy::prelude::*;
 use bevy::ui::{ComputedNode, FocusPolicy, UiGlobalTransform};
 use std::f32::consts::PI;
@@ -1210,6 +1211,8 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
             // Scrim overlay
             root.spawn((
                 TimePickerScrim { picker: entity },
+                // Required for `Interaction` updates so scrim clicks can be detected.
+                Button,
                 Interaction::None,
                 Node {
                     position_type: PositionType::Absolute,
@@ -1220,6 +1223,11 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                     ..default()
                 },
                 BackgroundColor(theme.scrim.with_alpha(0.32)),
+                // Modal: block pointer interactions behind the picker.
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: true,
+                },
                 ZIndex(0),
             ));
 
@@ -1238,6 +1246,11 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                 Transform::default(),
                 GlobalTransform::default(),
                 BackgroundColor(bg_color),
+                // Modal: block pointer interactions behind the dialog surface.
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: false,
+                },
                 BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                 BoxShadow::default(),
                 ZIndex(1),

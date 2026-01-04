@@ -3,6 +3,7 @@
 //! A standalone date picker matching Material Design 3 specifications.
 //! Supports single date or date range selection with calendar and text input modes.
 
+use bevy::picking::Pickable;
 use bevy::prelude::*;
 use bevy::ui::FocusPolicy;
 
@@ -1776,6 +1777,8 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
             // Scrim overlay
             root.spawn((
                 DatePickerScrim { picker: entity },
+                // Required for `Interaction` updates so scrim clicks can be detected.
+                Button,
                 Interaction::None,
                 Node {
                     position_type: PositionType::Absolute,
@@ -1786,6 +1789,11 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     ..default()
                 },
                 BackgroundColor(theme.scrim.with_alpha(0.32)),
+                // Modal: block pointer interactions behind the picker.
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: true,
+                },
                 ZIndex(0),
             ));
 
@@ -1803,6 +1811,11 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     ..default()
                 },
                 BackgroundColor(bg_color),
+                // Modal: block pointer interactions behind the dialog surface.
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: false,
+                },
                 BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                 BoxShadow::default(),
                 ZIndex(1),

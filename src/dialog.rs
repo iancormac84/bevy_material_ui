@@ -33,12 +33,47 @@ impl Plugin for DialogPlugin {
                 (
                     dialog_visibility_system,
                     dialog_scrim_visibility_system,
+                    dialog_pickable_system,
                     dialog_scrim_pickable_system,
                     dialog_shadow_system,
                     dialog_telemetry_system,
                     dialog_scrim_telemetry_system,
                 ),
             );
+    }
+}
+
+/// Update dialog pickability when dialog modality changes.
+///
+/// This prevents clicks from going through the dialog surface to UI behind it.
+fn dialog_pickable_system(
+    mut commands: Commands,
+    changed_dialogs: Query<(Entity, &MaterialDialog), Changed<MaterialDialog>>,
+    mut pickables: Query<&mut Pickable>,
+) {
+    if changed_dialogs.is_empty() {
+        return;
+    }
+
+    for (entity, dialog) in changed_dialogs.iter() {
+        let pickable = if dialog.modal {
+            Pickable {
+                should_block_lower: true,
+                // The dialog surface itself doesn't need hover feedback.
+                is_hoverable: false,
+            }
+        } else {
+            Pickable {
+                should_block_lower: false,
+                is_hoverable: false,
+            }
+        };
+
+        if let Ok(mut existing) = pickables.get_mut(entity) {
+            *existing = pickable;
+        } else {
+            commands.entity(entity).insert(pickable);
+        }
     }
 }
 
@@ -416,6 +451,7 @@ impl DialogBuilder {
     pub fn build(self, theme: &MaterialTheme) -> impl Bundle {
         let bg_color = self.dialog.surface_color(theme);
         let is_full_screen = self.dialog.dialog_type == DialogType::FullScreen;
+        let modal = self.dialog.modal;
 
         (
             self.dialog,
@@ -454,6 +490,18 @@ impl DialogBuilder {
             })),
             // Native Bevy 0.17 shadow support (starts hidden since dialog is closed)
             BoxShadow::default(),
+            // Ensure modal dialogs block pointer interactions behind the dialog surface.
+            if modal {
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: false,
+                }
+            } else {
+                Pickable {
+                    should_block_lower: false,
+                    is_hoverable: false,
+                }
+            },
         )
     }
 }

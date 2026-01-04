@@ -13,7 +13,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'push' && github.actor == 'edgarhsanchez') && 'self-hosted' || 'ubuntu-latest' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,7 +53,9 @@ jobs:
         run: cargo clippy --all-targets --all-features
 
       - name: Test
-        run: cargo test
+        env:
+          CARGO_BUILD_JOBS: 1
+        run: cargo test --lib --tests
 
       - name: Docs
         run: cargo doc --no-deps

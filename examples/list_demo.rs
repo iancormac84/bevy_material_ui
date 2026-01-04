@@ -9,11 +9,18 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(MaterialUiPlugin)
+        .add_plugins(TelemetryPlugin)
         .add_systems(Startup, setup)
         .run();
 }
 
-fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+fn setup(
+    mut commands: Commands,
+    theme: Res<MaterialTheme>,
+    telemetry: Res<TelemetryConfig>,
+    language: Option<Res<MaterialLanguage>>,
+    i18n: Option<Res<MaterialI18n>>,
+) {
     commands.spawn(Camera2d);
 
     commands
@@ -29,6 +36,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
             },
             BackgroundColor(theme.surface),
         ))
+        .insert_test_id("list_demo/root", &telemetry)
         .with_children(|root| {
             root.spawn((
                 Node {
@@ -41,20 +49,40 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
                 },
                 BackgroundColor(theme.surface_container_low),
             ))
+            .insert_test_id("list_demo/panel", &telemetry)
             .with_children(|panel| {
                 panel
                     .spawn((
                         ListBuilder::new().max_height(360.0).build_scrollable(),
                         BackgroundColor(theme.surface),
                     ))
+                    .insert_test_id("list_demo/list", &telemetry)
                     .with_children(|list| {
                         for i in 1..=20 {
+                            let headline_key = format!("list_demo.item_{}.headline", i);
+                            let supporting_key = format!("list_demo.item_{}.supporting", i);
+
+                            let language_tag =
+                                language.as_ref().map(|l| l.tag.as_str()).unwrap_or("en-US");
+
+                            let headline = i18n
+                                .as_ref()
+                                .and_then(|i18n| i18n.translate(language_tag, &headline_key))
+                                .map(str::to_string)
+                                .unwrap_or_else(|| format!("Item {i}"));
+
                             let builder = if i % 3 == 0 {
-                                ListItemBuilder::new(format!("Item {i}"))
+                                let supporting = i18n
+                                    .as_ref()
+                                    .and_then(|i18n| i18n.translate(language_tag, &supporting_key))
+                                    .map(str::to_string)
+                                    .unwrap_or_else(|| "Supporting text".to_string());
+
+                                ListItemBuilder::new(headline)
                                     .two_line()
-                                    .supporting_text("Supporting text")
+                                    .supporting_text(supporting)
                             } else {
-                                ListItemBuilder::new(format!("Item {i}")).one_line()
+                                ListItemBuilder::new(headline).one_line()
                             };
 
                             list.spawn_list_item_with(&theme, builder);

@@ -35,8 +35,6 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 row_gap: Val::Px(16.0),
                 ..default()
             },
-            Transform::default(),
-            GlobalTransform::default(),
             BackgroundColor(theme.surface),
         ))
         .insert_test_id("time_picker_demo/root", &telemetry)

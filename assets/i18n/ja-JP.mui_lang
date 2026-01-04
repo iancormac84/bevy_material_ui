@@ -180,14 +180,19 @@
     "showcase.section.translations.description": "実行中に言語を切り替えてローカライズ文字列を確認",
 
     "list_demo.item_1.headline": "受信トレイ",
+    "list_demo.item_1.supporting": "メインの受信トレイ",
     "list_demo.item_2.headline": "スター付き",
+    "list_demo.item_2.supporting": "重要なメッセージ",
     "list_demo.item_3.headline": "下書き",
     "list_demo.item_3.supporting": "3件の未保存下書き",
     "list_demo.item_4.headline": "送信済み",
+    "list_demo.item_4.supporting": "送信メッセージ",
     "list_demo.item_5.headline": "ゴミ箱",
+    "list_demo.item_5.supporting": "削除されたアイテム",
     "list_demo.item_6.headline": "迷惑メール",
     "list_demo.item_6.supporting": "12件の迷惑メール",
     "list_demo.item_7.headline": "重要",
+    "list_demo.item_7.supporting": "サポートとドキュメント",
     "list_demo.item_8.headline": "ソーシャル",
     "list_demo.item_9.headline": "プロモーション",
     "list_demo.item_9.supporting": "15件の広告メール",
@@ -201,9 +206,12 @@
     "list_demo.item_15.supporting": "8件の仕事関連項目",
     "list_demo.item_16.headline": "個人",
     "list_demo.item_17.headline": "アーカイブ",
+    "list_demo.item_17.supporting": "保存されたメッセージ",
     "list_demo.item_18.headline": "カテゴリー",
     "list_demo.item_18.supporting": "カテゴリーを管理",
     "list_demo.item_19.headline": "ラベル",
-    "list_demo.item_20.headline": "設定"
+    "list_demo.item_19.supporting": "整理されたカテゴリー",
+    "list_demo.item_20.headline": "設定",
+    "list_demo.item_20.supporting": "設定オプション"
   }
 }

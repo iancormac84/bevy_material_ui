@@ -186,14 +186,19 @@
     "showcase.section.translations.description": "Sprachen zur Laufzeit wechseln und lokalisierte Strings ansehen",
 
     "list_demo.item_1.headline": "Posteingang",
+    "list_demo.item_1.supporting": "Haupt-Posteingang",
     "list_demo.item_2.headline": "Markiert",
+    "list_demo.item_2.supporting": "Wichtige Nachrichten",
     "list_demo.item_3.headline": "Entwürfe",
     "list_demo.item_3.supporting": "3 nicht gespeicherte Entwürfe",
     "list_demo.item_4.headline": "Gesendet",
+    "list_demo.item_4.supporting": "Ausgehende Nachrichten",
     "list_demo.item_5.headline": "Papierkorb",
+    "list_demo.item_5.supporting": "Gelöschte Elemente",
     "list_demo.item_6.headline": "Spam",
     "list_demo.item_6.supporting": "12 Spam-Nachrichten",
     "list_demo.item_7.headline": "Wichtig",
+    "list_demo.item_7.supporting": "Support und Dokumentation",
     "list_demo.item_8.headline": "Soziale Netzwerke",
     "list_demo.item_9.headline": "Werbeaktionen",
     "list_demo.item_9.supporting": "15 Werbe-E-Mails",
@@ -207,9 +212,12 @@
     "list_demo.item_15.supporting": "8 arbeitsbezogene Elemente",
     "list_demo.item_16.headline": "Persönlich",
     "list_demo.item_17.headline": "Archiv",
+    "list_demo.item_17.supporting": "Gespeicherte Nachrichten",
     "list_demo.item_18.headline": "Kategorien",
     "list_demo.item_18.supporting": "Verwalten Sie Ihre Kategorien",
     "list_demo.item_19.headline": "Labels",
-    "list_demo.item_20.headline": "Einstellungen"
+    "list_demo.item_19.supporting": "Organisierte Kategorien",
+    "list_demo.item_20.headline": "Einstellungen",
+    "list_demo.item_20.supporting": "Konfigurationsoptionen"
   }
 }

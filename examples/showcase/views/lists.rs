@@ -98,27 +98,27 @@ pub fn spawn_list_section(
                             Interaction::None, // Enable hover detection
                         ))
                         .with_children(|list| {
-                            // 10 list items
+                            // 10 list items with translation keys
                             let items = [
-                                ("Inbox", "Primary inbox for emails"),
-                                ("Starred", "Important messages"),
-                                ("Sent", "Outgoing messages"),
-                                ("Drafts", "Unfinished messages"),
-                                ("Spam", "Filtered junk mail"),
-                                ("Trash", "Deleted items"),
-                                ("Archive", "Stored messages"),
-                                ("Labels", "Organized categories"),
-                                ("Settings", "Configuration options"),
-                                ("Help", "Support and documentation"),
+                                ("list_demo.item_1.headline", "Inbox", "list_demo.item_1.supporting", "Primary inbox for emails"),
+                                ("list_demo.item_2.headline", "Starred", "list_demo.item_2.supporting", "Important messages"),
+                                ("list_demo.item_4.headline", "Sent", "list_demo.item_4.supporting", "Outgoing messages"),
+                                ("list_demo.item_3.headline", "Drafts", "list_demo.item_3.supporting", "Unfinished messages"),
+                                ("list_demo.item_6.headline", "Spam", "list_demo.item_6.supporting", "Filtered junk mail"),
+                                ("list_demo.item_5.headline", "Trash", "list_demo.item_5.supporting", "Deleted items"),
+                                ("list_demo.item_17.headline", "Archive", "list_demo.item_17.supporting", "Stored messages"),
+                                ("list_demo.item_19.headline", "Labels", "list_demo.item_19.supporting", "Organized categories"),
+                                ("list_demo.item_20.headline", "Settings", "list_demo.item_20.supporting", "Configuration options"),
+                                ("list_demo.item_7.headline", "Help", "list_demo.item_7.supporting", "Support and documentation"),
                             ];
 
-                            for (i, (headline, supporting)) in items.iter().enumerate() {
+                            for (i, (headline_key, headline_default, supporting_key, supporting_default)) in items.iter().enumerate() {
                                 list.spawn((
                                     SelectableListItem,
                                     TestId::new(format!("list_item_{}", i)),
-                                    ListItemBuilder::new(*headline)
+                                    ListItemBuilder::new(*headline_default)
                                         .two_line()
-                                        .supporting_text(*supporting)
+                                        .supporting_text(*supporting_default)
                                         .build(&theme_clone),
                                     Interaction::None,
                                 ))
@@ -158,21 +158,27 @@ pub fn spawn_list_section(
                                     .with_children(|body| {
                                         body.spawn((
                                             bevy_material_ui::list::ListItemHeadline,
-                                            Text::new(*headline),
+                                            Text::new(""),
+                                            LocalizedText::new(*headline_key)
+                                                .with_default(*headline_default),
                                             TextFont {
                                                 font_size: 16.0,
                                                 ..default()
                                             },
                                             TextColor(theme_clone.on_surface),
+                                            NeedsInternationalFont,
                                         ));
                                         body.spawn((
                                             bevy_material_ui::list::ListItemSupportingText,
-                                            Text::new(*supporting),
+                                            Text::new(""),
+                                            LocalizedText::new(*supporting_key)
+                                                .with_default(*supporting_default),
                                             TextFont {
                                                 font_size: 14.0,
                                                 ..default()
                                             },
                                             TextColor(theme_clone.on_surface_variant),
+                                            NeedsInternationalFont,
                                         ));
                                     });
                                 });

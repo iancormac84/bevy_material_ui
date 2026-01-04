@@ -184,14 +184,19 @@
     "showcase.section.translations.description": "运行时切换语言并预览本地化字符串",
 
     "list_demo.item_1.headline": "收件箱",
+    "list_demo.item_1.supporting": "主收件箱",
     "list_demo.item_2.headline": "已加星标",
+    "list_demo.item_2.supporting": "重要消息",
     "list_demo.item_3.headline": "草稿",
     "list_demo.item_3.supporting": "3个未保存的草稿",
     "list_demo.item_4.headline": "已发送",
+    "list_demo.item_4.supporting": "发出消息",
     "list_demo.item_5.headline": "垃圾箱",
+    "list_demo.item_5.supporting": "已删除项目",
     "list_demo.item_6.headline": "垃圾邮件",
     "list_demo.item_6.supporting": "12条垃圾邮件",
     "list_demo.item_7.headline": "重要",
+    "list_demo.item_7.supporting": "支持和文档",
     "list_demo.item_8.headline": "社交",
     "list_demo.item_9.headline": "促销",
     "list_demo.item_9.supporting": "15封促销邮件",
@@ -205,9 +210,12 @@
     "list_demo.item_15.supporting": "8个工作相关项目",
     "list_demo.item_16.headline": "个人",
     "list_demo.item_17.headline": "归档",
+    "list_demo.item_17.supporting": "已存储消息",
     "list_demo.item_18.headline": "类别",
     "list_demo.item_18.supporting": "管理你的类别",
     "list_demo.item_19.headline": "标签",
-    "list_demo.item_20.headline": "设置"
+    "list_demo.item_19.supporting": "有序类别",
+    "list_demo.item_20.headline": "设置",
+    "list_demo.item_20.supporting": "配置选项"
   }
 }

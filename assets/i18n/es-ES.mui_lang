@@ -179,14 +179,19 @@
     "showcase.section.translations.description": "Cambiar idiomas en tiempo de ejecución y ver cadenas localizadas",
 
     "list_demo.item_1.headline": "Bandeja de entrada",
+    "list_demo.item_1.supporting": "Bandeja de entrada principal",
     "list_demo.item_2.headline": "Destacados",
+    "list_demo.item_2.supporting": "Mensajes importantes",
     "list_demo.item_3.headline": "Borradores",
     "list_demo.item_3.supporting": "3 borradores sin guardar",
     "list_demo.item_4.headline": "Enviados",
+    "list_demo.item_4.supporting": "Mensajes salientes",
     "list_demo.item_5.headline": "Papelera",
+    "list_demo.item_5.supporting": "Elementos eliminados",
     "list_demo.item_6.headline": "Spam",
     "list_demo.item_6.supporting": "12 mensajes de spam",
     "list_demo.item_7.headline": "Importante",
+    "list_demo.item_7.supporting": "Soporte y documentación",
     "list_demo.item_8.headline": "Social",
     "list_demo.item_9.headline": "Promociones",
     "list_demo.item_9.supporting": "15 correos promocionales",
@@ -200,9 +205,12 @@
     "list_demo.item_15.supporting": "8 elementos de trabajo",
     "list_demo.item_16.headline": "Personal",
     "list_demo.item_17.headline": "Archivos",
+    "list_demo.item_17.supporting": "Mensajes almacenados",
     "list_demo.item_18.headline": "Categorías",
     "list_demo.item_18.supporting": "Gestiona tus categorías",
     "list_demo.item_19.headline": "Etiquetas",
-    "list_demo.item_20.headline": "Configuración"
+    "list_demo.item_19.supporting": "Categorías organizadas",
+    "list_demo.item_20.headline": "Configuración",
+    "list_demo.item_20.supporting": "Opciones de configuración"
   }
 }

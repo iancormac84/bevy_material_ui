@@ -186,14 +186,19 @@
     "showcase.section.translations.description": "Switch languages at runtime and preview localized strings",
 
     "list_demo.item_1.headline": "Inbox",
+    "list_demo.item_1.supporting": "Primary inbox for emails",
     "list_demo.item_2.headline": "Starred",
+    "list_demo.item_2.supporting": "Important messages",
     "list_demo.item_3.headline": "Drafts",
     "list_demo.item_3.supporting": "3 unsaved drafts",
     "list_demo.item_4.headline": "Sent",
+    "list_demo.item_4.supporting": "Outgoing messages",
     "list_demo.item_5.headline": "Trash",
+    "list_demo.item_5.supporting": "Deleted items",
     "list_demo.item_6.headline": "Spam",
     "list_demo.item_6.supporting": "12 spam messages",
     "list_demo.item_7.headline": "Important",
+    "list_demo.item_7.supporting": "Support and documentation",
     "list_demo.item_8.headline": "Social",
     "list_demo.item_9.headline": "Promotions",
     "list_demo.item_9.supporting": "15 promotional emails",
@@ -207,9 +212,12 @@
     "list_demo.item_15.supporting": "8 work-related items",
     "list_demo.item_16.headline": "Personal",
     "list_demo.item_17.headline": "Archives",
+    "list_demo.item_17.supporting": "Stored messages",
     "list_demo.item_18.headline": "Categories",
     "list_demo.item_18.supporting": "Manage your categories",
     "list_demo.item_19.headline": "Labels",
-    "list_demo.item_20.headline": "Settings"
+    "list_demo.item_19.supporting": "Organized categories",
+    "list_demo.item_20.headline": "Settings",
+    "list_demo.item_20.supporting": "Configuration options"
   }
 }

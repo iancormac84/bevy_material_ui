@@ -184,14 +184,19 @@
     "showcase.section.translations.description": "החלפת שפות בזמן ריצה ותצוגה מקדימה של מחרוזות מתורגמות",
 
     "list_demo.item_1.headline": "תיבת דואר נכנס",
+    "list_demo.item_1.supporting": "תיבת דואר ראשית",
     "list_demo.item_2.headline": "מסומנים בכוכב",
+    "list_demo.item_2.supporting": "הודעות חשובות",
     "list_demo.item_3.headline": "טיוטות",
     "list_demo.item_3.supporting": "3 טיוטות שלא נשמרו",
     "list_demo.item_4.headline": "נשלחו",
+    "list_demo.item_4.supporting": "הודעות יוצאות",
     "list_demo.item_5.headline": "אשפה",
+    "list_demo.item_5.supporting": "פריטים שנמחקו",
     "list_demo.item_6.headline": "דואר זבל",
     "list_demo.item_6.supporting": "12 הודעות זבל",
     "list_demo.item_7.headline": "חשוב",
+    "list_demo.item_7.supporting": "תמיכה ותיעוד",
     "list_demo.item_8.headline": "חברתי",
     "list_demo.item_9.headline": "מבצעים",
     "list_demo.item_9.supporting": "15 דוא"ל פרסומי",
@@ -205,9 +210,12 @@
     "list_demo.item_15.supporting": "8 פריטים קשורים לעבודה",
     "list_demo.item_16.headline": "אישי",
     "list_demo.item_17.headline": "ארכיונים",
+    "list_demo.item_17.supporting": "הודעות מאוחסנות",
     "list_demo.item_18.headline": "קטגוריות",
     "list_demo.item_18.supporting": "נהל את הקטגוריות שלך",
     "list_demo.item_19.headline": "תוויות",
-    "list_demo.item_20.headline": "הגדרות"
+    "list_demo.item_19.supporting": "קטגוריות מאורגנות",
+    "list_demo.item_20.headline": "הגדרות",
+    "list_demo.item_20.supporting": "אפשרויות תצורה"
   }
 }

@@ -183,14 +183,19 @@
     "showcase.section.translations.description": "Changer de langue à l'exécution et prévisualiser les chaînes localisées",
 
     "list_demo.item_1.headline": "Boîte de réception",
+    "list_demo.item_1.supporting": "Boîte de réception principale",
     "list_demo.item_2.headline": "Favoris",
+    "list_demo.item_2.supporting": "Messages importants",
     "list_demo.item_3.headline": "Brouillons",
     "list_demo.item_3.supporting": "3 brouillons non enregistrés",
     "list_demo.item_4.headline": "Envoyés",
+    "list_demo.item_4.supporting": "Messages sortants",
     "list_demo.item_5.headline": "Corbeille",
+    "list_demo.item_5.supporting": "Éléments supprimés",
     "list_demo.item_6.headline": "Spam",
     "list_demo.item_6.supporting": "12 messages spam",
     "list_demo.item_7.headline": "Important",
+    "list_demo.item_7.supporting": "Support et documentation",
     "list_demo.item_8.headline": "Social",
     "list_demo.item_9.headline": "Promotions",
     "list_demo.item_9.supporting": "15 e-mails promotionnels",
@@ -204,9 +209,12 @@
     "list_demo.item_15.supporting": "8 éléments de travail",
     "list_demo.item_16.headline": "Personnel",
     "list_demo.item_17.headline": "Archives",
+    "list_demo.item_17.supporting": "Messages archivés",
     "list_demo.item_18.headline": "Catégories",
     "list_demo.item_18.supporting": "Gérer vos catégories",
     "list_demo.item_19.headline": "Étiquettes",
-    "list_demo.item_20.headline": "Paramètres"
+    "list_demo.item_19.supporting": "Catégories organisées",
+    "list_demo.item_20.headline": "Paramètres",
+    "list_demo.item_20.supporting": "Options de configuration"
   }
 }

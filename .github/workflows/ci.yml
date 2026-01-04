@@ -53,7 +53,9 @@ jobs:
         run: cargo clippy --all-targets --all-features
 
       - name: Test
-        run: cargo test
+        env:
+          CARGO_BUILD_JOBS: 1
+        run: cargo test --lib --tests
 
       - name: Docs
         run: cargo doc --no-deps

@@ -173,22 +173,7 @@ pub fn spawn_app_bar_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Top App Bar with navigation, actions, and right-side content
-parent.spawn_top_app_bar_with_right_content(
-    theme,
-    TopAppBarBuilder::new("Page Title")
-        .small()
-        .with_navigation("menu")
-        .add_action("more_vert", "more"),
-    |right| {
-        // Spawn any extra widgets here (e.g. a search field)
-    },
-);
-
-// Bottom App Bar
-parent.spawn_bottom_app_bar(theme, |bar| {
-    // Spawn actions + optional FAB
-});"#,
+                include_str!("../../app_bar_demo.rs"),
             );
         });
 }

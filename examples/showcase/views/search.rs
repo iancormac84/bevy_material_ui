@@ -101,22 +101,7 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
             spawn_code_block(
                 section,
                 theme,
-                r#"// Default search bar
-ui.spawn_search_bar(&theme, "Search...");
-
-// With navigation icon
-ui.spawn_search_bar_with(
-    &theme,
-    SearchBarBuilder::new("Search...")
-            .with_navigation(MaterialIcon::from_name(ICON_MENU).unwrap()),
-);
-
-// With search text
-ui.spawn_search_bar_with(
-    &theme,
-    SearchBarBuilder::new("Search...")
-        .with_text("material design"),
-);"#,
+                include_str!("../../search_demo.rs"),
             );
         });
 }

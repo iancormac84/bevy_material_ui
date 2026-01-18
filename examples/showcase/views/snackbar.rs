@@ -239,23 +239,7 @@ pub fn spawn_snackbar_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Show a snackbar (via event)
-commands.write_message(ShowSnackbar::message("File saved"));
-
-// With action button
-commands.write_message(
-    ShowSnackbar::with_action("Item deleted", "UNDO")
-        .duration(5.0)
-);
-
-// Handle action clicks
-fn handle_snackbar(mut events: MessageReader<SnackbarActionEvent>) {
-    for event in events.read() {
-        if event.action == "UNDO" {
-            // Handle undo
-        }
-    }
-}"#,
+                include_str!("../../snackbar_demo.rs"),
             );
         });
 }

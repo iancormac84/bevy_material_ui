@@ -162,18 +162,7 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a filled button
-let button = MaterialButton::new("Click Me")
-    .with_variant(ButtonVariant::Filled);
-
-commands.spawn((
-    button,
-    Button,  // Required for interaction
-    RippleHost::new(),
-    Node { padding: UiRect::axes(Val::Px(24.0), Val::Px(10.0)), ..default() },
-    BackgroundColor(theme.primary),
-    BorderRadius::all(Val::Px(20.0)),
-));"#,
+                include_str!("../../button_demo.rs"),
             );
         });
 }

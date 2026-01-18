@@ -488,18 +488,7 @@ pub fn spawn_theme_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a theme from a seed color
-let seed_color = Color::srgb(0.4, 0.2, 0.8); // Purple seed
-let theme = MaterialTheme::from_source_color(seed_color, is_dark);
-
-// Access theme colors
-let primary = theme.primary;
-let on_primary = theme.on_primary;
-let surface = theme.surface;
-
-// Dynamic color tokens
-BackgroundColor(theme.primary_container)
-BorderColor(theme.outline_variant)"#,
+                include_str!("../../theme_demo.rs"),
             );
         });
 }

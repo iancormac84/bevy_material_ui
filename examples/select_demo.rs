@@ -38,15 +38,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ))
         .insert_test_id("select_demo/root", &telemetry)
         .with_children(|root| {
-            let options = vec![
-                SelectOption::new("Apple").value("apple").icon("nutrition"),
-                SelectOption::new("Banana")
-                    .value("banana")
-                    .icon("emoji_food_beverage"),
-                SelectOption::new("Cherry (disabled)")
-                    .value("cherry")
-                    .disabled(),
-            ];
+                // Use enough options to demonstrate a scrollable dropdown.
+                let options = (1..=40)
+                    .map(|i| SelectOption::new(format!("Option {i}")))
+                    .collect::<Vec<_>>();
 
             root.spawn((
                 Text::new("Select"),
@@ -66,18 +61,20 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 col.spawn_select_with(
                     &theme,
                     SelectBuilder::new(options.clone())
-                        .label("Fruit (Filled)")
+                        .label("Options (Filled)")
                         .filled()
                         .selected(0)
+                        .dropdown_max_height(Val::Px(240.0))
                         .width(Val::Px(320.0)),
                 );
 
                 col.spawn_select_with(
                     &theme,
                     SelectBuilder::new(options.clone())
-                        .label("Fruit (Outlined)")
+                        .label("Options (Outlined)")
                         .outlined()
                         .selected(1)
+                        .dropdown_max_height(Val::Px(240.0))
                         .width(Val::Px(320.0)),
                 );
 

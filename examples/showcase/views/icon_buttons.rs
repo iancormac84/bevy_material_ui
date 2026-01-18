@@ -67,24 +67,7 @@ pub fn spawn_icon_buttons_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create an icon button
-let icon_btn = MaterialIconButton::new("favorite")
-    .with_variant(IconButtonVariant::Filled);
-
-commands.spawn((
-    icon_btn,
-    Button,
-    RippleHost::new(),
-    Node {
-        width: Val::Px(40.0),
-        height: Val::Px(40.0),
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        ..default()
-    },
-    BackgroundColor(theme.primary),
-    BorderRadius::all(Val::Px(20.0)),
-));"#,
+                include_str!("../../icon_button_demo.rs"),
             );
         });
 }

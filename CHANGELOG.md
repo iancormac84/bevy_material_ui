@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5 (Unreleased)
+
+- TBD
+
 ## 0.2.4 (2026-01-02)
 
 ### Breaking Changes

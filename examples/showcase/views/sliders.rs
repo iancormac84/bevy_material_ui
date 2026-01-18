@@ -118,17 +118,7 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a continuous slider
-commands.spawn_slider(theme, 0.0, 100.0, 50.0, Some("Volume"));
-
-// Create a discrete slider with ticks
-commands.spawn_discrete_slider(theme, 0.0, 100.0, 60.0, 20.0, Some("Steps"));
-
-// Use builder for more control
-let slider = MaterialSlider::new(0.0, 100.0)
-    .with_value(50.0)
-    .with_step(10.0);
-commands.spawn_slider_with(theme, slider, Some("Custom"));"#,
+                include_str!("../../slider_demo.rs"),
             );
         });
 }

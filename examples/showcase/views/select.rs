@@ -97,21 +97,7 @@ pub fn spawn_select_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"use bevy_material_ui::select::{SelectBuilder, SelectOption};
-
-let options = vec![
-    SelectOption::new("Option 1").value("opt1"),
-    SelectOption::new("Option 2").value("opt2"),
-    SelectOption::new("Option 3").value("opt3"),
-];
-
-commands.spawn(
-    SelectBuilder::new(options)
-        .outlined()
-        .label("Choose")
-        .selected(0)
-        .build(&theme),
-);"#,
+                include_str!("../../select_demo.rs"),
             );
         });
 }

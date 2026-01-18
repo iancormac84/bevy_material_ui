@@ -33,45 +33,11 @@ pub fn spawn_layouts_section(
             spawn_modal_drawer_example(section, theme.clone());
             spawn_panes_examples(section, theme.clone());
 
-            spawn_code_block(section, theme,
-r#"// Navigation bar scaffold (Material 3)
-let scaffold = NavigationBarScaffold::default();
-spawn_navigation_bar_scaffold(parent, theme, &scaffold,
-    |content| {
-        // main content children here
-    },
-    |nav| {
-        // bottom bar items here
-    },
-);
-
-// List-detail scaffold
-let scaffold = ListDetailScaffold::default();
-spawn_list_detail_scaffold(parent, theme, &scaffold,
-    |primary| {
-        // list pane
-    },
-    |secondary| {
-        // detail pane
-    },
-);
-
-// Supporting panes scaffold (three-pane)
-let scaffold = SupportingPanesScaffold::default();
-spawn_supporting_panes_scaffold(parent, theme, &scaffold,
-    |primary| { /* primary */ },
-    |secondary| { /* secondary */ },
-    |supporting| { /* supporting */ },
-);
-
-// Navigation suite scaffold (Material 3)
-let size_class = WindowSizeClass::new(window_width_px, window_height_px);
-let config = NavigationSuiteScaffold::default();
-spawn_navigation_suite_scaffold(parent, theme, &size_class,
-    |nav| { /* nav items */ },
-    |content| { /* main content */ },
-);
-"#);
+            spawn_code_block(
+                section,
+                theme,
+                include_str!("../../layouts_demo.rs"),
+            );
         });
 }
 

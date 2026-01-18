@@ -79,27 +79,7 @@ pub fn spawn_time_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
             spawn_code_block(
                 section,
                 theme,
-                r#"// Spawn a Material Design 3 time picker
-section.spawn_time_picker(
-    theme,
-    TimePickerBuilder::new()
-        .title("Select Time")
-        .initial_time(13, 30)
-        .format(TimeFormat::H24)
-);
-
-// Listen for submit/cancel messages
-fn handle_picker_events(
-    mut submit: MessageReader<TimePickerSubmitEvent>,
-    mut cancel: MessageReader<TimePickerCancelEvent>,
-) {
-    for ev in submit.read() {
-        info!("Selected: {:02}:{:02}", ev.hour, ev.minute);
-    }
-    for _ in cancel.read() {
-        info!("Picker canceled");
-    }
-}"#,
+                include_str!("../../time_picker_demo.rs"),
             );
         });
 }

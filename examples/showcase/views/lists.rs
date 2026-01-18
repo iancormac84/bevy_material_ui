@@ -370,26 +370,7 @@ pub fn spawn_list_section(
             spawn_code_block(
                 section,
                 &theme_clone,
-                r#"// Scrollable list with selection modes
-// Single select clears previous selection
-// Multi select allows multiple items to be selected
-commands.spawn((
-    ListBuilder::new()
-        .max_visible_items_variant(4, ListItemVariant::TwoLine)
-        .selection_mode(ListSelectionMode::Multi)  // or Single
-        .build_scrollable(),
-    BackgroundColor(theme.surface_container_low),
-)).with_children(|list| {
-    for (headline, supporting) in items {
-        list.spawn((
-            SelectableListItem,
-            ListItemBuilder::new(headline)
-                .two_line()
-                .supporting_text(supporting)
-                .build(&theme)
-        ));
-    }
-});"#,
+                include_str!("../../list_demo.rs"),
             );
         });
 }

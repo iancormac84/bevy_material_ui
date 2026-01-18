@@ -82,17 +82,7 @@ pub fn spawn_text_fields_section(parent: &mut ChildSpawnerCommands, theme: &Mate
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a text field
-let text_field = MaterialTextField::new()
-    .with_variant(TextFieldVariant::Outlined)
-    .label("Email")
-    .placeholder("Enter your email")
-    .supporting_text("We'll never share your email");
-
-commands.spawn((
-    text_field,
-    Node { width: Val::Px(280.0), ..default() },
-));"#,
+                include_str!("../../textfield_demo.rs"),
             );
         });
 }

@@ -113,20 +113,7 @@ pub fn spawn_tabs_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create tabs with content panels
-let tabs_entity = commands
-    .spawn((MaterialTabs::new().selected(0), Node::default()))
-    .id();
-
-// Tab buttons
-commands.entity(tabs_entity).with_children(|parent| {
-    parent.spawn((MaterialTab::new(0).selected(true), Button, Node::default()));
-    parent.spawn((MaterialTab::new(1), Button, Node::default()));
-});
-
-// Content panels: the library shows/hides these via TabContent
-commands.spawn((TabContent::new(0, tabs_entity), Visibility::Inherited, Node::default()));
-commands.spawn((TabContent::new(1, tabs_entity), Visibility::Hidden, Node::default()));"#,
+                include_str!("../../tabs_demo.rs"),
             );
         });
 }

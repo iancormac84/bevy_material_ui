@@ -22,8 +22,9 @@
 //! ```
 
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
-use bevy::picking::hover::HoverMap;
 use bevy::prelude::*;
+use bevy::ui::UiGlobalTransform;
+use bevy::window::PrimaryWindow;
 
 /// Maximum depth to traverse when searching for ancestor entities.
 /// This prevents infinite loops in case of circular references or pathological entity hierarchies.
@@ -727,12 +728,24 @@ const SCROLLBAR_THICKNESS: f32 = 10.0;
 #[allow(deprecated)] // EventReader renamed to MessageReader in Bevy 0.17
 fn mouse_wheel_scroll_system(
     mut mouse_wheel_reader: EventReader<MouseWheel>,
-    hover_map: Res<HoverMap>,
+    windows: Query<&Window, With<PrimaryWindow>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     parents: Query<&ChildOf>,
+    hovered: Query<(Entity, &Interaction)>,
+    container_nodes: Query<(Entity, &ComputedNode, &UiGlobalTransform), With<ScrollContainer>>,
     mut scrollable_query: Query<(&mut ScrollPosition, &ScrollContainer), With<ScrollContainer>>,
 ) {
+    let Ok(window) = windows.single() else {
+        return;
+    };
+
     for mouse_wheel in mouse_wheel_reader.read() {
+        let Some(cursor_logical) = window.cursor_position() else {
+            continue;
+        };
+        // `Window::cursor_position()` is in logical pixels; UI transforms/sizes are physical.
+        let cursor_physical = cursor_logical * window.scale_factor();
+
         // Calculate scroll delta.
         // - Mouse wheels typically report `Line` deltas with the sign opposite of the desired
         //   scroll offset direction (wheel down should increase scroll offset), so we negate.
@@ -753,71 +766,118 @@ fn mouse_wheel_scroll_system(
             std::mem::swap(&mut delta.x, &mut delta.y);
         }
 
-        // Find entities under the cursor and scroll their nearest ScrollContainer ancestor.
-        // (This allows scrolling when hovering list items/content, not just the container root.)
+        // Find hovered UI entities (via Bevy UI `Interaction`) and scroll their nearest
+        // ScrollContainer ancestor.
+        //
+        // This intentionally does not rely on bevy_picking hover state; this makes wheel
+        // scrolling work even if picking backends are not active.
         let mut scrolled_containers: HashSet<Entity> = HashSet::new();
-        for pointer_map in hover_map.values() {
-            for entity in pointer_map.keys().copied() {
-                // Walk up the parent hierarchy until we find a ScrollContainer.
-                let mut current = Some(entity);
-                let mut container_entity = None;
-                for _ in 0..MAX_ANCESTOR_DEPTH {
-                    let Some(e) = current else { break };
-                    if scrollable_query.get(e).is_ok() {
-                        container_entity = Some(e);
-                        break;
-                    }
-                    current = parents.get(e).ok().map(|p| p.0);
+        for (entity, interaction) in hovered.iter() {
+            if !matches!(*interaction, Interaction::Hovered | Interaction::Pressed) {
+                continue;
+            }
+
+            // Walk up the parent hierarchy until we find a ScrollContainer.
+            let mut current = Some(entity);
+            let mut container_entity = None;
+            for _ in 0..MAX_ANCESTOR_DEPTH {
+                let Some(e) = current else { break };
+                if scrollable_query.get(e).is_ok() {
+                    container_entity = Some(e);
+                    break;
+                }
+                current = parents.get(e).ok().map(|p| p.0);
+            }
+
+            let Some(container_entity) = container_entity else {
+                continue;
+            };
+            if !scrolled_containers.insert(container_entity) {
+                continue;
+            }
+
+            if let Ok((mut scroll_position, container)) =
+                scrollable_query.get_mut(container_entity)
+            {
+                let max_offset = container.max_offset;
+
+                // Handle vertical scroll
+                if matches!(
+                    container.direction,
+                    ScrollDirection::Vertical | ScrollDirection::Both
+                ) && max_offset.y > 0.0
+                    && delta.y != 0.0
+                {
+                    scroll_position.y = (scroll_position.y + delta.y).clamp(0.0, max_offset.y);
                 }
 
-                let Some(container_entity) = container_entity else {
-                    continue;
-                };
-                if !scrolled_containers.insert(container_entity) {
-                    continue;
+                // Handle horizontal scroll
+                if matches!(
+                    container.direction,
+                    ScrollDirection::Horizontal | ScrollDirection::Both
+                ) && max_offset.x > 0.0
+                    && delta.x != 0.0
+                {
+                    scroll_position.x = (scroll_position.x + delta.x).clamp(0.0, max_offset.x);
                 }
+            }
+        }
 
+        // If the cursor is over the scroll container itself (not a child with Interaction),
+        // we still want wheel scrolling to work. Do a simple hit-test against all
+        // ScrollContainer UI rects and pick the most specific match.
+        let mut best: Option<(f32, Entity)> = None;
+        for (entity, computed, transform) in container_nodes.iter() {
+            let size = computed.size();
+            if size.x <= 0.0 || size.y <= 0.0 {
+                continue;
+            }
+
+            // `UiGlobalTransform` gives the center of the UI node in physical pixels.
+            let center = transform.translation.trunc();
+            let half = size * 0.5;
+            let min = center - half;
+            let max = center + half;
+
+            let inside = cursor_physical.x >= min.x
+                && cursor_physical.x <= max.x
+                && cursor_physical.y >= min.y
+                && cursor_physical.y <= max.y;
+            if !inside {
+                continue;
+            }
+
+            // Prefer the smallest-area container under the cursor (most specific).
+            let area = size.x * size.y;
+            match best {
+                Some((best_area, _)) if area >= best_area => {}
+                _ => best = Some((area, entity)),
+            }
+        }
+
+        if let Some((_, container_entity)) = best {
+            if scrolled_containers.insert(container_entity) {
                 if let Ok((mut scroll_position, container)) =
                     scrollable_query.get_mut(container_entity)
                 {
                     let max_offset = container.max_offset;
 
-                    // Handle vertical scroll
                     if matches!(
                         container.direction,
                         ScrollDirection::Vertical | ScrollDirection::Both
                     ) && max_offset.y > 0.0
                         && delta.y != 0.0
                     {
-                        let at_max = if delta.y > 0.0 {
-                            scroll_position.y >= max_offset.y
-                        } else {
-                            scroll_position.y <= 0.0
-                        };
-
-                        if !at_max {
-                            scroll_position.y =
-                                (scroll_position.y + delta.y).clamp(0.0, max_offset.y);
-                        }
+                        scroll_position.y = (scroll_position.y + delta.y).clamp(0.0, max_offset.y);
                     }
 
-                    // Handle horizontal scroll
                     if matches!(
                         container.direction,
                         ScrollDirection::Horizontal | ScrollDirection::Both
                     ) && max_offset.x > 0.0
                         && delta.x != 0.0
                     {
-                        let at_max = if delta.x > 0.0 {
-                            scroll_position.x >= max_offset.x
-                        } else {
-                            scroll_position.x <= 0.0
-                        };
-
-                        if !at_max {
-                            scroll_position.x =
-                                (scroll_position.x + delta.x).clamp(0.0, max_offset.x);
-                        }
+                        scroll_position.x = (scroll_position.x + delta.x).clamp(0.0, max_offset.x);
                     }
                 }
             }

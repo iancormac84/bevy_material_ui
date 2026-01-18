@@ -7,7 +7,6 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::select::{SelectBuilder, SpawnSelectChild};
 
 use crate::showcase::common::*;
 
@@ -38,47 +37,9 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(16.0),
             ..default()
         })
-        .with_children(|section| {
-            spawn_section_header(
-                section,
-                theme,
-                "showcase.section.translations.title",
-                "Translations",
-                "showcase.section.translations.description",
-                "Switch languages at runtime",
-            );
-
-            // Language file selection.
-            section
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(24.0),
-                    row_gap: Val::Px(16.0),
-                    flex_wrap: FlexWrap::Wrap,
-                    margin: UiRect::vertical(Val::Px(8.0)),
-                    ..default()
-                })
-                .with_children(|row| {
-                    // Dropdown (options are populated dynamically by showcase systems).
-                    row.spawn_select_with(
-                        theme,
-                        SelectBuilder::new(vec![])
-                            .outlined()
-                            .label_key("showcase.translations.language_file"),
-                    );
-                });
-
-            // Live demo UI that updates when the language changes.
-            section
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(12.0),
-                    ..default()
-                })
-                .with_children(|editor| {
+        .with_children(|editor| {
                     editor.spawn((
                         Text::new(""),
                         LocalizedText::new("showcase.translations.greeting").with_default("Hello!"),
@@ -120,11 +81,7 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                     spawn_code_block(
                         editor,
                         theme,
-                        r#"// Files live in assets/i18n/*.mui_lang
-// Switching the dropdown updates MaterialLanguage.tag.
-// Text nodes: attach `LocalizedText { key: ... }`.
-// Text fields: use `.label_key(..)`, `.placeholder_key(..)`, `.supporting_text_key(..)`."#,
+                        include_str!("../../translations_demo.rs"),
                     );
-                });
         });
 }

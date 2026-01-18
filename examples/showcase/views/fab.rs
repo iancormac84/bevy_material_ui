@@ -46,16 +46,7 @@ pub fn spawn_fab_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a FAB
-let fab = MaterialFab::new()
-    .icon("add")
-    .size(FabSize::Regular);
-
-// Extended FAB with label
-let fab = MaterialFab::new()
-    .icon("add")
-    .label("Create")
-    .extended(true);"#,
+                include_str!("../../fab_demo.rs"),
             );
         });
 }

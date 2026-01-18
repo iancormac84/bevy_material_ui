@@ -89,14 +89,7 @@ pub fn spawn_toolbar_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Spawn a toolbar
-ui.spawn_toolbar_with(
-    &theme,
-    ToolbarBuilder::new("Inventory")
-            .navigation_icon_name(ICON_MENU)
-            .action_name(ICON_SEARCH, "search")
-            .action_name(ICON_MORE_VERT, "more"),
-);"#,
+                include_str!("../../toolbar_demo.rs"),
             );
         });
 }

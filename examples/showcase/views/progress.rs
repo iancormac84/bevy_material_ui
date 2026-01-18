@@ -74,14 +74,7 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
             spawn_code_block(
                 section,
                 theme,
-                r#"// Linear progress (determinate)
-let progress = LinearProgress::new(0.5); // 50%
-
-// Indeterminate progress
-let progress = LinearProgress::indeterminate();
-
-// Circular progress
-let progress = CircularProgress::new(0.75);"#,
+                include_str!("../../progress_demo.rs"),
             );
         });
 }

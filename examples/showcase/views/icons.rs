@@ -61,12 +61,7 @@ pub fn spawn_icons_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Using embedded icons
-use bevy_material_ui::icons::MaterialIcon;
-
-if let Some(icon) = MaterialIcon::from_name("home") {
-    commands.spawn(icon);
-}"#,
+                include_str!("../../icons_demo.rs"),
             );
         });
 }

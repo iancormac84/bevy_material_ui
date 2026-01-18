@@ -298,8 +298,8 @@ pub mod prelude {
     pub use crate::dialog::{
         create_dialog_scrim, create_dialog_scrim_for, DialogActions, DialogBuilder,
         DialogCloseEvent, DialogConfirmEvent, DialogContent, DialogHeadline, DialogOpenEvent,
-        DialogPlugin, DialogScrim, DialogType, MaterialDialog, SpawnDialogChild, DIALOG_MAX_WIDTH,
-        DIALOG_MIN_WIDTH,
+        DialogPlugin, DialogScrim, DialogType, MaterialDialog, MaterialDialogAnchor,
+        MaterialDialogPlacement, SpawnDialogChild, DIALOG_MAX_WIDTH, DIALOG_MIN_WIDTH,
     };
 
     // Date Picker

@@ -40,15 +40,7 @@ pub fn spawn_cards_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create an elevated card
-let card = MaterialCard::new()
-    .variant(CardVariant::Elevated);
-
-// Filled card
-let card = MaterialCard::filled();
-
-// Outlined card  
-let card = MaterialCard::outlined();"#,
+                include_str!("../../card_demo.rs"),
             );
         });
 }

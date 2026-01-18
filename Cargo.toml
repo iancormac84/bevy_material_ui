@@ -1,6 +1,6 @@
 [package]
 name = "bevy_material_ui"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors = ["Edgar H. Sanchez"]
 description = "Material Design 3 UI components for Bevy game engine"
@@ -31,7 +31,20 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 # Bevy Game Engine - Latest version
-bevy = "0.17.3"
+bevy = { version = "0.17.3", default-features = false, features = [
+	"bevy_asset",
+	"bevy_log",
+	"bevy_picking",
+	"bevy_winit",
+	"bevy_render",
+	"bevy_core_pipeline",
+	"bevy_sprite",
+	"bevy_ui",
+	"bevy_ui_render",
+	"bevy_text",
+	"default_font",
+	"png",
+] }
 serde_json = "1.0"
 thiserror = "1.0"
 
@@ -45,8 +58,16 @@ google-material-design-icons-bin = "0.1.2"
 arboard = { version = "3.4", optional = true }
 
 [features]
-# Keep default features empty so downstream crates can opt in.
-default = []
+# Default to Bevy's full feature set for backwards compatibility.
+default = ["bevy_full"]
+
+# Enables Bevy's default feature set (includes 3D / PBR). This matches prior behavior when
+# the dependency was specified as `bevy = "..."`.
+bevy_full = ["bevy/default"]
+
+# Marker feature for building with a minimal Bevy feature set (no 3D features).
+# Use with `--no-default-features --features bevy_minimal`.
+bevy_minimal = []
 
 # Enables copy/paste support in `MaterialTextField` via the `arboard` crate.
 clipboard = ["dep:arboard"]
@@ -74,6 +95,13 @@ name = "showcase"
 path = "examples/showcase/main.rs"
 
 [[example]]
+name = "showcase_minimal"
+path = "examples/showcase/main.rs"
+required-features = ["bevy_minimal"]
+# Note: Cargo can't apply `--no-default-features` automatically per-example.
+# Use: `cargo run-showcase-minimal`
+
+[[example]]
 name = "button_demo"
 path = "examples/button_demo.rs"
 
@@ -96,6 +124,10 @@ path = "examples/card_demo.rs"
 [[example]]
 name = "list_demo"
 path = "examples/list_demo.rs"
+
+[[example]]
+name = "icons_demo"
+path = "examples/icons_demo.rs"
 
 [[example]]
 name = "all_icon_buttons"

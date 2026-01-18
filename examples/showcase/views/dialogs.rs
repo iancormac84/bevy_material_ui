@@ -10,11 +10,14 @@ use crate::showcase::common::*;
 /// Spawn the dialogs section content
 pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     parent
-        .spawn(Node {
+        .spawn((
+            DialogsSectionRoot,
+            Node {
             flex_direction: FlexDirection::Column,
             row_gap: Val::Px(16.0),
             ..default()
-        })
+        },
+        ))
         .with_children(|section| {
             spawn_section_header(
                 section,
@@ -69,6 +72,27 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             theme,
                             "Below Trigger",
                             DialogPosition::BelowTrigger,
+                            false,
+                        );
+                        spawn_dialog_position_option(
+                            row,
+                            theme,
+                            "Above Trigger",
+                            DialogPosition::AboveTrigger,
+                            false,
+                        );
+                        spawn_dialog_position_option(
+                            row,
+                            theme,
+                            "Right of Trigger",
+                            DialogPosition::RightOfTrigger,
+                            false,
+                        );
+                        spawn_dialog_position_option(
+                            row,
+                            theme,
+                            "Left of Trigger",
+                            DialogPosition::LeftOfTrigger,
                             false,
                         );
                     });
@@ -153,7 +177,6 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
             let dialog_entity = section
                 .spawn((
                     DialogContainer,
-                    GlobalZIndex(1001),
                     DialogBuilder::new()
                         .title("Confirm Action")
                         .modal(true)
@@ -240,17 +263,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a modal dialog (blocks clicks behind it)
-let dialog = MaterialDialog::new()
-    .title("Delete Item?")
-    .modal(true)
-    .open(true);
-
-// Or allow click-through (non-modal scrim)
-let dialog = MaterialDialog::new()
-    .title("Info")
-    .modal(false)
-    .open(true);"#,
+                include_str!("../../dialog_demo.rs"),
             );
         });
 }

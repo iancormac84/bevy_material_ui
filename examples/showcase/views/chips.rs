@@ -46,15 +46,7 @@ pub fn spawn_chips_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create an assist chip
-let chip = MaterialChip::assist("Label");
-
-// Create a filter chip (toggleable)
-let chip = MaterialChip::filter("Category")
-    .selected(true);
-
-// Create an input chip (with close button)
-let chip = MaterialChip::input("User Input");"#,
+                include_str!("../../chip_demo.rs"),
             );
         });
 }

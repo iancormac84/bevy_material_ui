@@ -66,39 +66,7 @@ pub fn spawn_checkboxes_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Without i18n - simple API
-parent.spawn_checkbox(&theme, CheckboxState::Unchecked, "Accept terms");
-
-// With i18n - use LocalizedText component
-parent.spawn(Node::default()).with_children(|row| {
-    row.spawn((
-        MaterialCheckbox::new().with_state(CheckboxState::Checked),
-        Button,
-        // ... other button components
-    )).with_children(|checkbox| {
-        // Add checkbox internals (state layer, box, icon)
-        // ...
-    });
-    
-    // Add localized label
-    row.spawn((
-        Text::new(""),
-        LocalizedText::new("settings.remember_me")
-            .with_default("Remember me"),
-        TextFont { font_size: 14.0, ..default() },
-        TextColor(theme.on_surface),
-        NeedsInternationalFont,
-    ));
-});
-
-// Listen for changes
-fn handle_checkbox_changes(
-    mut events: MessageReader<CheckboxChangeEvent>,
-) {
-    for event in events.read() {
-        info!("Checkbox {:?} -> {:?}", event.entity, event.state);
-    }
-}"#,
+                include_str!("../../checkbox_demo.rs"),
             );
         });
 }

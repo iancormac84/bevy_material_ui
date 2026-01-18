@@ -130,36 +130,7 @@ pub fn spawn_loading_indicator_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Default loading indicator with shape morphing
-parent.spawn_loading_indicator(&theme, &mut materials);
-
-// Contained (with container background)
-parent.spawn_loading_indicator_with(
-    &theme,
-    &mut materials,
-    LoadingIndicatorBuilder::new().contained(),
-);
-
-// Multiple colors
-parent.spawn_loading_indicator_with(
-    &theme,
-    &mut materials,
-    LoadingIndicatorBuilder::new().multi_color(),
-);
-
-// Custom size
-parent.spawn_loading_indicator_with(
-    &theme,
-    &mut materials,
-    LoadingIndicatorBuilder::new().size(36.0),
-);
-
-// Large and fast
-parent.spawn_loading_indicator_with(
-    &theme,
-    &mut materials,
-    LoadingIndicatorBuilder::new().size(64.0).speed(2.0),
-);"#,
+                include_str!("../../loading_indicator_demo.rs"),
             );
         });
 }

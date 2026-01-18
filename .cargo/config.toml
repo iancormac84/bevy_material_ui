@@ -1,0 +1,6 @@
+[alias]
+# Runs the UI-only showcase build (no Bevy default/3D feature set).
+run-showcase-minimal = "run --no-default-features --features bevy_minimal --example showcase_minimal"
+
+# Convenience alias for the full showcase (default Bevy feature set).
+run-showcase = "run --example showcase"

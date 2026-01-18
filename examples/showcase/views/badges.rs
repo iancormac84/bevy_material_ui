@@ -47,14 +47,7 @@ pub fn spawn_badges_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Dot badge (no text)
-let badge = MaterialBadge::dot();
-
-// Count badge
-let badge = MaterialBadge::count(5);
-
-// Count badge with max
-let badge = MaterialBadge::count(150).max(99); // Shows "99+""#,
+                include_str!("../../badge_demo.rs"),
             );
         });
 }

@@ -196,17 +196,7 @@ pub fn spawn_tooltip_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Add tooltip to an element
-commands.spawn((
-    Button,
-    TooltipTrigger::new("Add to favorites")
-        .with_position(TooltipPosition::Bottom)
-        .with_delay(0.5),  // 500ms delay
-));
-
-// Rich tooltip with title
-let trigger = TooltipTrigger::rich("Title", "Description text")
-    .with_position(TooltipPosition::Right);"#,
+                include_str!("../../tooltip_demo.rs"),
             );
         });
 }

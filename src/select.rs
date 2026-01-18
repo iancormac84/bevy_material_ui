@@ -13,6 +13,8 @@ use crate::{
     tokens::{CornerRadius, Spacing},
 };
 
+use crate::scroll::ScrollContainer;
+
 /// Plugin for the select component
 pub struct SelectPlugin;
 
@@ -766,6 +768,7 @@ pub struct SelectBuilder {
     select: MaterialSelect,
     width: Val,
     localization: SelectLocalization,
+    dropdown_max_height: Option<Val>,
 }
 
 impl SelectBuilder {
@@ -775,7 +778,17 @@ impl SelectBuilder {
             select: MaterialSelect::new(options),
             width: Val::Px(210.0),
             localization: SelectLocalization::default(),
+            dropdown_max_height: None,
         }
+    }
+
+    /// Set a maximum height for the dropdown list.
+    ///
+    /// When set, the dropdown becomes vertically scrollable so long lists don't expand
+    /// beyond this height.
+    pub fn dropdown_max_height(mut self, height: Val) -> Self {
+        self.dropdown_max_height = Some(height);
+        self
     }
 
     /// Localize the select's placeholder/label via a translation key.
@@ -892,6 +905,12 @@ impl SelectBuilder {
 #[derive(Component)]
 pub struct SelectDropdown;
 
+/// Internal marker for the dropdown's scroll/content container.
+///
+/// Option rows are spawned under this entity.
+#[derive(Component)]
+struct SelectDropdownContent;
+
 /// Internal marker for option icons rendered as embedded bitmaps.
 #[derive(Component)]
 struct SelectOptionIcon;
@@ -943,7 +962,9 @@ fn select_dropdown_rebuild_options_system(
     theme: Option<Res<MaterialTheme>>,
     selects: Query<(Entity, &MaterialSelect, &Children), Changed<MaterialSelect>>,
     dropdowns: Query<(), With<SelectDropdown>>,
+    dropdown_contents: Query<(), With<SelectDropdownContent>>,
     dropdown_children: Query<&Children, With<SelectDropdown>>,
+    content_children: Query<&Children, With<SelectDropdownContent>>,
     option_rows: Query<(), With<SelectOptionItem>>,
     children_query: Query<&Children>,
     mut commands: Commands,
@@ -956,11 +977,18 @@ fn select_dropdown_rebuild_options_system(
             continue;
         };
 
-        // Collect current option row entities.
-        // Note: If the dropdown was spawned with zero children, it won't have a `Children`
-        // component, so we treat a missing Children as "zero existing rows".
-        let existing_rows: Vec<Entity> = dropdown_children
+        // Find the content container where option rows live.
+        let content_entity = dropdown_children
             .get(dropdown_entity)
+            .ok()
+            .and_then(|kids| kids.iter().find(|e| dropdown_contents.get(*e).is_ok()))
+            .unwrap_or(dropdown_entity);
+
+        // Collect current option row entities.
+        // Note: If the container was spawned with zero children, it won't have a `Children`
+        // component, so we treat a missing Children as "zero existing rows".
+        let existing_rows: Vec<Entity> = content_children
+            .get(content_entity)
             .map(|kids| {
                 kids.iter()
                     .filter(|e| option_rows.get(*e).is_ok())
@@ -993,7 +1021,7 @@ fn select_dropdown_rebuild_options_system(
         let selected_index = select.selected_index;
         let options = select.options.clone();
 
-        commands.entity(dropdown_entity).with_children(|dropdown| {
+        commands.entity(content_entity).with_children(|dropdown| {
             for (index, option) in options.iter().enumerate() {
                 let is_disabled = option.disabled;
                 let is_selected = selected_index.is_some_and(|i| i == index);
@@ -1200,6 +1228,8 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
         let text_color = builder.select.text_color(theme);
         let option_text_color = theme.on_surface;
 
+        let dropdown_max_height = builder.dropdown_max_height;
+
         // Clone options for building the dropdown list
         let options = builder.select.options.clone();
         let selected_index = builder.select.selected_index;
@@ -1260,14 +1290,39 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                         top: Val::Px(SELECT_HEIGHT + 4.0),
                         left: Val::Px(0.0),
                         width: Val::Percent(100.0),
-                        flex_direction: FlexDirection::Column,
-                        padding: UiRect::vertical(Val::Px(8.0)),
+                        // The outer node draws the dropdown surface.
                         ..default()
                     },
                     BackgroundColor(theme.surface_container),
                     BorderRadius::all(Val::Px(8.0)),
                 ))
                 .with_children(|dropdown| {
+                    // Content container. Option rows are spawned under this child.
+                    // If `dropdown_max_height` is set, this becomes a scroll container.
+                    let mut content = dropdown.spawn((
+                        SelectDropdownContent,
+                        Node {
+                            width: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Column,
+                            padding: UiRect::vertical(Val::Px(8.0)),
+                            ..default()
+                        },
+                    ));
+
+                    if let Some(max_height) = dropdown_max_height {
+                        content.insert((
+                            ScrollContainer::vertical(),
+                            ScrollPosition::default(),
+                            Node {
+                                max_height,
+                                overflow: Overflow::scroll_y(),
+                                ..default()
+                            },
+                        ));
+                    }
+
+                    let mut content = content;
+                    content.with_children(|dropdown| {
                     for (index, option) in options.iter().enumerate() {
                         let is_disabled = option.disabled;
                         let is_selected = selected_index.is_some_and(|i| i == index);
@@ -1327,6 +1382,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                 ));
                             });
                     }
+                    });
                 });
         });
     }

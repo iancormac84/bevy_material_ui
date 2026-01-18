@@ -289,6 +289,9 @@ pub enum DialogPosition {
     CenterWindow,
     CenterParent,
     BelowTrigger,
+    AboveTrigger,
+    RightOfTrigger,
+    LeftOfTrigger,
 }
 
 // Use the library's list selection mode type directly.
@@ -343,6 +346,10 @@ pub struct ListDemoRoot;
 /// Marker for dialog container
 #[derive(Component)]
 pub struct DialogContainer;
+
+/// Marker for the dialogs section root node (used for dialog placement anchoring).
+#[derive(Component)]
+pub struct DialogsSectionRoot;
 
 /// Marker for dialog show button
 #[derive(Component)]

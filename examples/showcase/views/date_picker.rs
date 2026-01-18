@@ -78,34 +78,7 @@ pub fn spawn_date_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
             spawn_code_block(
                 section,
                 theme,
-                r#"// Spawn a Material Design 3 date picker
-section.spawn_date_picker(
-    theme,
-    DatePickerBuilder::new()
-        .title("Select Date")
-        .single_date(Date::new(2025, 1, 15))
-        .width(Val::Px(360.0))
-);
-
-// Listen for submit/cancel messages
-fn handle_picker_events(
-    mut submit: MessageReader<DatePickerSubmitEvent>,
-    mut cancel: MessageReader<DatePickerCancelEvent>,
-) {
-    for ev in submit.read() {
-        match &ev.selection {
-            DateSelection::Single(date) => {
-                info!("Selected: {:?}", date);
-            }
-            DateSelection::Range { start, end } => {
-                info!("Range: {:?} to {:?}", start, end);
-            }
-        }
-    }
-    for _ in cancel.read() {
-        info!("Picker canceled");
-    }
-}"#,
+                include_str!("../../date_picker_demo.rs"),
             );
         });
 }

@@ -68,26 +68,7 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create radios in a group - simple and clean!
-commands.spawn((
-    RadioGroup::new("my_group"),
-    Node { flex_direction: FlexDirection::Column, ..default() },
-)).with_children(|group| {
-    // Each radio is spawned with just a few parameters
-    group.spawn_radio(&theme, true, "my_group", "Option 1");
-    group.spawn_radio(&theme, false, "my_group", "Option 2");
-    group.spawn_radio(&theme, false, "my_group", "Option 3");
-    
-    // Or use the builder for more control
-    group.spawn_radio_with(
-        &theme,
-        RadioBuilder::new()
-            .selected(false)
-            .disabled(true)
-            .group("my_group"),
-        "Disabled Option"
-    );
-});"#,
+                include_str!("../../radio_demo.rs"),
             );
         });
 }

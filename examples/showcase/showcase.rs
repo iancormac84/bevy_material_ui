@@ -13,9 +13,12 @@ pub mod views;
 #[path = "tab_state.rs"]
 pub mod tab_state;
 
-use bevy::asset::{AssetPlugin, RenderAssetUsages};
+use bevy::asset::AssetPlugin;
+#[cfg(feature = "bevy_full")]
+use bevy::asset::RenderAssetUsages;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::input::{keyboard::KeyCode, ButtonInput};
+#[cfg(feature = "bevy_full")]
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
 use bevy::ui::{ComputedNode, OverflowAxis, ScrollPosition, UiGlobalTransform, UiSystems};
@@ -36,6 +39,7 @@ pub use tab_state::TabStateCache;
 
 use bevy_material_ui::list::MaterialListItem;
 
+#[cfg(feature = "bevy_full")]
 #[derive(Component)]
 struct SpinningDice;
 
@@ -2992,51 +2996,54 @@ fn dialog_demo_position_style_system(
 }
 
 fn dialog_demo_apply_position_system(
+    mut commands: Commands,
     options: Res<DialogDemoOptions>,
     dialogs_added: Query<(), Added<DialogContainer>>,
-    mut dialogs: Query<&mut Node, With<DialogContainer>>,
+    dialogs: Query<Entity, With<DialogContainer>>,
+    ui_roots: Query<Entity, With<UiRoot>>,
+    dialogs_section_roots: Query<Entity, With<DialogsSectionRoot>>,
+    show_buttons: Query<Entity, With<ShowDialogButton>>,
 ) {
     if !options.is_changed() && dialogs_added.is_empty() {
         return;
     }
 
-    for mut node in dialogs.iter_mut() {
-        match options.position {
-            DialogPosition::CenterParent => {
-                node.position_type = PositionType::Relative;
-                node.left = Val::Auto;
-                node.top = Val::Auto;
-                node.right = Val::Auto;
-                node.bottom = Val::Auto;
-                node.align_self = AlignSelf::Center;
-                node.margin = UiRect::vertical(Val::Px(8.0));
-            }
-            DialogPosition::BelowTrigger => {
-                node.position_type = PositionType::Relative;
-                node.left = Val::Auto;
-                node.top = Val::Auto;
-                node.right = Val::Auto;
-                node.bottom = Val::Auto;
-                node.align_self = AlignSelf::Start;
-                node.margin = UiRect::top(Val::Px(12.0));
-            }
-            DialogPosition::CenterWindow => {
-                // Approximate center by anchoring the dialog's top-left near center.
-                // (UI centering with translation isn't directly available here.)
-                node.position_type = PositionType::Absolute;
-                node.left = Val::Percent(50.0);
-                node.top = Val::Percent(50.0);
-                node.right = Val::Auto;
-                node.bottom = Val::Auto;
-                node.align_self = AlignSelf::Auto;
-                // Dialog width is fixed at 280px in the view; offset half width to better center.
-                node.margin = UiRect {
-                    left: Val::Px(-140.0),
-                    top: Val::Px(-100.0),
-                    ..default()
-                };
-            }
+    let ui_root = ui_roots.iter().next();
+    let dialogs_section_root = dialogs_section_roots.iter().next();
+    let show_button = show_buttons.iter().next();
+
+    let (anchor, placement) = match options.position {
+        DialogPosition::CenterWindow => (
+            ui_root,
+            MaterialDialogPlacement::CenterInAnchor,
+        ),
+        DialogPosition::CenterParent => (
+            dialogs_section_root,
+            MaterialDialogPlacement::CenterInAnchor,
+        ),
+        DialogPosition::BelowTrigger => (
+            show_button,
+            MaterialDialogPlacement::below_anchor(12.0),
+        ),
+        DialogPosition::AboveTrigger => (
+            show_button,
+            MaterialDialogPlacement::above_anchor(12.0),
+        ),
+        DialogPosition::RightOfTrigger => (
+            show_button,
+            MaterialDialogPlacement::right_of_anchor(12.0),
+        ),
+        DialogPosition::LeftOfTrigger => (
+            show_button,
+            MaterialDialogPlacement::left_of_anchor(12.0),
+        ),
+    };
+
+    for dialog in dialogs.iter() {
+        if let Some(anchor) = anchor {
+            commands.entity(dialog).insert(MaterialDialogAnchor(anchor));
         }
+        commands.entity(dialog).insert(placement);
     }
 }
 
@@ -3204,6 +3211,7 @@ fn clear_children_recursive(
     }
 }
 
+#[cfg(feature = "bevy_full")]
 fn rotate_dice(time: Res<Time>, mut dice: Query<&mut Transform, With<SpinningDice>>) {
     for mut transform in dice.iter_mut() {
         transform.rotate_y(time.delta_secs() * 0.8);
@@ -3211,6 +3219,12 @@ fn rotate_dice(time: Res<Time>, mut dice: Query<&mut Transform, With<SpinningDic
     }
 }
 
+#[cfg(not(feature = "bevy_full"))]
+fn rotate_dice() {
+    // 3D disabled.
+}
+
+#[cfg(feature = "bevy_full")]
 fn setup_3d_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -3250,6 +3264,21 @@ fn setup_3d_scene(
     ));
 }
 
+#[cfg(not(feature = "bevy_full"))]
+fn setup_3d_scene(mut commands: Commands) {
+    // 3D disabled.
+    // Provide a background clear so the UI looks consistent with the full showcase.
+    commands.spawn((
+        Camera2d,
+        Camera {
+            order: 0,
+            clear_color: ClearColorConfig::Custom(Color::srgb(0.05, 0.05, 0.08)),
+            ..default()
+        },
+    ));
+}
+
+#[cfg(feature = "bevy_full")]
 fn create_d10_mesh() -> Mesh {
     use std::f32::consts::PI;
 
@@ -3324,15 +3353,13 @@ fn create_d10_mesh() -> Mesh {
         );
     }
 
-    Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD,
-    )
-    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-    .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::RENDER_WORLD)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+        .with_inserted_indices(Indices::U32(indices))
 }
 
+#[cfg(feature = "bevy_full")]
 fn add_triangle(
     positions: &mut Vec<[f32; 3]>,
     normals: &mut Vec<[f32; 3]>,

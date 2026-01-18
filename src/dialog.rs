@@ -8,6 +8,8 @@
 use bevy::picking::Pickable;
 use bevy::prelude::*;
 use bevy::ui::BoxShadow;
+use bevy::ui::FocusPolicy;
+use bevy::ecs::system::ParamSet;
 
 use crate::{
     elevation::Elevation,
@@ -28,9 +30,18 @@ impl Plugin for DialogPlugin {
         app.add_message::<DialogOpenEvent>()
             .add_message::<DialogCloseEvent>()
             .add_message::<DialogConfirmEvent>()
+            .init_resource::<DialogSpawnCounter>()
+            .init_resource::<DialogOpenStack>()
+            .add_systems(Startup, setup_dialog_overlay)
             .add_systems(
                 Update,
                 (
+                    dialog_promote_to_overlay_system,
+                    dialog_layer_z_index_system,
+                    dialog_layer_visibility_system,
+                    dialog_position_system,
+                    dialog_dismiss_on_scrim_click_system,
+                    dialog_dismiss_on_escape_system,
                     dialog_visibility_system,
                     dialog_scrim_visibility_system,
                     dialog_pickable_system,
@@ -41,6 +52,501 @@ impl Plugin for DialogPlugin {
                 ),
             );
     }
+}
+
+/// Overlay root for dialog layers.
+#[derive(Component)]
+struct DialogOverlay;
+
+/// Root entity that holds a dialog + its scrim.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+struct DialogLayerRootFor(Entity);
+
+/// Override which UI element's rect is used as the dialog's placement bounds.
+///
+/// By default (when this component is not present), dialogs are anchored to their original
+/// parent at spawn time.
+///
+/// You can provide your own anchor node by inserting `MaterialDialogAnchor(your_anchor_entity)`
+/// on the dialog entity. This is especially useful for positioning relative to a trigger button
+/// or a custom layout container.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MaterialDialogAnchor(pub Entity);
+
+/// Controls how the dialog is positioned relative to its `MaterialDialogAnchor`.
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub enum MaterialDialogPlacement {
+    /// Center the dialog within the anchor bounds.
+    CenterInAnchor,
+    /// Center the dialog within the window/viewport.
+    ///
+    /// This ignores the anchor bounds and instead centers within the dialog overlay.
+    /// Useful for top-level dialogs or examples where you don't have a convenient anchor entity.
+    CenterInViewport,
+    /// Place the dialog below the anchor.
+    BelowAnchor {
+        /// Gap below the anchor (logical px).
+        gap_px: f32,
+    },
+    /// Place the dialog above the anchor.
+    AboveAnchor {
+        /// Gap above the anchor (logical px).
+        gap_px: f32,
+    },
+    /// Place the dialog to the right of the anchor.
+    RightOfAnchor {
+        /// Gap to the right of the anchor (logical px).
+        gap_px: f32,
+    },
+    /// Place the dialog to the left of the anchor.
+    LeftOfAnchor {
+        /// Gap to the left of the anchor (logical px).
+        gap_px: f32,
+    },
+}
+
+impl Default for MaterialDialogPlacement {
+    fn default() -> Self {
+        Self::CenterInAnchor
+    }
+}
+
+impl MaterialDialogPlacement {
+    pub fn center_in_viewport() -> Self {
+        Self::CenterInViewport
+    }
+
+    pub fn below_anchor(gap_px: f32) -> Self {
+        Self::BelowAnchor { gap_px }
+    }
+
+    pub fn above_anchor(gap_px: f32) -> Self {
+        Self::AboveAnchor { gap_px }
+    }
+
+    pub fn right_of_anchor(gap_px: f32) -> Self {
+        Self::RightOfAnchor { gap_px }
+    }
+
+    pub fn left_of_anchor(gap_px: f32) -> Self {
+        Self::LeftOfAnchor { gap_px }
+    }
+}
+
+/// Monotonic spawn counter used to produce stable z-ordering.
+#[derive(Resource, Default)]
+struct DialogSpawnCounter(u64);
+
+/// Stable spawn order for dialogs.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct DialogSpawnOrder(u64);
+
+/// Cached open stack ordered from bottom -> top.
+#[derive(Resource, Default)]
+struct DialogOpenStack {
+    ordered: Vec<Entity>,
+}
+
+fn setup_dialog_overlay(mut commands: Commands) {
+    // Full-screen container used as a portal destination for dialogs.
+    // Must NOT be pickable so it doesn't interfere with input.
+    commands.spawn((
+        DialogOverlay,
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            top: Val::Px(0.0),
+            left: Val::Px(0.0),
+            ..default()
+        },
+        GlobalZIndex(9000),
+        Pickable::IGNORE,
+    ));
+}
+
+/// Promote newly spawned dialogs into the global overlay so they're not clipped by
+/// parent layout/overflow, while still using their original parent as an anchor.
+fn dialog_promote_to_overlay_system(
+    mut commands: Commands,
+    theme: Res<MaterialTheme>,
+    overlay_query: Query<Entity, With<DialogOverlay>>,
+    mut spawn_counter: ResMut<DialogSpawnCounter>,
+    added_dialogs: Query<(Entity, Option<&ChildOf>, &MaterialDialog), Added<MaterialDialog>>,
+    existing_scrims: Query<(Entity, &DialogScrimFor), With<DialogScrim>>,
+    existing_anchors: Query<&MaterialDialogAnchor>,
+    existing_placements: Query<&MaterialDialogPlacement>,
+) {
+    let Some(overlay) = overlay_query.iter().next() else {
+        return;
+    };
+
+    for (dialog_entity, parent, dialog) in added_dialogs.iter() {
+        // Anchor placement to the caller-provided anchor if available.
+        // Otherwise: use original parent if present, else fall back to the overlay.
+        let anchor = existing_anchors.get(dialog_entity).map(|a| a.0).unwrap_or_else(|_| {
+            parent
+                .map(|p| p.parent())
+                .unwrap_or(overlay)
+        });
+
+        // Ensure we always have a stable anchor available after promotion (ChildOf changes).
+        commands
+            .entity(dialog_entity)
+            .insert(MaterialDialogAnchor(anchor));
+
+        // Default placement if none was specified by caller.
+        if existing_placements.get(dialog_entity).is_err() {
+            commands
+                .entity(dialog_entity)
+                .insert(MaterialDialogPlacement::default());
+        }
+
+        // Assign stable spawn order for stacking.
+        spawn_counter.0 += 1;
+        let spawn_order = DialogSpawnOrder(spawn_counter.0);
+        commands.entity(dialog_entity).insert(spawn_order);
+
+        // Create a per-dialog layer root under the overlay.
+        // Visibility is synced to the dialog's open state.
+        let layer_root = commands
+            .spawn((
+                DialogLayerRootFor(dialog_entity),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(0.0),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    display: Display::None,
+                    ..default()
+                },
+            ))
+            .id();
+
+        // Attach the layer root to overlay, and move the dialog under it.
+        commands.entity(overlay).add_child(layer_root);
+        commands.entity(layer_root).add_child(dialog_entity);
+
+        // Ensure dialog surface is always above its scrim.
+        commands.entity(dialog_entity).insert((
+            ZIndex(1),
+            FocusPolicy::Block,
+            // Dialog surface should never allow click-through.
+            Pickable {
+                should_block_lower: true,
+                is_hoverable: false,
+            },
+        ));
+
+        // Ensure we have a scrim for this dialog.
+        // - If the user already spawned one via `create_dialog_scrim_for`, reuse it.
+        // - Otherwise, spawn our default scrim.
+        let scrim_entity = existing_scrims
+            .iter()
+            .find_map(|(entity, for_dialog)| (for_dialog.0 == dialog_entity).then_some(entity))
+            .unwrap_or_else(|| {
+                commands
+                    .spawn((
+                        DialogScrim,
+                        DialogScrimFor(dialog_entity),
+                        Node {
+                            display: Display::None,
+                            position_type: PositionType::Absolute,
+                            left: Val::Px(0.0),
+                            top: Val::Px(0.0),
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            ..default()
+                        },
+                        BackgroundColor(dialog.scrim_color(&theme)),
+                        ZIndex(0),
+                    ))
+                    .id()
+            });
+
+        // Make the scrim a proper input blocker for bevy_ui and bevy_picking.
+        commands.entity(scrim_entity).remove::<GlobalZIndex>();
+        commands.entity(scrim_entity).insert((
+            // Required for bevy_ui `Interaction` updates.
+            Button,
+            Interaction::None,
+            FocusPolicy::Block,
+            if dialog.modal {
+                Pickable {
+                    should_block_lower: true,
+                    is_hoverable: true,
+                }
+            } else {
+                Pickable::IGNORE
+            },
+            ZIndex(0),
+        ));
+
+        commands.entity(layer_root).add_child(scrim_entity);
+    }
+}
+
+/// Sync the per-dialog layer root's visibility (and scrim visibility) with dialog state.
+fn dialog_layer_visibility_system(
+    dialogs: Query<&MaterialDialog>,
+    mut sets: ParamSet<(
+        Query<(&DialogLayerRootFor, &mut Node)>,
+        Query<(&DialogScrimFor, &mut Node), With<DialogScrim>>,
+    )>,
+) {
+    for (for_dialog, mut root_node) in sets.p0().iter_mut() {
+        let Ok(dialog) = dialogs.get(for_dialog.0) else {
+            root_node.display = Display::None;
+            continue;
+        };
+
+        root_node.display = if dialog.open {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+
+    for (for_dialog, mut scrim_node) in sets.p1().iter_mut() {
+        let Ok(dialog) = dialogs.get(for_dialog.0) else {
+            scrim_node.display = Display::None;
+            continue;
+        };
+
+        // Only show the scrim when modal.
+        scrim_node.display = if dialog.open && dialog.modal {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+}
+
+/// Maintain deterministic layering (nested dialogs above parents).
+fn dialog_layer_z_index_system(
+    mut commands: Commands,
+    dialogs: Query<(Entity, &MaterialDialog, &DialogSpawnOrder)>,
+    mut roots: Query<(Entity, &DialogLayerRootFor)>,
+    mut open_stack: ResMut<DialogOpenStack>,
+) {
+    // Collect all open dialogs sorted by spawn order.
+    let mut open_dialogs: Vec<(Entity, DialogSpawnOrder)> = dialogs
+        .iter()
+        .filter_map(|(entity, dialog, order)| dialog.open.then_some((entity, *order)))
+        .collect();
+    open_dialogs.sort_by_key(|(_, order)| *order);
+    open_stack.ordered = open_dialogs.iter().map(|(e, _)| *e).collect();
+
+    // Assign z-index in increasing order, leaving room for other overlays.
+    // Each dialog gets a root promoted at a unique GlobalZIndex.
+    for (root_entity, for_dialog) in roots.iter_mut() {
+        let Some((idx, _)) = open_dialogs
+            .iter()
+            .enumerate()
+            .find(|(_, (dialog_entity, _))| *dialog_entity == for_dialog.0)
+        else {
+            // Closed dialogs can keep their current z.
+            continue;
+        };
+
+        // Base above other modal UIs (date/time pickers use 9999).
+        let z = 10000 + (idx as i32);
+        commands.entity(root_entity).insert(GlobalZIndex(z));
+    }
+}
+
+/// Position dialogs relative to their original parent (anchor) rect.
+///
+/// This keeps dialogs independent of parent layout/clipping by rendering them in the overlay,
+/// while still using the parent as the placement bounds.
+fn dialog_position_system(
+    mut dialogs: Query<(
+        &MaterialDialog,
+        &MaterialDialogAnchor,
+        Option<&MaterialDialogPlacement>,
+        &mut Node,
+        &ComputedNode,
+    )>,
+    anchors: Query<(&UiGlobalTransform, &ComputedNode)>,
+    roots: Query<&DialogLayerRootFor>,
+    overlay_query: Query<(&UiGlobalTransform, &ComputedNode), With<DialogOverlay>>,
+    windows: Query<&Window>,
+) {
+    let scale_factor = windows
+        .iter()
+        .next()
+        .map(|w| w.scale_factor())
+        .unwrap_or(1.0);
+
+    let (overlay_center, overlay_size) = overlay_query
+        .iter()
+        .next()
+        .map(|(t, c)| (t.translation, c.size()))
+        .unwrap_or((Vec2::ZERO, Vec2::ZERO));
+    let overlay_top_left = overlay_center - overlay_size / 2.0;
+
+    for for_dialog in roots.iter() {
+        let Ok((dialog, anchor, placement, mut dialog_node, dialog_computed)) =
+            dialogs.get_mut(for_dialog.0)
+        else {
+            continue;
+        };
+
+        if !dialog.open {
+            continue;
+        }
+
+        // Fullscreen dialogs just fill the overlay.
+        if dialog.dialog_type == DialogType::FullScreen {
+            dialog_node.left = Val::Px(0.0);
+            dialog_node.top = Val::Px(0.0);
+            continue;
+        }
+
+        let scale = scale_factor;
+
+        let dialog_size_physical = dialog_computed.size();
+        if dialog_size_physical.x <= 0.0 || dialog_size_physical.y <= 0.0 {
+            // Not laid out yet.
+            continue;
+        }
+
+        let placement = placement.copied().unwrap_or_default();
+
+        let (screen_left_physical, screen_top_physical) = match placement {
+            MaterialDialogPlacement::CenterInViewport => (
+                // Center within the overlay (physical pixels).
+                overlay_top_left.x + (overlay_size.x - dialog_size_physical.x) / 2.0,
+                overlay_top_left.y + (overlay_size.y - dialog_size_physical.y) / 2.0,
+            ),
+            other => {
+                // All other placements require an anchor rect.
+                let Ok((anchor_transform, anchor_computed)) = anchors.get(anchor.0) else {
+                    continue;
+                };
+
+                // UiGlobalTransform and ComputedNode sizes are physical pixels.
+                let anchor_center_physical = anchor_transform.translation;
+                let anchor_size_physical = anchor_computed.size();
+                if anchor_size_physical.x <= 0.0 || anchor_size_physical.y <= 0.0 {
+                    continue;
+                }
+
+                let anchor_top_left_physical = anchor_center_physical - anchor_size_physical / 2.0;
+
+                match other {
+                    MaterialDialogPlacement::CenterInViewport => unreachable!(),
+                    MaterialDialogPlacement::CenterInAnchor => (
+                        anchor_top_left_physical.x
+                            + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
+                        anchor_top_left_physical.y
+                            + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
+                    ),
+                    MaterialDialogPlacement::BelowAnchor { gap_px } => {
+                        let gap_physical = gap_px * scale;
+                        (
+                            anchor_top_left_physical.x
+                                + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
+                            anchor_top_left_physical.y + anchor_size_physical.y + gap_physical,
+                        )
+                    }
+                    MaterialDialogPlacement::AboveAnchor { gap_px } => {
+                        let gap_physical = gap_px * scale;
+                        (
+                            anchor_top_left_physical.x
+                                + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
+                            anchor_top_left_physical.y - dialog_size_physical.y - gap_physical,
+                        )
+                    }
+                    MaterialDialogPlacement::RightOfAnchor { gap_px } => {
+                        let gap_physical = gap_px * scale;
+                        (
+                            anchor_top_left_physical.x + anchor_size_physical.x + gap_physical,
+                            anchor_top_left_physical.y
+                                + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
+                        )
+                    }
+                    MaterialDialogPlacement::LeftOfAnchor { gap_px } => {
+                        let gap_physical = gap_px * scale;
+                        (
+                            anchor_top_left_physical.x - dialog_size_physical.x - gap_physical,
+                            anchor_top_left_physical.y
+                                + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
+                        )
+                    }
+                }
+            }
+        };
+
+        // Convert to logical pixels relative to the overlay.
+        let left = (screen_left_physical - overlay_top_left.x) / scale;
+        let top = (screen_top_physical - overlay_top_left.y) / scale;
+
+        dialog_node.left = Val::Px(left);
+        dialog_node.top = Val::Px(top);
+    }
+}
+
+fn dialog_dismiss_on_scrim_click_system(
+    mouse: Res<ButtonInput<MouseButton>>,
+    mut close_events: MessageWriter<DialogCloseEvent>,
+    mut dialogs: Query<&mut MaterialDialog>,
+    mut scrims: Query<(&DialogScrimFor, &Interaction), (With<DialogScrim>, Changed<Interaction>)>,
+) {
+    for (for_dialog, interaction) in scrims.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        // Avoid immediately dismissing a dialog when its scrim becomes visible while the
+        // mouse button is still held down from clicking the trigger.
+        if !mouse.just_pressed(MouseButton::Left) {
+            continue;
+        }
+
+        let Ok(mut dialog) = dialogs.get_mut(for_dialog.0) else {
+            continue;
+        };
+        if !dialog.open || !dialog.dismiss_on_scrim_click {
+            continue;
+        }
+
+        dialog.open = false;
+        close_events.write(DialogCloseEvent {
+            entity: for_dialog.0,
+            dismissed: true,
+        });
+    }
+}
+
+fn dialog_dismiss_on_escape_system(
+    keys: Res<ButtonInput<KeyCode>>,
+    open_stack: Res<DialogOpenStack>,
+    mut close_events: MessageWriter<DialogCloseEvent>,
+    mut dialogs: Query<&mut MaterialDialog>,
+) {
+    if !keys.just_pressed(KeyCode::Escape) {
+        return;
+    }
+
+    let Some(&topmost) = open_stack.ordered.last() else {
+        return;
+    };
+
+    let Ok(mut dialog) = dialogs.get_mut(topmost) else {
+        return;
+    };
+
+    if !dialog.open || !dialog.dismiss_on_escape {
+        return;
+    }
+
+    dialog.open = false;
+    close_events.write(DialogCloseEvent {
+        entity: topmost,
+        dismissed: true,
+    });
 }
 
 /// Update dialog pickability when dialog modality changes.
@@ -55,18 +561,11 @@ fn dialog_pickable_system(
         return;
     }
 
-    for (entity, dialog) in changed_dialogs.iter() {
-        let pickable = if dialog.modal {
-            Pickable {
-                should_block_lower: true,
-                // The dialog surface itself doesn't need hover feedback.
-                is_hoverable: false,
-            }
-        } else {
-            Pickable {
-                should_block_lower: false,
-                is_hoverable: false,
-            }
+    for (entity, _dialog) in changed_dialogs.iter() {
+        // Dialog surfaces should always block click-through. Modality is enforced by the scrim.
+        let pickable = Pickable {
+            should_block_lower: true,
+            is_hoverable: false,
         };
 
         if let Ok(mut existing) = pickables.get_mut(entity) {
@@ -346,35 +845,40 @@ fn dialog_scrim_visibility_system(
     mut scrims: Query<(&DialogScrimFor, &mut Node), With<DialogScrim>>,
 ) {
     for (for_dialog, mut node) in scrims.iter_mut() {
-        let open = dialogs.get(for_dialog.0).map(|d| d.open).unwrap_or(false);
-        node.display = if open { Display::Flex } else { Display::None };
+        let Ok(dialog) = dialogs.get(for_dialog.0) else {
+            node.display = Display::None;
+            continue;
+        };
+
+        node.display = if dialog.open && dialog.modal {
+            Display::Flex
+        } else {
+            Display::None
+        };
     }
 }
 
 /// Update scrim pickability when dialog modality changes.
 fn dialog_scrim_pickable_system(
-    changed_dialogs: Query<(Entity, &MaterialDialog), Changed<MaterialDialog>>,
+    dialogs: Query<&MaterialDialog>,
     mut scrims: Query<(&DialogScrimFor, &mut Pickable), With<DialogScrim>>,
 ) {
-    if changed_dialogs.is_empty() {
-        return;
-    }
+    for (for_dialog, mut pickable) in scrims.iter_mut() {
+        let Ok(dialog) = dialogs.get(for_dialog.0) else {
+            *pickable = Pickable::IGNORE;
+            continue;
+        };
 
-    for (dialog_entity, dialog) in changed_dialogs.iter() {
-        for (for_dialog, mut pickable) in scrims.iter_mut() {
-            if for_dialog.0 != dialog_entity {
-                continue;
+        // Scrims should *only* block pointer interactions while visible.
+        // Otherwise they can accidentally intercept clicks even when hidden.
+        *pickable = if dialog.open && dialog.modal {
+            Pickable {
+                should_block_lower: true,
+                is_hoverable: true,
             }
-
-            *pickable = if dialog.modal {
-                Pickable {
-                    should_block_lower: true,
-                    is_hoverable: false,
-                }
-            } else {
-                Pickable::IGNORE
-            };
-        }
+        } else {
+            Pickable::IGNORE
+        };
     }
 }
 
@@ -587,7 +1091,6 @@ pub fn create_dialog_scrim_for(
         } else {
             Pickable::IGNORE
         },
-        GlobalZIndex(1000),
     )
 }
 

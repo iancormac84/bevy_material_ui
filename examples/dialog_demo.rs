@@ -18,6 +18,22 @@ struct ConfirmDialogButton;
 #[derive(Resource)]
 struct DialogEntities {
     dialog: Entity,
+    trigger: Entity,
+}
+
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq)]
+enum DemoPlacement {
+    Below,
+    Above,
+    Right,
+    Left,
+    CenterOnWindow,
+}
+
+impl Default for DemoPlacement {
+    fn default() -> Self {
+        Self::Below
+    }
 }
 
 fn main() {
@@ -26,12 +42,23 @@ fn main() {
         .add_plugins(MaterialUiPlugin)
         .add_plugins(TelemetryPlugin)
         .add_systems(Startup, setup)
-        .add_systems(Update, (open_dialog_system, close_dialog_system))
+        .init_resource::<DemoPlacement>()
+        .add_systems(
+            Update,
+            (
+                open_dialog_system,
+                close_dialog_system,
+                placement_hotkeys_system,
+                apply_demo_placement_system,
+            ),
+        )
         .run();
 }
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<TelemetryConfig>) {
     commands.spawn(Camera2d);
+
+    let mut trigger_entity: Option<Entity> = None;
 
     commands
         .spawn((
@@ -53,15 +80,16 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             let open_button = MaterialButton::new(open_label).with_variant(ButtonVariant::Filled);
             let open_text_color = open_button.text_color(&theme);
 
-            root.spawn((
+            let mut open_button_entity = root.spawn((
                 OpenDialogButton,
                 Interaction::None,
                 MaterialButtonBuilder::new(open_label)
                     .filled()
                     .build(&theme),
-            ))
-            .insert_test_id("dialog_demo/open_button", &telemetry)
-            .with_children(|btn| {
+            ));
+
+            open_button_entity.insert_test_id("dialog_demo/open_button", &telemetry);
+            open_button_entity.with_children(|btn| {
                 btn.spawn((
                     ButtonLabel,
                     Text::new(open_label),
@@ -72,15 +100,30 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     TextColor(open_text_color),
                 ));
             });
+
+            trigger_entity = Some(open_button_entity.id());
+
+            root.spawn((
+                Text::new("Placement hotkeys: 1=Below, 2=Above, 3=Right, 4=Left, 5=Center"),
+                TextFont {
+                    font_size: 12.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface_variant),
+            ));
         });
+
+    let trigger_entity = trigger_entity.expect("Open dialog button should exist");
 
     let dialog_entity = commands
         .spawn((
-            GlobalZIndex(1001),
             DialogBuilder::new()
                 .title("Confirm Action")
                 .modal(true)
                 .build(&theme),
+            // Place the dialog relative to the trigger button.
+            MaterialDialogAnchor(trigger_entity),
+            MaterialDialogPlacement::below_anchor(12.0),
         ))
         .insert_test_id("dialog_demo/dialog", &telemetry)
         .with_children(|dialog| {
@@ -157,7 +200,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         });
                 });
         })
-        .id();
+            .id();
 
     // Scrim follows dialog open state and modality.
     commands
@@ -166,6 +209,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
     commands.insert_resource(DialogEntities {
         dialog: dialog_entity,
+        trigger: trigger_entity,
     });
 }
 
@@ -201,4 +245,53 @@ fn close_dialog_system(
     if should_close {
         dialog.open = false;
     }
+}
+
+fn placement_hotkeys_system(keys: Res<ButtonInput<KeyCode>>, mut placement: ResMut<DemoPlacement>) {
+    if keys.just_pressed(KeyCode::Digit1) {
+        *placement = DemoPlacement::Below;
+    } else if keys.just_pressed(KeyCode::Digit2) {
+        *placement = DemoPlacement::Above;
+    } else if keys.just_pressed(KeyCode::Digit3) {
+        *placement = DemoPlacement::Right;
+    } else if keys.just_pressed(KeyCode::Digit4) {
+        *placement = DemoPlacement::Left;
+    } else if keys.just_pressed(KeyCode::Digit5) {
+        *placement = DemoPlacement::CenterOnWindow;
+    }
+}
+
+fn apply_demo_placement_system(
+    placement: Res<DemoPlacement>,
+    entities: Res<DialogEntities>,
+    mut commands: Commands,
+) {
+    if !placement.is_changed() {
+        return;
+    }
+
+    let (anchor, placement_component) = match *placement {
+        DemoPlacement::Below => (
+            Some(entities.trigger),
+            MaterialDialogPlacement::below_anchor(12.0),
+        ),
+        DemoPlacement::Above => (
+            Some(entities.trigger),
+            MaterialDialogPlacement::above_anchor(12.0),
+        ),
+        DemoPlacement::Right => (
+            Some(entities.trigger),
+            MaterialDialogPlacement::right_of_anchor(12.0),
+        ),
+        DemoPlacement::Left => (
+            Some(entities.trigger),
+            MaterialDialogPlacement::left_of_anchor(12.0),
+        ),
+        DemoPlacement::CenterOnWindow => (None, MaterialDialogPlacement::center_in_viewport()),
+    };
+
+    if let Some(anchor) = anchor {
+        commands.entity(entities.dialog).insert(MaterialDialogAnchor(anchor));
+    }
+    commands.entity(entities.dialog).insert(placement_component);
 }

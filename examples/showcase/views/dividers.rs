@@ -79,22 +79,7 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
             spawn_code_block(
                 section,
                 theme,
-                r#"// Full-width divider
-commands.spawn((
-    Node { width: Val::Percent(100.0), height: Val::Px(1.0), ..default() },
-    BackgroundColor(theme.outline_variant),
-));
-
-// Inset divider (with left margin)
-commands.spawn((
-    Node { 
-        width: Val::Percent(100.0), 
-        height: Val::Px(1.0),
-        margin: UiRect::left(Val::Px(16.0)),
-        ..default() 
-    },
-    BackgroundColor(theme.outline_variant),
-));"#,
+                include_str!("../../divider_demo.rs"),
             );
         });
 }

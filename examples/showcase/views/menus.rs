@@ -123,20 +123,7 @@ pub fn spawn_menus_section(
             spawn_code_block(
                 section,
                 theme,
-                r#"// Create a menu
-let menu = MaterialMenu::new()
-    .anchor(MenuAnchor::BottomLeft)
-    .open();
-
-commands.spawn((
-    menu,
-    Node { width: Val::Px(200.0), ..default() },
-    BackgroundColor(theme.surface_container),
-));
-
-// Add menu items
-let item = MenuItem::new("Copy")
-    .shortcut("Ctrl+C");"#,
+                include_str!("../../menu_demo.rs"),
             );
         });
 }

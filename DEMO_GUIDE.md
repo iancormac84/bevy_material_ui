@@ -116,6 +116,36 @@ $env:BEVY_TELEMETRY="1"; $env:RUST_LOG="info,bevy_material_ui=debug,wgpu=error";
 BEVY_TELEMETRY=1 RUST_LOG="info,bevy_material_ui=debug,wgpu=error" cargo run --example button_demo
 ```
 
+### Running The Showcase (Full vs Minimal Bevy)
+
+The showcase is available in two modes:
+
+- **Full** (`showcase`): uses the crate default features (which include `bevy_full`) and enables the showcase's optional 3D scene.
+- **Minimal** (`showcase_minimal`): runs the *same* showcase entrypoint (`examples/showcase/main.rs`), but compiled with `--no-default-features --features bevy_minimal` so the 3D parts are compiled out.
+
+This repo intentionally uses the **same `main.rs`** for both example targets (`showcase` and `showcase_minimal`). Cargo will warn that the same file is present in multiple build targets; that warning is expected with this setup.
+
+**How 3D is disabled in minimal mode**
+
+The 3D scene code inside the showcase is guarded with `#[cfg(feature = "bevy_full")]` in `examples/showcase/showcase.rs`. When you run with `--no-default-features --features bevy_minimal`, the crate feature `bevy_full` is not enabled, so those 3D systems/types are not compiled.
+
+**Commands**
+
+```powershell
+# Full showcase (includes 3D)
+cargo run --example showcase
+
+# Minimal/UI-only showcase (same main.rs, 3D compiled out)
+cargo run --example showcase_minimal --no-default-features --features=bevy_minimal
+```
+
+If you have the repo checkout, there are also cargo aliases in `.cargo/config.toml`:
+
+```powershell
+cargo run-showcase
+cargo run-showcase-minimal
+```
+
 ### Persistent Environment Variables
 
 To avoid setting environment variables for each command:

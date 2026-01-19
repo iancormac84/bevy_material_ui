@@ -40,6 +40,13 @@ pub fn spawn_select_section(
                     .value("opt3"),
             ];
 
+            // Use enough items to demonstrate a scrollable dropdown with a max height.
+            let many_options = (1..=40)
+                .map(|i| {
+                    SelectOption::new(format!("Option {i}")).value(format!("option_{i}"))
+                })
+                .collect::<Vec<_>>();
+
             section
                 .spawn(Node {
                     flex_direction: FlexDirection::Row,
@@ -90,6 +97,31 @@ pub fn spawn_select_section(
                                 .outlined()
                                 .label_key("showcase.select.label.with_selection")
                                 .selected(1),
+                        );
+                    });
+
+                    row.spawn(Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(8.0),
+                        ..default()
+                    })
+                    .with_children(|col| {
+                        col.spawn((
+                            Text::new("Scrollable dropdown (max height)"),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                        ));
+
+                        col.spawn_select_with(
+                            theme,
+                            SelectBuilder::new(many_options.clone())
+                                .filled()
+                                .label("Many Options")
+                                .selected(0)
+                                .dropdown_max_height(Val::Px(240.0)),
                         );
                     });
                 });

@@ -22,8 +22,19 @@ pub fn run() {
         .add_plugins(MaterialUiPlugin)
         .init_resource::<SelectedSection>()
         .init_resource::<ComponentTelemetry>()
+        .init_resource::<views::lists::ListsViewState>()
         .add_systems(Startup, (setup_3d_scene, setup_ui, setup_telemetry))
-        .add_systems(Update, (rotate_dice, handle_nav_clicks, update_nav_highlights, update_detail_content, write_telemetry))
+        .add_systems(
+            Update,
+            (
+                rotate_dice,
+                handle_nav_clicks,
+                update_nav_highlights,
+                update_detail_content,
+                views::lists::handle_list_virtualize_toggle,
+                write_telemetry,
+            ),
+        )
         .run();
 }
 
@@ -48,6 +59,7 @@ fn setup_ui(
     selected: Res<SelectedSection>,
     mut materials: ResMut<Assets<ShapeMorphMaterial>>,
     tab_cache: Res<TabStateCache>,
+    lists_state: Res<views::lists::ListsViewState>,
 ) {
     // UI camera (renders over the 3d scene)
     commands.spawn((
@@ -131,7 +143,15 @@ fn setup_ui(
                 BackgroundColor(theme.surface.with_alpha(0.0)),
             ))
             .with_children(|detail| {
-                spawn_selected_section(detail, &theme, selected.current, icon_font.clone(), &mut materials, &tab_cache);
+                spawn_selected_section(
+                    detail,
+                    &theme,
+                    selected.current,
+                    icon_font.clone(),
+                    &mut materials,
+                    &tab_cache,
+                    &lists_state,
+                );
             });
         });
 }
@@ -143,6 +163,7 @@ fn update_detail_content(
     icon_font: Res<MaterialIconFont>,
     mut materials: ResMut<Assets<ShapeMorphMaterial>>,
     tab_cache: Res<TabStateCache>,
+    lists_state: Res<views::lists::ListsViewState>,
     detail: Query<Entity, With<DetailContent>>,
     children_q: Query<&Children>,
 ) {
@@ -159,7 +180,15 @@ fn update_detail_content(
     let section = selected.current;
     let icon_font = icon_font.0.clone();
     commands.entity(detail_entity).with_children(|detail| {
-        spawn_selected_section(detail, &theme, section, icon_font, &mut materials, &tab_cache);
+        spawn_selected_section(
+            detail,
+            &theme,
+            section,
+            icon_font,
+            &mut materials,
+            &tab_cache,
+            &lists_state,
+        );
     });
 }
 
@@ -170,6 +199,7 @@ fn spawn_selected_section(
     icon_font: Handle<Font>,
     materials: &mut Assets<ShapeMorphMaterial>,
     tab_cache: &TabStateCache,
+    lists_state: &views::lists::ListsViewState,
 ) {
     match section {
         ComponentSection::Buttons => spawn_buttons_section(parent, theme),
@@ -182,7 +212,7 @@ fn spawn_selected_section(
         ComponentSection::Progress => spawn_progress_section(parent, theme),
         ComponentSection::Cards => spawn_cards_section(parent, theme),
         ComponentSection::Dividers => spawn_dividers_section(parent, theme),
-        ComponentSection::Lists => spawn_list_section(parent, theme, icon_font),
+        ComponentSection::Lists => spawn_list_section(parent, theme, icon_font, lists_state),
         ComponentSection::Icons => spawn_icons_section(parent, theme, icon_font),
         ComponentSection::IconButtons => spawn_icon_buttons_section(parent, theme, icon_font),
         ComponentSection::Sliders => spawn_sliders_section(parent, theme),

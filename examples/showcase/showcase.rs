@@ -158,6 +158,7 @@ pub fn run() {
         .init_resource::<TooltipDemoOptions>()
         .init_resource::<ListDemoOptions>()
         .init_resource::<DialogDemoOptions>()
+        .init_resource::<views::lists::ListsViewState>()
         .init_resource::<PresentModeSettings>()
         .add_systems(Startup, load_showcase_i18n_assets_system)
         .init_resource::<TranslationsDemoState>()
@@ -173,6 +174,7 @@ pub fn run() {
                 handle_nav_clicks,
                 update_nav_highlights,
                 update_detail_content,
+                views::lists::handle_list_virtualize_toggle,
                 progress_demo_animate_system,
                 demo_click_log_system,
                 snackbar_demo_options_system,
@@ -2000,6 +2002,7 @@ fn setup_ui(
     tab_cache: Res<TabStateCache>,
     theme_selection: Res<ShowcaseThemeSelection>,
     mut materials: ResMut<Assets<ShapeMorphMaterial>>,
+    lists_state: Res<views::lists::ListsViewState>,
 ) {
     // UI camera (renders over the 3d scene)
     commands.spawn((
@@ -2263,6 +2266,7 @@ fn setup_ui(
         &tab_cache,
         theme_selection.seed_argb,
         &mut materials,
+        &lists_state,
     );
 }
 
@@ -2342,6 +2346,7 @@ fn spawn_ui_root(
     tab_cache: &TabStateCache,
     seed_argb: u32,
     materials: &mut Assets<ShapeMorphMaterial>,
+    lists_state: &views::lists::ListsViewState,
 ) {
     commands
         .spawn((
@@ -2418,7 +2423,14 @@ fn spawn_ui_root(
                         ))
                         .with_children(|detail| {
                             spawn_detail_scroller(
-                                detail, theme, selected, icon_font, tab_cache, seed_argb, materials,
+                                detail,
+                                theme,
+                                selected,
+                                icon_font,
+                                tab_cache,
+                                seed_argb,
+                                materials,
+                                lists_state,
                             );
                         });
                 },
@@ -2434,6 +2446,7 @@ fn spawn_detail_scroller(
     tab_cache: &TabStateCache,
     seed_argb: u32,
     materials: &mut Assets<ShapeMorphMaterial>,
+    lists_state: &views::lists::ListsViewState,
 ) {
     parent
         .spawn((
@@ -2475,7 +2488,14 @@ fn spawn_detail_scroller(
                 ))
                 .with_children(|surface| {
                     spawn_selected_section(
-                        surface, theme, selected, icon_font, tab_cache, seed_argb, materials,
+                        surface,
+                        theme,
+                        selected,
+                        icon_font,
+                        tab_cache,
+                        seed_argb,
+                        materials,
+                        lists_state,
                     );
                 });
 
@@ -2762,6 +2782,7 @@ fn time_picker_demo_system(
 fn rebuild_ui_on_theme_change_system(
     mut commands: Commands,
     theme: Res<MaterialTheme>,
+    lists_state: Res<views::lists::ListsViewState>,
     selected: Res<SelectedSection>,
     tab_cache: Res<TabStateCache>,
     theme_selection: Res<ShowcaseThemeSelection>,
@@ -2794,6 +2815,7 @@ fn rebuild_ui_on_theme_change_system(
         &tab_cache,
         theme_selection.seed_argb,
         &mut materials,
+        &lists_state,
     );
 }
 
@@ -3124,6 +3146,7 @@ fn update_detail_content(
     tab_cache: Res<TabStateCache>,
     theme_selection: Res<ShowcaseThemeSelection>,
     mut materials: ResMut<Assets<ShapeMorphMaterial>>,
+    lists_state: Res<views::lists::ListsViewState>,
     detail: Query<Entity, With<DetailContent>>,
     children_q: Query<&Children>,
 ) {
@@ -3147,6 +3170,7 @@ fn update_detail_content(
             &tab_cache,
             theme_selection.seed_argb,
             &mut materials,
+            &lists_state,
         );
     });
 }
@@ -3159,6 +3183,7 @@ fn spawn_selected_section(
     tab_cache: &TabStateCache,
     seed_argb: u32,
     materials: &mut Assets<ShapeMorphMaterial>,
+    lists_state: &views::lists::ListsViewState,
 ) {
     match section {
         ComponentSection::Buttons => spawn_buttons_section(parent, theme),
@@ -3171,7 +3196,7 @@ fn spawn_selected_section(
         ComponentSection::Progress => spawn_progress_section(parent, theme),
         ComponentSection::Cards => spawn_cards_section(parent, theme),
         ComponentSection::Dividers => spawn_dividers_section(parent, theme),
-        ComponentSection::Lists => spawn_list_section(parent, theme, icon_font),
+        ComponentSection::Lists => spawn_list_section(parent, theme, icon_font, lists_state),
         ComponentSection::Icons => spawn_icons_section(parent, theme, icon_font),
         ComponentSection::IconButtons => spawn_icon_buttons_section(parent, theme, icon_font),
         ComponentSection::Sliders => spawn_sliders_section(parent, theme),

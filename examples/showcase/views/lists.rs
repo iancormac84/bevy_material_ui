@@ -8,11 +8,31 @@ use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
 
+#[derive(Resource, Debug, Clone)]
+pub struct ListsViewState {
+    pub virtualize_large_list: bool,
+}
+
+impl Default for ListsViewState {
+    fn default() -> Self {
+        Self {
+            virtualize_large_list: true,
+        }
+    }
+}
+
+#[derive(Component)]
+pub(crate) struct ListVirtualizeToggle;
+
+#[derive(Component)]
+pub(crate) struct ListVirtualDemoHost;
+
 /// Spawn the list section content
 pub fn spawn_list_section(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
     _icon_font: Handle<Font>,
+    state: &ListsViewState,
 ) {
     let theme_clone = theme.clone();
     parent
@@ -268,37 +288,94 @@ pub fn spawn_list_section(
                         NeedsInternationalFont,
                     ));
 
-                    let mut v_items: Vec<ListItemBuilder> = Vec::new();
-                    for i in 1..=500 {
-                        let builder = if i % 3 == 0 {
-                            ListItemBuilder::new(format!("Item {i}"))
-                                .two_line()
-                                .supporting_text("Supporting text")
-                                .leading_icon(ICON_EMAIL)
-                        } else {
-                            ListItemBuilder::new(format!("Item {i}"))
-                                .one_line()
-                                .leading_icon(ICON_EMAIL)
-                        };
-                        v_items.push(builder);
-                    }
+                    // Runtime toggle for virtualization.
+                    let switch = MaterialSwitch::new().selected(state.virtualize_large_list);
+                    let switch_track_color = switch.track_color(&theme_clone);
+                    let switch_outline_color = switch.track_outline_color(&theme_clone);
+                    let switch_handle_color = switch.handle_color(&theme_clone);
+                    let switch_handle_size = switch.handle_size();
+                    let switch_label = if state.virtualize_large_list {
+                        "Virtualize: ON"
+                    } else {
+                        "Virtualize: OFF"
+                    };
+                    let label_color = theme_clone.on_surface;
 
-                    container.spawn((
-                        TestId::new("list_virtual_scroll_area"),
-                        bevy_material_ui::list::ListBuilder::new()
-                            .max_visible_items_variant(
-                                6,
-                                bevy_material_ui::list::ListItemVariant::TwoLine,
-                            )
-                            .selection_mode(ListSelectionMode::Single)
-                            .items_from_builders(v_items)
-                            .virtualize(true)
-                            .overscan_rows(3)
-                            .build_scrollable(),
-                        BackgroundColor(theme_clone.surface),
-                        BorderRadius::all(Val::Px(12.0)),
-                        Interaction::None,
-                    ));
+                    container
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::Center,
+                            column_gap: Val::Px(12.0),
+                            ..default()
+                        })
+                        .with_children(|row| {
+                            row.spawn((
+                                ListVirtualizeToggle,
+                                TestId::new("list_virtualize_toggle"),
+                                switch,
+                                Button,
+                                Interaction::None,
+                                RippleHost::new(),
+                                Node {
+                                    width: Val::Px(bevy_material_ui::switch::SWITCH_TRACK_WIDTH),
+                                    height: Val::Px(bevy_material_ui::switch::SWITCH_TRACK_HEIGHT),
+                                    justify_content: if state.virtualize_large_list {
+                                        JustifyContent::FlexEnd
+                                    } else {
+                                        JustifyContent::FlexStart
+                                    },
+                                    align_items: AlignItems::Center,
+                                    padding: UiRect::horizontal(Val::Px(2.0)),
+                                    border: UiRect::all(Val::Px(if state.virtualize_large_list {
+                                        0.0
+                                    } else {
+                                        2.0
+                                    })),
+                                    ..default()
+                                },
+                                BackgroundColor(switch_track_color),
+                                BorderColor::all(switch_outline_color),
+                                BorderRadius::all(Val::Px(16.0)),
+                            ))
+                            .with_children(|track| {
+                                let handle_size = switch_handle_size;
+                                track.spawn((
+                                    SwitchHandle,
+                                    Node {
+                                        width: Val::Px(handle_size),
+                                        height: Val::Px(handle_size),
+                                        ..default()
+                                    },
+                                    BackgroundColor(switch_handle_color),
+                                    BorderRadius::all(Val::Px(handle_size / 2.0)),
+                                ));
+                            });
+
+                            row.spawn((
+                                Text::new(switch_label),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(label_color),
+                                NeedsInternationalFont,
+                            ));
+                        });
+
+                    // Host used so we can rebuild the large list on toggle.
+                    container
+                        .spawn((
+                            ListVirtualDemoHost,
+                            Node {
+                                width: Val::Px(420.0),
+                                max_width: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                ..default()
+                            },
+                        ))
+                        .with_children(|host| {
+                            spawn_large_list_demo(host, &theme_clone, state.virtualize_large_list);
+                        });
                 });
 
             // Explicit scrollbar orientation demos (vertical/horizontal/both)
@@ -422,6 +499,108 @@ pub fn spawn_list_section(
                 include_str!("../../list_demo.rs"),
             );
         });
+}
+
+fn spawn_large_list_demo(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    virtualize: bool,
+) {
+    let mut items: Vec<ListItemBuilder> = Vec::new();
+    for i in 1..=500 {
+        let builder = if i % 3 == 0 {
+            ListItemBuilder::new(format!("Item {i}"))
+                .two_line()
+                .supporting_text("Supporting text")
+                .leading_icon(ICON_EMAIL)
+        } else {
+            ListItemBuilder::new(format!("Item {i}")).one_line().leading_icon(ICON_EMAIL)
+        };
+        items.push(builder);
+    }
+
+    if virtualize {
+        parent.spawn((
+            TestId::new("list_virtual_scroll_area"),
+            bevy_material_ui::list::ListBuilder::new()
+                .max_visible_items_variant(6, bevy_material_ui::list::ListItemVariant::TwoLine)
+                .selection_mode(ListSelectionMode::Single)
+                .items_from_builders(items)
+                .virtualize(true)
+                .overscan_rows(3)
+                .build_scrollable(),
+            BackgroundColor(theme.surface),
+            BorderRadius::all(Val::Px(12.0)),
+            Interaction::None,
+        ));
+        return;
+    }
+
+    // Non-virtualized: spawn actual child entities for all items.
+    parent
+        .spawn((
+            TestId::new("list_virtual_scroll_area"),
+            bevy_material_ui::list::ListBuilder::new()
+                .max_visible_items_variant(6, bevy_material_ui::list::ListItemVariant::TwoLine)
+                .selection_mode(ListSelectionMode::Single)
+                .build_scrollable(),
+            BackgroundColor(theme.surface),
+            BorderRadius::all(Val::Px(12.0)),
+            Interaction::None,
+        ))
+        .with_children(|list| {
+            for builder in items {
+                list.spawn((
+                    SelectableListItem,
+                    builder.build(theme),
+                    Interaction::None,
+                ));
+            }
+        });
+}
+
+pub(crate) fn handle_list_virtualize_toggle(
+    mut commands: Commands,
+    mut state: ResMut<ListsViewState>,
+    mut switch_events: MessageReader<bevy_material_ui::switch::SwitchChangeEvent>,
+    toggles: Query<(), With<ListVirtualizeToggle>>,
+    hosts: Query<Entity, With<ListVirtualDemoHost>>,
+    children_q: Query<&Children>,
+    theme: Res<MaterialTheme>,
+) {
+    let mut should_update = None;
+    for event in switch_events.read() {
+        if toggles.get(event.entity).is_ok() {
+            should_update = Some(event.selected);
+        }
+    }
+
+    let Some(new_value) = should_update else {
+        return;
+    };
+
+    if state.virtualize_large_list == new_value {
+        return;
+    }
+    state.virtualize_large_list = new_value;
+
+    for host in hosts.iter() {
+        clear_children_recursive_local(&mut commands, &children_q, host);
+        commands.entity(host).with_children(|parent| {
+            spawn_large_list_demo(parent, &theme, new_value);
+        });
+    }
+}
+
+fn clear_children_recursive_local(commands: &mut Commands, children_q: &Query<&Children>, entity: Entity) {
+    let Ok(children) = children_q.get(entity) else {
+        return;
+    };
+
+    for child in children.iter() {
+        clear_children_recursive_local(commands, children_q, child);
+        commands.entity(child).despawn();
+    }
 }
 
 fn spawn_list_mode_option(

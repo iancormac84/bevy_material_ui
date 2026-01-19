@@ -6,6 +6,9 @@
 - Add `dropdown_max_height(Val)` to constrain dropdown height and enable vertical scrolling for long option lists.
 - Add optional dropdown virtualization via `.virtualize(true)` to keep UI entity count roughly constant for large lists.
 
+### List
+- Add optional list virtualization via `.virtualize(true)` (requires providing items via `.items(...)` or `.items_from_builders(...)`).
+
 ### Performance & Benchmarking
 - Add Select benchmarks (component-level and ECS/system-level) to quantify dropdown spawn cost with/without virtualization.
 

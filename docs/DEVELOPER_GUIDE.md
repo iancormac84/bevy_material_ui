@@ -547,7 +547,7 @@ fn handle_dialog(
 Lists present content in a continuous vertical index.
 
 ```rust
-let list = ListBuilder::new().build(&theme);
+let list = ListBuilder::new().build();
 
 commands.spawn(list).with_children(|parent| {
     // List items
@@ -568,6 +568,32 @@ commands.spawn(list).with_children(|parent| {
             .build(&theme)
     );
 });
+```
+
+For very large lists, you can provide data-backed items and enable virtualization to keep
+UI entity count roughly constant while scrolling:
+
+```rust
+let items: Vec<ListItemBuilder> = (0..10_000)
+    .map(|i| {
+        if i % 3 == 0 {
+            ListItemBuilder::new(format!("Item {i}"))
+                .two_line()
+                .supporting_text("Supporting text")
+        } else {
+            ListItemBuilder::new(format!("Item {i}"))
+        }
+    })
+    .collect();
+
+commands.spawn(
+    ListBuilder::new()
+        .max_height(360.0)
+        .items_from_builders(items)
+        .virtualize(true)
+        .overscan_rows(3)
+        .build_scrollable(),
+);
 ```
 
 ---

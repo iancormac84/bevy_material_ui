@@ -250,6 +250,55 @@ pub fn spawn_list_section(
 
                     // Keep the entity id around for future selection/scroll interactions.
                     let _ = scroll_area_id;
+
+                    // Virtualized list demo (large item count) to showcase performance.
+                    container.spawn((
+                        Text::new(""),
+                        LocalizedText::new("showcase.lists.virtualized_demo")
+                            .with_default("Virtualized list (500 items)"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme_clone.on_surface),
+                        Node {
+                            margin: UiRect::top(Val::Px(16.0)),
+                            ..default()
+                        },
+                        NeedsInternationalFont,
+                    ));
+
+                    let mut v_items: Vec<ListItemBuilder> = Vec::new();
+                    for i in 1..=500 {
+                        let builder = if i % 3 == 0 {
+                            ListItemBuilder::new(format!("Item {i}"))
+                                .two_line()
+                                .supporting_text("Supporting text")
+                                .leading_icon(ICON_EMAIL)
+                        } else {
+                            ListItemBuilder::new(format!("Item {i}"))
+                                .one_line()
+                                .leading_icon(ICON_EMAIL)
+                        };
+                        v_items.push(builder);
+                    }
+
+                    container.spawn((
+                        TestId::new("list_virtual_scroll_area"),
+                        bevy_material_ui::list::ListBuilder::new()
+                            .max_visible_items_variant(
+                                6,
+                                bevy_material_ui::list::ListItemVariant::TwoLine,
+                            )
+                            .selection_mode(ListSelectionMode::Single)
+                            .items_from_builders(v_items)
+                            .virtualize(true)
+                            .overscan_rows(3)
+                            .build_scrollable(),
+                        BackgroundColor(theme_clone.surface),
+                        BorderRadius::all(Val::Px(12.0)),
+                        Interaction::None,
+                    ));
                 });
 
             // Explicit scrollbar orientation demos (vertical/horizontal/both)

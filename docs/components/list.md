@@ -8,6 +8,7 @@ Material Design 3 list component with selection support.
 - Leading/trailing icons and avatars
 - Supporting text
 - Dividers between items
+- Optional virtualization for large lists
 
 ## Basic Usage
 
@@ -85,6 +86,34 @@ commands
     });
 ```
 
+## Virtualized List
+
+For very large lists, you can provide data-backed items and enable virtualization. When enabled,
+the list reuses a small pool of row entities and updates their content as the user scrolls.
+
+```rust
+let items: Vec<ListItemBuilder> = (0..10_000)
+    .map(|i| {
+        if i % 3 == 0 {
+            ListItemBuilder::new(format!("Item {i}"))
+                .two_line()
+                .supporting_text("Supporting text")
+        } else {
+            ListItemBuilder::new(format!("Item {i}"))
+        }
+    })
+    .collect();
+
+commands.spawn(
+    ListBuilder::new()
+        .max_height(300.0)
+        .items_from_builders(items)
+        .virtualize(true)
+        .overscan_rows(3)
+        .build_scrollable(),
+);
+```
+
 ## Selection Modes
 
 Selection is handled by the library. Set the mode on the list:
@@ -128,6 +157,8 @@ fn handle_list_item_clicks(
 | `selection_mode` | `ListSelectionMode` | `None` | Selection behavior |
 | `max_height` | `Option<f32>` | `None` | Max height for `build_scrollable()` |
 | `show_scrollbar` | `bool` | `true` | Scrollbar visibility (scrolling still works if hidden) |
+| `virtualize` | `bool` | `false` | Reuse a fixed pool of rows for large lists |
+| `overscan_rows` | `usize` | `2` | Extra rows to render above/below the viewport when virtualized |
 
 ### ListItemBuilder
 

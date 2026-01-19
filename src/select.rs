@@ -911,6 +911,13 @@ pub struct SelectDropdown;
 #[derive(Component)]
 struct SelectDropdownContent;
 
+/// Optional max height configuration for a select dropdown.
+///
+/// When present on `SelectDropdownContent`, the dropdown viewport height is computed as:
+/// `min(max_height, content_height)` so the dropdown only becomes scrollable when needed.
+#[derive(Component, Clone, Copy, Debug, PartialEq)]
+struct SelectDropdownMaxHeight(pub Val);
+
 /// Internal marker for option icons rendered as embedded bitmaps.
 #[derive(Component)]
 struct SelectOptionIcon;
@@ -963,6 +970,8 @@ fn select_dropdown_rebuild_options_system(
     selects: Query<(Entity, &MaterialSelect, &Children), Changed<MaterialSelect>>,
     dropdowns: Query<(), With<SelectDropdown>>,
     dropdown_contents: Query<(), With<SelectDropdownContent>>,
+    dropdown_max_heights: Query<&SelectDropdownMaxHeight>,
+    mut dropdown_content_nodes: Query<&mut Node, With<SelectDropdownContent>>,
     dropdown_children: Query<&Children, With<SelectDropdown>>,
     content_children: Query<&Children, With<SelectDropdownContent>>,
     option_rows: Query<(), With<SelectOptionItem>>,
@@ -1020,6 +1029,26 @@ fn select_dropdown_rebuild_options_system(
         let option_text_color = theme.on_surface;
         let selected_index = select.selected_index;
         let options = select.options.clone();
+
+        // If this dropdown is configured with a max height, compute the viewport height
+        // based on the number of options so rows keep the standard height.
+        if let Ok(max_h) = dropdown_max_heights.get(content_entity).copied() {
+            if let Ok(mut node) = dropdown_content_nodes.get_mut(content_entity) {
+                match max_h.0 {
+                    Val::Px(max_px) => {
+                        let content_px = 16.0 + (options.len() as f32 * SELECT_OPTION_HEIGHT);
+                        node.height = Val::Px(content_px.min(max_px));
+                        node.max_height = Val::Px(max_px);
+                    }
+                    other => {
+                        // For non-pixel values we can't compute content height reliably,
+                        // so use the configured height as the viewport height.
+                        node.height = other;
+                        node.max_height = other;
+                    }
+                }
+            }
+        }
 
         commands.entity(content_entity).with_children(|dropdown| {
             for (index, option) in options.iter().enumerate() {
@@ -1300,12 +1329,22 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                     // Content container. Option rows are spawned under this child.
                     // If `dropdown_max_height` is set, this becomes a scroll container.
                     let mut content = if let Some(max_height) = dropdown_max_height {
+                        let viewport_height = match max_height {
+                            Val::Px(max_px) => {
+                                let content_px = 16.0 + (options.len() as f32 * SELECT_OPTION_HEIGHT);
+                                Val::Px(content_px.min(max_px))
+                            }
+                            other => other,
+                        };
+
                         dropdown.spawn((
                             SelectDropdownContent,
+                            SelectDropdownMaxHeight(max_height),
                             ScrollContainer::vertical(),
                             ScrollPosition::default(),
                             Node {
                                 width: Val::Percent(100.0),
+                                height: viewport_height,
                                 max_height,
                                 overflow: Overflow::scroll_y(),
                                 flex_direction: FlexDirection::Column,

@@ -1299,29 +1299,32 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                 .with_children(|dropdown| {
                     // Content container. Option rows are spawned under this child.
                     // If `dropdown_max_height` is set, this becomes a scroll container.
-                    let mut content = dropdown.spawn((
-                        SelectDropdownContent,
-                        Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Column,
-                            padding: UiRect::vertical(Val::Px(8.0)),
-                            ..default()
-                        },
-                    ));
-
-                    if let Some(max_height) = dropdown_max_height {
-                        content.insert((
+                    let mut content = if let Some(max_height) = dropdown_max_height {
+                        dropdown.spawn((
+                            SelectDropdownContent,
                             ScrollContainer::vertical(),
                             ScrollPosition::default(),
                             Node {
+                                width: Val::Percent(100.0),
                                 max_height,
                                 overflow: Overflow::scroll_y(),
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::vertical(Val::Px(8.0)),
                                 ..default()
                             },
-                        ));
-                    }
+                        ))
+                    } else {
+                        dropdown.spawn((
+                            SelectDropdownContent,
+                            Node {
+                                width: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                padding: UiRect::vertical(Val::Px(8.0)),
+                                ..default()
+                            },
+                        ))
+                    };
 
-                    let mut content = content;
                     content.with_children(|dropdown| {
                     for (index, option) in options.iter().enumerate() {
                         let is_disabled = option.disabled;

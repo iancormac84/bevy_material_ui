@@ -65,6 +65,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         .filled()
                         .selected(0)
                         .dropdown_max_height(Val::Px(240.0))
+                        .virtualize(true)
                         .width(Val::Px(320.0)),
                 );
 
@@ -75,6 +76,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         .outlined()
                         .selected(1)
                         .dropdown_max_height(Val::Px(240.0))
+                        .virtualize(true)
                         .width(Val::Px(320.0)),
                 );
 

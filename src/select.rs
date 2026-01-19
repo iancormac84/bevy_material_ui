@@ -14,6 +14,7 @@ use crate::{
 };
 
 use crate::scroll::ScrollContainer;
+use crate::scroll::ScrollContent;
 
 /// Plugin for the select component
 pub struct SelectPlugin;
@@ -33,6 +34,7 @@ impl Plugin for SelectPlugin {
                 select_localization_system,
                 select_dropdown_rebuild_options_system,
                 select_dropdown_sync_system,
+                select_dropdown_virtualization_system,
                 select_option_interaction_system,
                 select_telemetry_system,
             ),
@@ -189,6 +191,7 @@ fn select_telemetry_system(
     telemetry: Option<Res<TelemetryConfig>>,
     selects: Query<(&TestId, &Children), With<MaterialSelect>>,
     children_query: Query<&Children>,
+    virtual_rows: Query<(), With<SelectVirtualRow>>,
     mut queries: ParamSet<(
         Query<(), With<SelectDisplayText>>,
         Query<(), With<SelectDropdownArrow>>,
@@ -241,6 +244,11 @@ fn select_telemetry_system(
             }
 
             if let Ok(option) = queries.p3().get(entity) {
+                // Virtualized rows are reused for multiple indices as you scroll; tagging them
+                // with an index-based test id would be misleading.
+                if virtual_rows.get(entity).is_ok() {
+                    continue;
+                }
                 let option_base = format!("{base}/option/{}", option.index);
                 commands.queue(InsertTestIdIfExists {
                     entity,
@@ -769,6 +777,7 @@ pub struct SelectBuilder {
     width: Val,
     localization: SelectLocalization,
     dropdown_max_height: Option<Val>,
+    dropdown_virtualize: bool,
 }
 
 impl SelectBuilder {
@@ -779,6 +788,7 @@ impl SelectBuilder {
             width: Val::Px(210.0),
             localization: SelectLocalization::default(),
             dropdown_max_height: None,
+            dropdown_virtualize: false,
         }
     }
 
@@ -788,6 +798,18 @@ impl SelectBuilder {
     /// beyond this height.
     pub fn dropdown_max_height(mut self, height: Val) -> Self {
         self.dropdown_max_height = Some(height);
+        self
+    }
+
+    /// Enable dropdown virtualization.
+    ///
+    /// When enabled, the dropdown only spawns a small fixed pool of option row entities and
+    /// reuses them as you scroll. This significantly improves performance for very large option
+    /// lists.
+    ///
+    /// Note: virtualization requires `dropdown_max_height(...)` so the dropdown is scrollable.
+    pub fn virtualize(mut self, enabled: bool) -> Self {
+        self.dropdown_virtualize = enabled;
         self
     }
 
@@ -918,6 +940,26 @@ struct SelectDropdownContent;
 #[derive(Component, Clone, Copy, Debug, PartialEq)]
 struct SelectDropdownMaxHeight(pub Val);
 
+/// Internal marker for a virtualized dropdown list.
+///
+/// Virtualized dropdowns render a fixed pool of rows with top/bottom spacers.
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+struct SelectDropdownVirtualized {
+    pool_size: usize,
+}
+
+#[derive(Component)]
+struct SelectVirtualTopSpacer;
+
+#[derive(Component)]
+struct SelectVirtualBottomSpacer;
+
+#[derive(Component)]
+struct SelectVirtualRow;
+
+#[derive(Component)]
+struct SelectVirtualIcon;
+
 /// Internal marker for option icons rendered as embedded bitmaps.
 #[derive(Component)]
 struct SelectOptionIcon;
@@ -971,6 +1013,7 @@ fn select_dropdown_rebuild_options_system(
     dropdowns: Query<(), With<SelectDropdown>>,
     dropdown_contents: Query<(), With<SelectDropdownContent>>,
     dropdown_max_heights: Query<&SelectDropdownMaxHeight>,
+    dropdown_virtualized: Query<(), With<SelectDropdownVirtualized>>,
     mut dropdown_content_nodes: Query<&mut Node, With<SelectDropdownContent>>,
     dropdown_children: Query<&Children, With<SelectDropdown>>,
     content_children: Query<&Children, With<SelectDropdownContent>>,
@@ -992,6 +1035,28 @@ fn select_dropdown_rebuild_options_system(
             .ok()
             .and_then(|kids| kids.iter().find(|e| dropdown_contents.get(*e).is_ok()))
             .unwrap_or(dropdown_entity);
+
+        // Virtualized dropdowns manage their own row pool; don't despawn/rebuild rows here.
+        // We still update the viewport height (below) so the dropdown only scrolls when needed.
+        if dropdown_virtualized.get(content_entity).is_ok() {
+            let options = select.options.clone();
+            if let Ok(max_h) = dropdown_max_heights.get(content_entity).copied() {
+                if let Ok(mut node) = dropdown_content_nodes.get_mut(content_entity) {
+                    match max_h.0 {
+                        Val::Px(max_px) => {
+                            let content_px = 16.0 + (options.len() as f32 * SELECT_OPTION_HEIGHT);
+                            node.height = Val::Px(content_px.min(max_px));
+                            node.max_height = Val::Px(max_px);
+                        }
+                        other => {
+                            node.height = other;
+                            node.max_height = other;
+                        }
+                    }
+                }
+            }
+            continue;
+        }
 
         // Collect current option row entities.
         // Note: If the container was spawned with zero children, it won't have a `Children`
@@ -1260,6 +1325,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
         let option_text_color = theme.on_surface;
 
         let dropdown_max_height = builder.dropdown_max_height;
+        let dropdown_virtualize = builder.dropdown_virtualize;
 
         // Clone options for building the dropdown list
         let options = builder.select.options.clone();
@@ -1330,6 +1396,8 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                 .with_children(|dropdown| {
                     // Content container. Option rows are spawned under this child.
                     // If `dropdown_max_height` is set, this becomes a scroll container.
+                    let mut virtual_pool_size: Option<usize> = None;
+
                     let mut content = if let Some(max_height) = dropdown_max_height {
                         let viewport_height = match max_height {
                             Val::Px(max_px) => {
@@ -1339,21 +1407,54 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                             other => other,
                         };
 
-                        dropdown.spawn((
-                            SelectDropdownContent,
-                            SelectDropdownMaxHeight(max_height),
-                            ScrollContainer::vertical(),
-                            ScrollPosition::default(),
-                            Node {
-                                width: Val::Percent(100.0),
-                                height: viewport_height,
-                                max_height,
-                                overflow: Overflow::scroll_y(),
-                                flex_direction: FlexDirection::Column,
-                                padding: UiRect::vertical(Val::Px(8.0)),
-                                ..default()
-                            },
-                        ))
+                        // Virtualization is only supported for pixel max heights.
+                        let wants_virtualize = dropdown_virtualize && matches!(max_height, Val::Px(_));
+
+                        if wants_virtualize {
+                            let pool_size = match viewport_height {
+                                Val::Px(viewport_px) => {
+                                    let visible = (viewport_px / SELECT_OPTION_HEIGHT).ceil() as usize;
+                                    (visible + 2).max(1)
+                                }
+                                _ => 12,
+                            };
+
+                            virtual_pool_size = Some(pool_size);
+
+                            dropdown.spawn((
+                                SelectDropdownContent,
+                                SelectDropdownMaxHeight(max_height),
+                                SelectDropdownVirtualized { pool_size },
+                                SelectOwner(select_entity),
+                                ScrollContainer::vertical(),
+                                ScrollPosition::default(),
+                                Node {
+                                    width: Val::Percent(100.0),
+                                    height: viewport_height,
+                                    max_height,
+                                    overflow: Overflow::scroll_y(),
+                                    flex_direction: FlexDirection::Column,
+                                    padding: UiRect::vertical(Val::Px(8.0)),
+                                    ..default()
+                                },
+                            ))
+                        } else {
+                            dropdown.spawn((
+                                SelectDropdownContent,
+                                SelectDropdownMaxHeight(max_height),
+                                ScrollContainer::vertical(),
+                                ScrollPosition::default(),
+                                Node {
+                                    width: Val::Percent(100.0),
+                                    height: viewport_height,
+                                    max_height,
+                                    overflow: Overflow::scroll_y(),
+                                    flex_direction: FlexDirection::Column,
+                                    padding: UiRect::vertical(Val::Px(8.0)),
+                                    ..default()
+                                },
+                            ))
+                        }
                     } else {
                         dropdown.spawn((
                             SelectDropdownContent,
@@ -1366,70 +1467,304 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                         ))
                     };
 
-                    content.with_children(|dropdown| {
-                    for (index, option) in options.iter().enumerate() {
-                        let is_disabled = option.disabled;
-                        let is_selected = selected_index.is_some_and(|i| i == index);
-                        let row_bg = if is_selected {
-                            theme.secondary_container
-                        } else {
-                            Color::NONE
-                        };
+                    // Virtualized dropdown: fixed pool of rows + spacers.
+                    if let Some(pool_size) = virtual_pool_size {
+                        let icon_default = icon_by_name("check").expect("embedded icon 'check' not found");
 
-                        dropdown
-                            .spawn((
-                                SelectOwner(select_entity),
-                                SelectOptionItem {
-                                    index,
-                                    label: option.label.clone(),
-                                },
-                                Button,
-                                Interaction::None,
+                        content.with_children(|list| {
+                            list.spawn((
+                                SelectVirtualTopSpacer,
                                 Node {
-                                    height: Val::Px(SELECT_OPTION_HEIGHT),
-                                    min_height: Val::Px(SELECT_OPTION_HEIGHT),
+                                    height: Val::Px(0.0),
+                                    min_height: Val::Px(0.0),
                                     flex_shrink: 0.0,
-                                    padding: UiRect::horizontal(Val::Px(Spacing::LARGE)),
-                                    align_items: AlignItems::Center,
-                                    column_gap: Val::Px(Spacing::MEDIUM),
                                     ..default()
                                 },
-                                BackgroundColor(row_bg),
-                            ))
-                            .with_children(|row| {
-                                // Optional leading icon
-                                if let Some(icon) = &option.icon {
-                                    if let Some(id) = icon_by_name(icon.as_str()) {
-                                        row.spawn((
-                                            SelectOptionIcon,
-                                            MaterialIcon::new(id).with_size(20.0).with_color(
-                                                if is_disabled {
-                                                    option_text_color.with_alpha(0.38)
-                                                } else {
-                                                    option_text_color
-                                                },
-                                            ),
-                                        ));
-                                    }
-                                }
+                            ));
 
-                                row.spawn((
-                                    SelectOptionLabelText,
-                                    Text::new(option.label.clone()),
-                                    TextFont {
-                                        font_size: 14.0,
+                            for pool_index in 0..pool_size {
+                                let (index, label) = options
+                                    .get(pool_index)
+                                    .map(|o| (pool_index, o.label.clone()))
+                                    .unwrap_or((usize::MAX, String::new()));
+
+                                let is_disabled = options.get(index).is_some_and(|o| o.disabled);
+                                let is_selected = selected_index.is_some_and(|i| i == index);
+                                let row_bg = if is_selected {
+                                    theme.secondary_container
+                                } else {
+                                    Color::NONE
+                                };
+
+                                list.spawn((
+                                    SelectVirtualRow,
+                                    SelectOwner(select_entity),
+                                    SelectOptionItem { index, label: label.clone() },
+                                    Button,
+                                    Interaction::None,
+                                    Node {
+                                        height: Val::Px(SELECT_OPTION_HEIGHT),
+                                        min_height: Val::Px(SELECT_OPTION_HEIGHT),
+                                        flex_shrink: 0.0,
+                                        padding: UiRect::horizontal(Val::Px(Spacing::LARGE)),
+                                        align_items: AlignItems::Center,
+                                        column_gap: Val::Px(Spacing::MEDIUM),
                                         ..default()
                                     },
-                                    TextColor(if is_disabled {
-                                        option_text_color.with_alpha(0.38)
-                                    } else {
-                                        option_text_color
-                                    }),
-                                ));
-                            });
+                                    BackgroundColor(row_bg),
+                                ))
+                                .with_children(|row| {
+                                    // Virtual icon placeholder. We'll toggle display based on the option.
+                                    row.spawn((
+                                        SelectVirtualIcon,
+                                        SelectOptionIcon,
+                                        MaterialIcon::new(icon_default)
+                                            .with_size(20.0)
+                                            .with_color(option_text_color),
+                                        Node {
+                                            display: Display::None,
+                                            ..default()
+                                        },
+                                    ));
+
+                                    row.spawn((
+                                        SelectOptionLabelText,
+                                        Text::new(label),
+                                        TextFont { font_size: 14.0, ..default() },
+                                        TextColor(if is_disabled {
+                                            option_text_color.with_alpha(0.38)
+                                        } else {
+                                            option_text_color
+                                        }),
+                                    ));
+                                });
+                            }
+
+                            list.spawn((
+                                SelectVirtualBottomSpacer,
+                                Node {
+                                    height: Val::Px(0.0),
+                                    min_height: Val::Px(0.0),
+                                    flex_shrink: 0.0,
+                                    ..default()
+                                },
+                            ));
+                        });
+                    } else {
+                        // Non-virtualized: spawn every option row.
+                        content.with_children(|dropdown| {
+                            for (index, option) in options.iter().enumerate() {
+                                let is_disabled = option.disabled;
+                                let is_selected = selected_index.is_some_and(|i| i == index);
+                                let row_bg = if is_selected {
+                                    theme.secondary_container
+                                } else {
+                                    Color::NONE
+                                };
+
+                                dropdown
+                                    .spawn((
+                                        SelectOwner(select_entity),
+                                        SelectOptionItem {
+                                            index,
+                                            label: option.label.clone(),
+                                        },
+                                        Button,
+                                        Interaction::None,
+                                        Node {
+                                            height: Val::Px(SELECT_OPTION_HEIGHT),
+                                            min_height: Val::Px(SELECT_OPTION_HEIGHT),
+                                            flex_shrink: 0.0,
+                                            padding: UiRect::horizontal(Val::Px(Spacing::LARGE)),
+                                            align_items: AlignItems::Center,
+                                            column_gap: Val::Px(Spacing::MEDIUM),
+                                            ..default()
+                                        },
+                                        BackgroundColor(row_bg),
+                                    ))
+                                    .with_children(|row| {
+                                        // Optional leading icon
+                                        if let Some(icon) = &option.icon {
+                                            if let Some(id) = icon_by_name(icon.as_str()) {
+                                                row.spawn((
+                                                    SelectOptionIcon,
+                                                    MaterialIcon::new(id).with_size(20.0).with_color(
+                                                        if is_disabled {
+                                                            option_text_color.with_alpha(0.38)
+                                                        } else {
+                                                            option_text_color
+                                                        },
+                                                    ),
+                                                ));
+                                            }
+                                        }
+
+                                        row.spawn((
+                                            SelectOptionLabelText,
+                                            Text::new(option.label.clone()),
+                                            TextFont {
+                                                font_size: 14.0,
+                                                ..default()
+                                            },
+                                            TextColor(if is_disabled {
+                                                option_text_color.with_alpha(0.38)
+                                            } else {
+                                                option_text_color
+                                            }),
+                                        ));
+                                    });
+                            }
+                        });
                     }
-                    });
                 });
         });
+    }
+}
+
+/// Update virtualized dropdown rows based on scroll position.
+fn select_dropdown_virtualization_system(
+    theme: Option<Res<MaterialTheme>>,
+    selects: Query<&MaterialSelect>,
+    children_query: Query<&Children>,
+    is_scroll_content: Query<(), With<ScrollContent>>,
+    mut contents: Query<
+        (Entity, &SelectOwner, &SelectDropdownVirtualized, &ScrollPosition, &Children),
+        With<SelectDropdownContent>,
+    >,
+    mut spacer_nodes: ParamSet<(
+        Query<&mut Node, With<SelectVirtualTopSpacer>>,
+        Query<&mut Node, With<SelectVirtualBottomSpacer>>,
+    )>,
+    mut rows: Query<
+        (
+            &mut Node,
+            &mut SelectOptionItem,
+            &mut BackgroundColor,
+            &Children,
+        ),
+        With<SelectVirtualRow>,
+    >,
+    mut label_texts: Query<(&mut Text, &mut TextColor), With<SelectOptionLabelText>>,
+    mut icons: Query<(&mut MaterialIcon, &mut Node), With<SelectVirtualIcon>>,
+) {
+    let Some(theme) = theme else { return };
+
+    for (content_entity, owner, virt, scroll_pos, content_children) in contents.iter_mut() {
+        let Ok(select) = selects.get(owner.0) else {
+            continue;
+        };
+
+        if !select.open {
+            continue;
+        }
+
+        // Find the actual list root. For ScrollContainers, children are moved under ScrollContent.
+        let mut list_root = content_entity;
+        if let Some(wrapper) = content_children
+            .iter()
+            .find(|c| is_scroll_content.get(*c).is_ok())
+        {
+            list_root = wrapper;
+        }
+
+        let Ok(list_children) = children_query.get(list_root) else {
+            continue;
+        };
+
+        let options_len = select.options.len();
+        let pool_size = virt.pool_size.max(1);
+
+        // Account for the dropdown's internal vertical padding (8px top + bottom).
+        let scroll_y = (scroll_pos.y - 8.0).max(0.0);
+        let mut start_index = (scroll_y / SELECT_OPTION_HEIGHT).floor() as usize;
+        if options_len > pool_size {
+            start_index = start_index.min(options_len - pool_size);
+        } else {
+            start_index = 0;
+        }
+
+        let top_px = (start_index as f32) * SELECT_OPTION_HEIGHT;
+        let bottom_px = (options_len.saturating_sub(start_index + pool_size) as f32)
+            * SELECT_OPTION_HEIGHT;
+
+        // Update spacers.
+        for child in list_children.iter() {
+            if let Ok(mut node) = spacer_nodes.p0().get_mut(child) {
+                node.height = Val::Px(top_px);
+                node.min_height = Val::Px(top_px);
+            }
+            if let Ok(mut node) = spacer_nodes.p1().get_mut(child) {
+                node.height = Val::Px(bottom_px);
+                node.min_height = Val::Px(bottom_px);
+            }
+        }
+
+        // Update row pool.
+        let base_text = theme.on_surface;
+
+        let mut row_i = 0usize;
+        for child in list_children.iter() {
+            let Ok((mut row_node, mut item, mut row_bg, row_children)) = rows.get_mut(child)
+            else {
+                continue;
+            };
+
+            let idx = start_index + row_i;
+            row_i += 1;
+
+            if idx >= options_len {
+                row_node.display = Display::None;
+                item.index = usize::MAX;
+                item.label.clear();
+                continue;
+            }
+
+            row_node.display = Display::Flex;
+
+            let opt = &select.options[idx];
+            item.index = idx;
+            if item.label != opt.label {
+                item.label = opt.label.clone();
+            }
+
+            let is_disabled = opt.disabled;
+            let is_selected = select.selected_index.is_some_and(|i| i == idx);
+            row_bg.0 = if is_selected {
+                theme.secondary_container
+            } else {
+                Color::NONE
+            };
+
+            let text_color = if is_disabled {
+                base_text.with_alpha(0.38)
+            } else {
+                base_text
+            };
+
+            for row_child in row_children.iter() {
+                if let Ok((mut text, mut color)) = label_texts.get_mut(row_child) {
+                    *text = Text::new(opt.label.clone());
+                    color.0 = text_color;
+                }
+
+                if let Ok((mut icon, mut icon_node)) = icons.get_mut(row_child) {
+                    if let Some(name) = opt.icon.as_deref() {
+                        if let Some(id) = icon_by_name(name) {
+                            icon.id = id;
+                            icon.color = text_color;
+                            icon_node.display = Display::Flex;
+                        } else {
+                            icon_node.display = Display::None;
+                        }
+                    } else {
+                        icon_node.display = Display::None;
+                    }
+                }
+            }
+
+            if row_i >= pool_size {
+                break;
+            }
+        }
     }
 }

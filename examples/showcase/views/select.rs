@@ -121,7 +121,8 @@ pub fn spawn_select_section(
                                 .filled()
                                 .label("Many Options")
                                 .selected(0)
-                                .dropdown_max_height(Val::Px(240.0)),
+                                .dropdown_max_height(Val::Px(240.0))
+                                .virtualize(true),
                         );
                     });
                 });

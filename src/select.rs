@@ -1071,6 +1071,8 @@ fn select_dropdown_rebuild_options_system(
                         Interaction::None,
                         Node {
                             height: Val::Px(SELECT_OPTION_HEIGHT),
+                            min_height: Val::Px(SELECT_OPTION_HEIGHT),
+                            flex_shrink: 0.0,
                             padding: UiRect::horizontal(Val::Px(Spacing::LARGE)),
                             align_items: AlignItems::Center,
                             column_gap: Val::Px(Spacing::MEDIUM),
@@ -1385,6 +1387,8 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                 Interaction::None,
                                 Node {
                                     height: Val::Px(SELECT_OPTION_HEIGHT),
+                                    min_height: Val::Px(SELECT_OPTION_HEIGHT),
+                                    flex_shrink: 0.0,
                                     padding: UiRect::horizontal(Val::Px(Spacing::LARGE)),
                                     align_items: AlignItems::Center,
                                     column_gap: Val::Px(Spacing::MEDIUM),

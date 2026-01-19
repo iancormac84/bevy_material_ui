@@ -18,11 +18,40 @@ use bevy_material_ui::{
     radio::MaterialRadio,
     ripple::Ripple,
     search::MaterialSearchBar,
+    select::{SelectBuilder, SelectOption, SpawnSelectChild},
     slider::MaterialSlider,
     switch::MaterialSwitch,
     theme::MaterialTheme,
 };
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+
+#[derive(Resource, Clone, Debug)]
+struct SelectSpawnBenchConfig {
+    options_count: usize,
+    virtualize: bool,
+}
+
+fn spawn_select_for_bench(
+    mut commands: Commands,
+    theme: Res<MaterialTheme>,
+    config: Res<SelectSpawnBenchConfig>,
+) {
+    let options = (0..config.options_count)
+        .map(|i| SelectOption::new(format!("Option {i}")))
+        .collect::<Vec<_>>();
+
+    commands.spawn(Node::default()).with_children(|root| {
+        root.spawn_select_with(
+            &theme,
+            SelectBuilder::new(options)
+                .label("Bench")
+                .filled()
+                .dropdown_max_height(Val::Px(240.0))
+                .virtualize(config.virtualize)
+                .width(Val::Px(320.0)),
+        );
+    });
+}
 
 /// Setup a minimal Bevy App for benchmarking
 fn setup_app() -> App {
@@ -280,6 +309,54 @@ fn bench_component_queries(c: &mut Criterion) {
                         query_count += 1;
                     }
                     black_box(query_count)
+                })
+            },
+        );
+    }
+
+    group.finish();
+}
+
+/// Benchmark select dropdown spawning with and without virtualization.
+///
+/// This is an ECS/system-level benchmark: it measures the cost of building the entity tree
+/// for a dropdown with many options.
+fn bench_select_dropdown_spawning(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Select Dropdown Spawning");
+
+    for &count in [100usize, 1000, 5000].iter() {
+        group.bench_with_input(
+            BenchmarkId::new("non_virtualized", count),
+            &count,
+            |b, &count| {
+                b.iter(|| {
+                    let mut app = setup_app();
+                    app.insert_resource(MaterialTheme::default());
+                    app.insert_resource(SelectSpawnBenchConfig {
+                        options_count: count,
+                        virtualize: false,
+                    });
+                    app.add_systems(Startup, spawn_select_for_bench);
+                    app.update();
+                    black_box(app.world().entities().len())
+                })
+            },
+        );
+
+        group.bench_with_input(
+            BenchmarkId::new("virtualized", count),
+            &count,
+            |b, &count| {
+                b.iter(|| {
+                    let mut app = setup_app();
+                    app.insert_resource(MaterialTheme::default());
+                    app.insert_resource(SelectSpawnBenchConfig {
+                        options_count: count,
+                        virtualize: true,
+                    });
+                    app.add_systems(Startup, spawn_select_for_bench);
+                    app.update();
+                    black_box(app.world().entities().len())
                 })
             },
         );
@@ -562,6 +639,7 @@ criterion_group!(
     benches,
     bench_entity_spawning,
     bench_component_queries,
+    bench_select_dropdown_spawning,
     bench_ripple_updates,
     bench_focus_updates,
     bench_elevation_calculations,

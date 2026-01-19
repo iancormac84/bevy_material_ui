@@ -1631,21 +1631,21 @@ fn select_dropdown_virtualization_system(
         (Entity, &SelectOwner, &SelectDropdownVirtualized, &ScrollPosition, &Children),
         With<SelectDropdownContent>,
     >,
-    mut spacer_nodes: ParamSet<(
+    mut nodes: ParamSet<(
         Query<&mut Node, With<SelectVirtualTopSpacer>>,
         Query<&mut Node, With<SelectVirtualBottomSpacer>>,
+        Query<
+            (
+                &mut Node,
+                &mut SelectOptionItem,
+                &mut BackgroundColor,
+                &Children,
+            ),
+            With<SelectVirtualRow>,
+        >,
+        Query<(&mut MaterialIcon, &mut Node), With<SelectVirtualIcon>>,
     )>,
-    mut rows: Query<
-        (
-            &mut Node,
-            &mut SelectOptionItem,
-            &mut BackgroundColor,
-            &Children,
-        ),
-        With<SelectVirtualRow>,
-    >,
     mut label_texts: Query<(&mut Text, &mut TextColor), With<SelectOptionLabelText>>,
-    mut icons: Query<(&mut MaterialIcon, &mut Node), With<SelectVirtualIcon>>,
 ) {
     let Some(theme) = theme else { return };
 
@@ -1688,14 +1688,22 @@ fn select_dropdown_virtualization_system(
             * SELECT_OPTION_HEIGHT;
 
         // Update spacers.
-        for child in list_children.iter() {
-            if let Ok(mut node) = spacer_nodes.p0().get_mut(child) {
-                node.height = Val::Px(top_px);
-                node.min_height = Val::Px(top_px);
+        {
+            let mut top_spacers = nodes.p0();
+            for child in list_children.iter() {
+                if let Ok(mut node) = top_spacers.get_mut(child) {
+                    node.height = Val::Px(top_px);
+                    node.min_height = Val::Px(top_px);
+                }
             }
-            if let Ok(mut node) = spacer_nodes.p1().get_mut(child) {
-                node.height = Val::Px(bottom_px);
-                node.min_height = Val::Px(bottom_px);
+        }
+        {
+            let mut bottom_spacers = nodes.p1();
+            for child in list_children.iter() {
+                if let Ok(mut node) = bottom_spacers.get_mut(child) {
+                    node.height = Val::Px(bottom_px);
+                    node.min_height = Val::Px(bottom_px);
+                }
             }
         }
 
@@ -1704,60 +1712,77 @@ fn select_dropdown_virtualization_system(
 
         let mut row_i = 0usize;
         for child in list_children.iter() {
-            let Ok((mut row_node, mut item, mut row_bg, row_children)) = rows.get_mut(child)
-            else {
-                continue;
-            };
-
             let idx = start_index + row_i;
             row_i += 1;
 
-            if idx >= options_len {
-                row_node.display = Display::None;
-                item.index = usize::MAX;
-                item.label.clear();
-                continue;
-            }
+            // First pass: update the row container + label text. Capture row children so we can
+            // update icons in a second pass without conflicting ParamSet borrows.
+            let (row_children_entities, icon_name, text_color) = {
+                let mut row_query = nodes.p2();
+                let Ok((mut row_node, mut item, mut row_bg, row_children)) = row_query.get_mut(child)
+                else {
+                    continue;
+                };
 
-            row_node.display = Display::Flex;
+                if idx >= options_len {
+                    row_node.display = Display::None;
+                    item.index = usize::MAX;
+                    item.label.clear();
+                    (Vec::new(), None, base_text)
+                } else {
+                    row_node.display = Display::Flex;
 
-            let opt = &select.options[idx];
-            item.index = idx;
-            if item.label != opt.label {
-                item.label = opt.label.clone();
-            }
+                    let opt = &select.options[idx];
+                    item.index = idx;
+                    if item.label != opt.label {
+                        item.label = opt.label.clone();
+                    }
 
-            let is_disabled = opt.disabled;
-            let is_selected = select.selected_index.is_some_and(|i| i == idx);
-            row_bg.0 = if is_selected {
-                theme.secondary_container
-            } else {
-                Color::NONE
-            };
+                    let is_disabled = opt.disabled;
+                    let is_selected = select.selected_index.is_some_and(|i| i == idx);
+                    row_bg.0 = if is_selected {
+                        theme.secondary_container
+                    } else {
+                        Color::NONE
+                    };
 
-            let text_color = if is_disabled {
-                base_text.with_alpha(0.38)
-            } else {
-                base_text
-            };
+                    let text_color = if is_disabled {
+                        base_text.with_alpha(0.38)
+                    } else {
+                        base_text
+                    };
 
-            for row_child in row_children.iter() {
-                if let Ok((mut text, mut color)) = label_texts.get_mut(row_child) {
-                    *text = Text::new(opt.label.clone());
-                    color.0 = text_color;
+                    for row_child in row_children.iter() {
+                        if let Ok((mut text, mut color)) = label_texts.get_mut(row_child) {
+                            *text = Text::new(opt.label.clone());
+                            color.0 = text_color;
+                        }
+                    }
+
+                    (
+                        row_children.iter().collect::<Vec<_>>(),
+                        opt.icon.as_deref().map(|s| s.to_string()),
+                        text_color,
+                    )
                 }
+            };
 
-                if let Ok((mut icon, mut icon_node)) = icons.get_mut(row_child) {
-                    if let Some(name) = opt.icon.as_deref() {
-                        if let Some(id) = icon_by_name(name) {
-                            icon.id = id;
-                            icon.color = text_color;
-                            icon_node.display = Display::Flex;
+            // Second pass: update icons.
+            if !row_children_entities.is_empty() {
+                let mut icon_query = nodes.p3();
+                for row_child in row_children_entities {
+                    if let Ok((mut icon, mut icon_node)) = icon_query.get_mut(row_child) {
+                        if let Some(name) = icon_name.as_deref() {
+                            if let Some(id) = icon_by_name(name) {
+                                icon.id = id;
+                                icon.color = text_color;
+                                icon_node.display = Display::Flex;
+                            } else {
+                                icon_node.display = Display::None;
+                            }
                         } else {
                             icon_node.display = Display::None;
                         }
-                    } else {
-                        icon_node.display = Display::None;
                     }
                 }
             }

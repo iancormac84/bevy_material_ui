@@ -665,6 +665,15 @@ let select = SelectBuilder::new(options)
     .selected(0)
     .build(&theme);
 
+// For large option lists, you can constrain dropdown height and enable scrolling.
+// If you have many thousands of options, you can also enable virtualization to keep
+// the number of spawned UI rows roughly constant.
+let many_options_select = SelectBuilder::new((0..5000).map(|i| SelectOption::new(format!("Option {i}"))).collect())
+    .label("Many Options")
+    .dropdown_max_height(Val::Px(240.0))
+    .virtualize(true)
+    .build(&theme);
+
 fn handle_select(mut events: MessageReader<SelectChangeEvent>) {
     for event in events.read() {
         let value = event.option.value.as_deref().unwrap_or("");

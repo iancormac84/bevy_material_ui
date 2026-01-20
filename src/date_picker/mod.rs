@@ -6,6 +6,7 @@
 use bevy::picking::Pickable;
 use bevy::prelude::*;
 use bevy::ui::FocusPolicy;
+use std::collections::HashMap;
 
 use crate::i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride};
 use crate::icons::material_icon_names;
@@ -29,6 +30,9 @@ pub use constraints::*;
 pub use range_selector::*;
 pub use types::*;
 
+#[derive(Component)]
+struct DatePickerOverlay;
+
 /// Plugin for the Date Picker component.
 pub struct DatePickerPlugin;
 
@@ -39,9 +43,11 @@ impl Plugin for DatePickerPlugin {
         }
         app.add_message::<DatePickerSubmitEvent>()
             .add_message::<DatePickerCancelEvent>()
+            .add_systems(Startup, setup_date_picker_overlay)
             .add_systems(
                 Update,
                 (
+                    date_picker_promote_to_overlay_system,
                     date_picker_localization_system,
                     date_picker_visibility_system,
                     date_picker_keyboard_dismiss_system,
@@ -63,6 +69,44 @@ impl Plugin for DatePickerPlugin {
                     date_picker_theme_system,
                 ),
             );
+    }
+}
+
+fn setup_date_picker_overlay(mut commands: Commands) {
+    // Full-screen container used as a portal destination for date pickers.
+    // Must NOT be pickable so it doesn't interfere with input.
+    commands.spawn((
+        DatePickerOverlay,
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            top: Val::Px(0.0),
+            left: Val::Px(0.0),
+            ..default()
+        },
+        GlobalZIndex(9100),
+        Pickable::IGNORE,
+    ));
+}
+
+/// Promote newly spawned date pickers into a global overlay so they're not clipped by
+/// parent layout/overflow (e.g. scroll containers in the showcase).
+fn date_picker_promote_to_overlay_system(
+    mut commands: Commands,
+    overlay_query: Query<Entity, With<DatePickerOverlay>>,
+    added_pickers: Query<(Entity, Option<&ChildOf>), Added<MaterialDatePicker>>,
+) {
+    let Some(overlay) = overlay_query.iter().next() else {
+        return;
+    };
+
+    for (picker_entity, parent) in added_pickers.iter() {
+        if parent.map(|p| p.parent()) == Some(overlay) {
+            continue;
+        }
+
+        commands.entity(overlay).add_child(picker_entity);
     }
 }
 
@@ -1044,11 +1088,15 @@ fn date_picker_rebuild_content_system(
 }
 
 fn date_picker_action_system(
-    mut pickers: Query<&mut MaterialDatePicker>,
+    mut pickers: ParamSet<(
+        Query<&mut MaterialDatePicker>,
+        Query<(Entity, &MaterialDatePicker)>,
+    )>,
     actions: Query<(&Interaction, &DatePickerAction), Changed<Interaction>>,
     scrim: Query<(&Interaction, &DatePickerScrim), Changed<Interaction>>,
     mut submit_events: MessageWriter<DatePickerSubmitEvent>,
     mut cancel_events: MessageWriter<DatePickerCancelEvent>,
+    mut prev_open: Local<HashMap<Entity, bool>>,
 ) {
     // Handle scrim clicks
     for (interaction, scrim) in scrim.iter() {
@@ -1056,8 +1104,14 @@ fn date_picker_action_system(
             continue;
         }
 
-        if let Ok(mut picker) = pickers.get_mut(scrim.picker) {
-            if picker.open && picker.dismiss_on_scrim_click {
+        // Prevent the same pointer press that opens the picker from immediately closing it
+        // via the newly-shown scrim.
+        let mut pickers_mut = pickers.p0();
+        if let Ok(mut picker) = pickers_mut.get_mut(scrim.picker) {
+            // If we don't have history for this picker yet (e.g. it was just spawned/rebuilt),
+            // treat it as previously closed so we don't immediately close on the opening click.
+            let was_open = prev_open.get(&scrim.picker).copied().unwrap_or(false);
+            if picker.open && picker.dismiss_on_scrim_click && was_open {
                 picker.open = false;
                 cancel_events.write(DatePickerCancelEvent {
                     entity: scrim.picker,
@@ -1072,7 +1126,8 @@ fn date_picker_action_system(
             continue;
         }
 
-        if let Ok(mut picker) = pickers.get_mut(action.picker) {
+        let mut pickers_mut = pickers.p0();
+        if let Ok(mut picker) = pickers_mut.get_mut(action.picker) {
             if !picker.open {
                 continue;
             }
@@ -1099,6 +1154,11 @@ fn date_picker_action_system(
                 });
             }
         }
+    }
+
+    // Track previous open state for next frame.
+    for (entity, picker) in pickers.p1().iter() {
+        prev_open.insert(entity, picker.open);
     }
 }
 

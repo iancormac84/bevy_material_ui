@@ -5,6 +5,7 @@
 use bevy::picking::Pickable;
 use bevy::prelude::*;
 use bevy::ui::{ComputedNode, FocusPolicy, UiGlobalTransform};
+use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride};
@@ -23,6 +24,9 @@ mod format;
 pub use clock::*;
 pub use format::*;
 
+#[derive(Component)]
+struct TimePickerOverlay;
+
 // Touch targets: outer ring can be full 48px without overlap;
 // inner ring (24h 00-11) must be smaller to avoid overlapping neighbors.
 const CLOCK_NUMBER_OUTER_SIZE: f32 = 48.0;
@@ -40,9 +44,11 @@ impl Plugin for TimePickerPlugin {
         }
         app.add_message::<TimePickerSubmitEvent>()
             .add_message::<TimePickerCancelEvent>()
+            .add_systems(Startup, setup_time_picker_overlay)
             .add_systems(
                 Update,
                 (
+                    time_picker_promote_to_overlay_system,
                     time_picker_localization_system,
                     time_picker_visibility_system,
                     time_picker_keyboard_dismiss_system,
@@ -58,6 +64,44 @@ impl Plugin for TimePickerPlugin {
                     time_picker_theme_system,
                 ),
             );
+    }
+}
+
+fn setup_time_picker_overlay(mut commands: Commands) {
+    // Full-screen container used as a portal destination for time pickers.
+    // Must NOT be pickable so it doesn't interfere with input.
+    commands.spawn((
+        TimePickerOverlay,
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            top: Val::Px(0.0),
+            left: Val::Px(0.0),
+            ..default()
+        },
+        GlobalZIndex(9100),
+        Pickable::IGNORE,
+    ));
+}
+
+/// Promote newly spawned time pickers into a global overlay so they're not clipped by
+/// parent layout/overflow (e.g. scroll containers in the showcase).
+fn time_picker_promote_to_overlay_system(
+    mut commands: Commands,
+    overlay_query: Query<Entity, With<TimePickerOverlay>>,
+    added_pickers: Query<(Entity, Option<&ChildOf>), Added<MaterialTimePicker>>,
+) {
+    let Some(overlay) = overlay_query.iter().next() else {
+        return;
+    };
+
+    for (picker_entity, parent) in added_pickers.iter() {
+        if parent.map(|p| p.parent()) == Some(overlay) {
+            continue;
+        }
+
+        commands.entity(overlay).add_child(picker_entity);
     }
 }
 
@@ -834,11 +878,15 @@ fn time_picker_clock_number_button_system(
 }
 
 fn time_picker_action_system(
-    mut pickers: Query<&mut MaterialTimePicker>,
+    mut pickers: ParamSet<(
+        Query<&mut MaterialTimePicker>,
+        Query<(Entity, &MaterialTimePicker)>,
+    )>,
     actions: Query<(&Interaction, &TimePickerAction), Changed<Interaction>>,
     scrim: Query<(&Interaction, &TimePickerScrim), Changed<Interaction>>,
     mut submit_events: MessageWriter<TimePickerSubmitEvent>,
     mut cancel_events: MessageWriter<TimePickerCancelEvent>,
+    mut prev_open: Local<HashMap<Entity, bool>>,
 ) {
     // Handle scrim clicks
     for (interaction, scrim) in scrim.iter() {
@@ -846,8 +894,14 @@ fn time_picker_action_system(
             continue;
         }
 
-        if let Ok(mut picker) = pickers.get_mut(scrim.picker) {
-            if picker.open && picker.dismiss_on_scrim_click {
+        // Prevent the same pointer press that opens the picker from immediately closing it
+        // via the newly-shown scrim.
+        let mut pickers_mut = pickers.p0();
+        if let Ok(mut picker) = pickers_mut.get_mut(scrim.picker) {
+            // If we don't have history for this picker yet (e.g. it was just spawned/rebuilt),
+            // treat it as previously closed so we don't immediately close on the opening click.
+            let was_open = prev_open.get(&scrim.picker).copied().unwrap_or(false);
+            if picker.open && picker.dismiss_on_scrim_click && was_open {
                 picker.open = false;
                 cancel_events.write(TimePickerCancelEvent {
                     entity: scrim.picker,
@@ -862,7 +916,8 @@ fn time_picker_action_system(
             continue;
         }
 
-        if let Ok(mut picker) = pickers.get_mut(action.picker) {
+        let mut pickers_mut = pickers.p0();
+        if let Ok(mut picker) = pickers_mut.get_mut(action.picker) {
             if !picker.open {
                 continue;
             }
@@ -881,6 +936,11 @@ fn time_picker_action_system(
                 });
             }
         }
+    }
+
+    // Track previous open state for next frame.
+    for (entity, picker) in pickers.p1().iter() {
+        prev_open.insert(entity, picker.open);
     }
 }
 

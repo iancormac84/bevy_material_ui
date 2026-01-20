@@ -37,11 +37,7 @@ pub fn spawn_cards_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTh
                     spawn_card(row, theme, "showcase.cards.outlined", CardType::Outlined);
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../card_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../card_demo.rs"));
         });
 }
 

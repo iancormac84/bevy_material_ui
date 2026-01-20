@@ -1,10 +1,10 @@
 //! Slider Demo
 //!
-//! Demonstrates Material Design 3 sliders with different configurations.
+//! Demonstrates Material Design 3 sliders.
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::slider::spawn_slider_control;
+use bevy_material_ui::slider::{spawn_slider_control_with, TickVisibility};
 
 fn main() {
     App::new()
@@ -26,108 +26,135 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         });
     }
 
-    let mut sliders: Vec<(&'static str, Entity)> = Vec::new();
-
     commands
         .spawn((
-            ScrollContainerBuilder::new().vertical().build(),
-            ScrollPosition::default(),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
-                // Both axes must be Scroll for Bevy's scroll system.
-                // The ScrollContainer direction controls which direction actually scrolls.
-                overflow: Overflow::scroll(),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..default()
             },
+            BackgroundColor(theme.surface),
         ))
         .insert_test_id("slider_demo/root", &telemetry)
-        .with_children(|scroller| {
-            scroller
-                .spawn(Node {
-                    width: Val::Percent(100.0),
-                    min_height: Val::Percent(100.0),
+        .with_children(|root| {
+            root.spawn(Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(24.0),
+                margin: UiRect::vertical(Val::Px(8.0)),
+                width: Val::Percent(100.0),
+                max_width: Val::Px(520.0),
+                ..default()
+            })
+            .with_children(|col| {
+                // Continuous
+                col.spawn(Node {
                     flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::FlexStart,
-                    align_items: AlignItems::Center,
-                    row_gap: Val::Px(32.0),
-                    padding: UiRect::all(Val::Px(48.0)),
+                    row_gap: Val::Px(4.0),
                     ..default()
                 })
-                .with_children(|root| {
-                    root.spawn(Node {
-                        width: Val::Px(520.0),
-                        max_width: Val::Percent(100.0),
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::FlexStart,
-                        column_gap: Val::Px(48.0),
+                .with_children(|container| {
+                    container.spawn((
+                        Text::new("Continuous"),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+
+                    container
+                        .spawn(Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(32.0),
+                            ..default()
+                        })
+                        .with_children(|slot| {
+                            let slider = MaterialSlider::new(0.0, 100.0).with_value(40.0);
+                            spawn_slider_control_with(
+                                slot,
+                                &theme,
+                                slider,
+                                TestId::new("slider_demo/continuous"),
+                            );
+                        });
+                });
+
+                // Discrete
+                col.spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(4.0),
+                    ..default()
+                })
+                .with_children(|container| {
+                    container.spawn((
+                        Text::new("Discrete"),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+
+                    container
+                        .spawn(Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(32.0),
+                            ..default()
+                        })
+                        .with_children(|slot| {
+                            let mut slider = MaterialSlider::new(0.0, 100.0)
+                                .with_value(60.0)
+                                .with_step(20.0);
+                            slider.show_ticks = true;
+                            slider.tick_visibility = TickVisibility::Always;
+
+                            spawn_slider_control_with(
+                                slot,
+                                &theme,
+                                slider,
+                                TestId::new("slider_demo/discrete"),
+                            );
+                        });
+                });
+
+                // Vertical
+                col.spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(16.0),
+                    ..default()
+                })
+                .with_children(|row| {
+                    row.spawn((
+                        Text::new("Vertical"),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface_variant),
+                        Node {
+                            width: Val::Px(64.0),
+                            ..default()
+                        },
+                    ));
+
+                    row.spawn(Node {
+                        width: Val::Px(48.0),
+                        height: Val::Px(220.0),
                         ..default()
                     })
-                    .with_children(|row| {
-                        // Horizontal examples
-                        row.spawn(Node {
-                            width: Val::Px(420.0),
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(24.0),
-                            ..default()
-                        })
-                        .with_children(|col| {
-                            col.spawn_slider(
-                                &theme,
-                                0.0,
-                                100.0,
-                                40.0,
-                                Some("Horizontal (Continuous)"),
-                            );
-                            col.spawn_discrete_slider(
-                                &theme,
-                                0.0,
-                                100.0,
-                                60.0,
-                                20.0,
-                                Some("Horizontal (Discrete)"),
-                            );
-                        });
-
-                        // Vertical example
-                        row.spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(12.0),
-                            ..default()
-                        })
-                        .with_children(|col| {
-                            col.spawn((
-                                Text::new("Vertical"),
-                                TextFont {
-                                    font_size: 14.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
-
-                            col.spawn(Node {
-                                width: Val::Px(48.0),
-                                height: Val::Px(240.0),
-                                ..default()
-                            })
-                            .with_children(|slot| {
-                                let slider =
-                                    MaterialSlider::new(0.0, 100.0).with_value(40.0).vertical();
-                                let slider_entity = spawn_slider_control(slot, &theme, slider);
-                                sliders.push(("vertical", slider_entity));
-                            });
-                        });
+                    .with_children(|slot| {
+                        let slider = MaterialSlider::new(0.0, 1.0).with_value(0.5).vertical();
+                        spawn_slider_control_with(
+                            slot,
+                            &theme,
+                            slider,
+                            TestId::new("slider_demo/vertical"),
+                        );
                     });
                 });
+            });
         });
-
-    for (kind, entity) in sliders {
-        commands
-            .entity(entity)
-            .insert_test_id(format!("slider_demo/slider/{kind}"), &telemetry);
-    }
-
-    // Alternatively, enable trace logging directly:
-    // commands.insert_resource(SliderTraceSettings { enabled: true, ..default() });
 }

@@ -53,10 +53,6 @@ pub fn spawn_switches_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     );
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../switch_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../switch_demo.rs"));
         });
 }

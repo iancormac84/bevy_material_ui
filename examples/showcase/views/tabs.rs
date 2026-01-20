@@ -110,11 +110,7 @@ pub fn spawn_tabs_section(
                     });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../tabs_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../tabs_demo.rs"));
         });
 }
 

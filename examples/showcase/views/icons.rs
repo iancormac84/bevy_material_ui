@@ -58,10 +58,6 @@ pub fn spawn_icons_section(
                     }
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../icons_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../icons_demo.rs"));
         });
 }

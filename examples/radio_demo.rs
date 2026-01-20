@@ -27,75 +27,66 @@ fn setup(
 ) {
     commands.spawn(Camera2d);
 
-    commands
+    let root_entity = commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
                 row_gap: Val::Px(16.0),
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
         .insert_test_id("radio_demo/root", &telemetry)
-        .with_children(|root| {
-            root.spawn((
-                Text::new("Radios"),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-        });
-
-    let column = commands
-        .spawn(Node {
-            width: Val::Px(360.0),
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(12.0),
-            ..default()
-        })
-        .insert_test_id("radio_demo/column", &telemetry)
         .id();
 
-    // Two radios in the same group (exclusive)
+    let section_entity = commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                max_width: Val::Px(560.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
+                ..default()
+            },
+            ChildOf(root_entity),
+        ))
+        .id();
+
+    // Match the showcase: one radio group with three choices.
+    let group_entity = commands
+        .spawn((
+            RadioGroup::new("example_group"),
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(8.0),
+                margin: UiRect::vertical(Val::Px(8.0)),
+                ..default()
+            },
+            ChildOf(section_entity),
+        ))
+        .insert_test_id("radio_demo/group", &telemetry)
+        .id();
+
     for (key, selected, label) in [
-        ("a", true, "Group 1: Option A"),
-        ("b", false, "Group 1: Option B"),
+        ("choice_a", true, "Choice A"),
+        ("choice_b", false, "Choice B"),
+        ("choice_c", false, "Choice C"),
     ] {
-        let row = commands.spawn_radio(&theme, selected, "group_1", label);
+        let row = commands.spawn_radio(&theme, selected, "example_group", label);
 
         if telemetry.enabled {
             commands
                 .entity(row)
-                .insert(TestId::new(format!("radio_demo/row/group_1/{key}")));
+                .insert(TestId::new(format!("radio_demo/row/{key}")));
         }
 
-        commands.entity(column).add_child(row);
-        rows.0
-            .push((row, format!("radio_demo/radio/group_1/{key}")));
-    }
-
-    // A separate group
-    for (key, selected, label) in [
-        ("x", false, "Group 2: Option X"),
-        ("y", true, "Group 2: Option Y"),
-    ] {
-        let row = commands.spawn_radio(&theme, selected, "group_2", label);
-
-        if telemetry.enabled {
-            commands
-                .entity(row)
-                .insert(TestId::new(format!("radio_demo/row/group_2/{key}")));
-        }
-
-        commands.entity(column).add_child(row);
-        rows.0
-            .push((row, format!("radio_demo/radio/group_2/{key}")));
+        commands.entity(group_entity).add_child(row);
+        rows.0.push((row, format!("radio_demo/radio/{key}")));
     }
 }
 

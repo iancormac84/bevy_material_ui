@@ -796,8 +796,7 @@ fn mouse_wheel_scroll_system(
                 continue;
             }
 
-            if let Ok((mut scroll_position, container)) =
-                scrollable_query.get_mut(container_entity)
+            if let Ok((mut scroll_position, container)) = scrollable_query.get_mut(container_entity)
             {
                 let max_offset = container.max_offset;
 
@@ -919,8 +918,20 @@ fn sync_scroll_state_system(
                 content_size_phys = content_computed.content_size();
                 inv = content_computed.inverse_scale_factor();
 
-                // Debug: Check if ScrollContent has scrollable overflow
-                if matches!(content_node.overflow.y, OverflowAxis::Scroll) {
+                // Debug: validate ScrollContent overflow matches container direction.
+                let expects_x = matches!(
+                    container.direction,
+                    ScrollDirection::Horizontal | ScrollDirection::Both
+                );
+                let expects_y = matches!(
+                    container.direction,
+                    ScrollDirection::Vertical | ScrollDirection::Both
+                );
+
+                let x_ok = !expects_x || matches!(content_node.overflow.x, OverflowAxis::Scroll);
+                let y_ok = !expects_y || matches!(content_node.overflow.y, OverflowAxis::Scroll);
+
+                if x_ok && y_ok {
                     bevy::log::trace!(
                         "ScrollContent {:?} overflow={:?}, scroll=({:.1},{:.1})",
                         child,
@@ -930,9 +941,11 @@ fn sync_scroll_state_system(
                     );
                 } else {
                     bevy::log::warn!(
-                        "ScrollContent {:?} has wrong overflow={:?} (should be Scroll), scroll=({:.1},{:.1})",
+                        "ScrollContent {:?} has wrong overflow={:?} (expected x_scroll={}, y_scroll={}), scroll=({:.1},{:.1})",
                         child,
                         content_node.overflow,
+                        expects_x,
+                        expects_y,
                         content_scroll_pos.x,
                         content_scroll_pos.y
                     );

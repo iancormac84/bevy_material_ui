@@ -1,15 +1,35 @@
 //! Snackbar Demo
 //!
-//! Demonstrates snackbar host positioning and triggering snackbars via messages.
+//! Demonstrates snackbars with a simple options panel (duration + action toggle).
 
 use bevy::prelude::*;
+use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
+use bevy_material_ui::icons::ICON_CLOSE;
 use bevy_material_ui::prelude::*;
 
-#[derive(Component)]
-struct ShowSnackbarButton;
+#[derive(Resource, Debug, Clone)]
+struct SnackbarDemoState {
+    duration_seconds: f32,
+    show_action: bool,
+}
+
+impl Default for SnackbarDemoState {
+    fn default() -> Self {
+        Self {
+            duration_seconds: 4.0,
+            show_action: false,
+        }
+    }
+}
 
 #[derive(Component)]
-struct ShowActionSnackbarButton;
+struct SnackbarTrigger;
+
+#[derive(Component)]
+struct SnackbarActionToggle;
+
+#[derive(Component)]
+struct SnackbarDurationOption(f32);
 
 fn main() {
     App::new()
@@ -19,8 +39,13 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(
             Update,
-            (show_snackbar_on_click_system, handle_snackbar_action_system),
+            (
+                snackbar_options_system,
+                snackbar_trigger_system,
+                handle_snackbar_action_system,
+            ),
         )
+        .init_resource::<SnackbarDemoState>()
         .run();
 }
 
@@ -46,74 +71,276 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             // Host lives in the UI tree; snackbars are spawned under it.
             root.spawn_snackbar_host(SnackbarPosition::BottomCenter);
 
-            // Buttons to trigger snackbars.
-            let label = "Show Snackbar";
-            let btn = MaterialButton::new(label).with_variant(ButtonVariant::Filled);
-            let label_color = btn.text_color(&theme);
-
-            root.spawn((
-                ShowSnackbarButton,
-                Interaction::None,
-                MaterialButtonBuilder::new(label).filled().build(&theme),
-            ))
-            .insert_test_id("snackbar_demo/show", &telemetry)
-            .with_children(|b| {
-                b.spawn((
-                    ButtonLabel,
-                    Text::new(label),
-                    TextFont {
-                        font_size: 14.0,
+            // Options panel
+            root.spawn(Node {
+                flex_direction: FlexDirection::Column,
+                padding: UiRect::all(Val::Px(12.0)),
+                row_gap: Val::Px(12.0),
+                ..default()
+            })
+            .with_children(|options| {
+                // Duration options
+                options
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(8.0),
                         ..default()
-                    },
-                    TextColor(label_color),
-                ));
+                    })
+                    .with_children(|row| {
+                        row.spawn((
+                            Text::new("Duration:"),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                        ));
+
+                        for (label, duration) in
+                            [("2s", 2.0_f32), ("4s", 4.0_f32), ("10s", 10.0_f32)]
+                        {
+                            let is_default = (duration - 4.0).abs() < 0.01;
+                            let chip_for_color =
+                                MaterialChip::filter(label).with_selected(is_default);
+                            let label_color = chip_for_color.label_color(&theme);
+
+                            row.spawn((
+                                SnackbarDurationOption(duration),
+                                Interaction::None,
+                                ChipBuilder::filter(label)
+                                    .selected(is_default)
+                                    .build(&theme),
+                            ))
+                            .with_children(|chip| {
+                                chip.spawn((
+                                    ChipLabel,
+                                    Text::new(label),
+                                    TextFont {
+                                        font_size: 12.0,
+                                        ..default()
+                                    },
+                                    TextColor(label_color),
+                                ));
+                            });
+                        }
+                    });
+
+                // Action toggle
+                options
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        column_gap: Val::Px(8.0),
+                        ..default()
+                    })
+                    .with_children(|row| {
+                        row.spawn((
+                            Text::new("Show action:"),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                        ));
+
+                        let toggle_label = "Toggle Action";
+                        let chip_for_color =
+                            MaterialChip::filter(toggle_label).with_selected(false);
+                        let label_color = chip_for_color.label_color(&theme);
+
+                        row.spawn((
+                            SnackbarActionToggle,
+                            Interaction::None,
+                            ChipBuilder::filter(toggle_label)
+                                .selected(false)
+                                .build(&theme),
+                        ))
+                        .with_children(|chip| {
+                            chip.spawn((
+                                ChipLabel,
+                                Text::new(toggle_label),
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
+                                TextColor(label_color),
+                            ));
+                        });
+                    });
             });
 
-            let label = "Show Snackbar (Action)";
-            let btn = MaterialButton::new(label).with_variant(ButtonVariant::Outlined);
-            let label_color = btn.text_color(&theme);
+            // Trigger button
+            root.spawn(Node {
+                margin: UiRect::vertical(Val::Px(8.0)),
+                ..default()
+            })
+            .with_children(|row| {
+                let trigger_label = "Show Snackbar";
+                let trigger_button =
+                    MaterialButton::new(trigger_label).with_variant(ButtonVariant::Filled);
+                let trigger_text_color = trigger_button.text_color(&theme);
 
+                row.spawn((
+                    SnackbarTrigger,
+                    Interaction::None,
+                    MaterialButtonBuilder::new(trigger_label)
+                        .filled()
+                        .build(&theme),
+                ))
+                .insert_test_id("snackbar_demo/show", &telemetry)
+                .with_children(|btn| {
+                    btn.spawn((
+                        ButtonLabel,
+                        Text::new(trigger_label),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(trigger_text_color),
+                    ));
+                });
+            });
+
+            // Snackbar preview (static example)
             root.spawn((
-                ShowActionSnackbarButton,
-                Interaction::None,
-                MaterialButtonBuilder::new(label).outlined().build(&theme),
+                Node {
+                    width: Val::Px(320.0),
+                    height: Val::Px(48.0),
+                    padding: UiRect::horizontal(Val::Px(16.0)),
+                    justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::top(Val::Px(8.0)),
+                    ..default()
+                },
+                BackgroundColor(theme.inverse_surface),
+                BorderRadius::all(Val::Px(4.0)),
+                BoxShadow::from(ShadowStyle {
+                    color: Color::BLACK.with_alpha(0.2),
+                    x_offset: Val::Px(0.0),
+                    y_offset: Val::Px(2.0),
+                    spread_radius: Val::Px(0.0),
+                    blur_radius: Val::Px(4.0),
+                }),
             ))
-            .insert_test_id("snackbar_demo/show_action", &telemetry)
-            .with_children(|b| {
-                b.spawn((
-                    ButtonLabel,
-                    Text::new(label),
+            .with_children(|snackbar| {
+                snackbar.spawn((
+                    Text::new("Item deleted"),
                     TextFont {
                         font_size: 14.0,
                         ..default()
                     },
-                    TextColor(label_color),
+                    TextColor(theme.inverse_on_surface),
+                    Node {
+                        flex_grow: 1.0,
+                        ..default()
+                    },
                 ));
+
+                snackbar
+                    .spawn((
+                        Interaction::None,
+                        MaterialButtonBuilder::new("UNDO").text().build(&theme),
+                    ))
+                    .with_children(|btn| {
+                        btn.spawn((
+                            ButtonLabel,
+                            Text::new("UNDO"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(theme.inverse_primary),
+                        ));
+                    });
+
+                snackbar
+                    .spawn((
+                        Button,
+                        Interaction::None,
+                        Node {
+                            width: Val::Px(32.0),
+                            height: Val::Px(32.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::NONE),
+                        BorderRadius::all(Val::Px(9999.0)),
+                    ))
+                    .with_children(|btn| {
+                        if let Some(icon) = MaterialIcon::from_name(ICON_CLOSE) {
+                            btn.spawn(icon.with_size(24.0).with_color(theme.inverse_on_surface));
+                        }
+                    });
             });
         });
 }
 
-#[allow(clippy::type_complexity)]
-fn show_snackbar_on_click_system(
-    mut clicks: Query<
-        (&Interaction, Option<&ShowActionSnackbarButton>),
+fn snackbar_options_system(
+    mut state: ResMut<SnackbarDemoState>,
+    mut duration_clicks: Query<
+        (&Interaction, &SnackbarDurationOption),
+        (Changed<Interaction>, With<MaterialChip>),
+    >,
+    mut duration_chips: Query<(&SnackbarDurationOption, &mut MaterialChip)>,
+    mut action_clicks: Query<
+        (&Interaction, Entity),
         (
             Changed<Interaction>,
-            Or<(With<ShowSnackbarButton>, With<ShowActionSnackbarButton>)>,
+            With<SnackbarActionToggle>,
+            With<MaterialChip>,
         ),
     >,
+    mut action_chips: Query<&mut MaterialChip, With<SnackbarActionToggle>>,
+) {
+    let mut new_duration = None;
+    for (interaction, opt) in duration_clicks.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            new_duration = Some(opt.0);
+        }
+    }
+
+    if let Some(duration) = new_duration {
+        state.duration_seconds = duration;
+        for (opt, mut chip) in duration_chips.iter_mut() {
+            chip.selected = (opt.0 - duration).abs() < 0.01;
+        }
+    }
+
+    let mut toggled = false;
+    for (interaction, _entity) in action_clicks.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            toggled = true;
+        }
+    }
+
+    if toggled {
+        state.show_action = !state.show_action;
+        for mut chip in action_chips.iter_mut() {
+            chip.selected = state.show_action;
+        }
+    }
+}
+
+fn snackbar_trigger_system(
+    state: Res<SnackbarDemoState>,
+    mut clicks: Query<(&Interaction, Entity), (Changed<Interaction>, With<SnackbarTrigger>)>,
     mut show: MessageWriter<ShowSnackbar>,
 ) {
-    for (interaction, action) in clicks.iter_mut() {
+    for (interaction, _entity) in clicks.iter_mut() {
         if *interaction != Interaction::Pressed {
             continue;
         }
 
-        if action.is_some() {
-            show.write(ShowSnackbar::with_action("Saved successfully", "UNDO"));
+        let event = if state.show_action {
+            ShowSnackbar::with_action("Saved successfully", "UNDO")
         } else {
-            show.write(ShowSnackbar::message("Hello from snackbar!"));
+            ShowSnackbar::message("Item deleted")
         }
+        .duration(state.duration_seconds);
+
+        show.write(event);
     }
 }
 

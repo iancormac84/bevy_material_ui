@@ -13,10 +13,10 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
         .spawn((
             DialogsSectionRoot,
             Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(16.0),
-            ..default()
-        },
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
+                ..default()
+            },
         ))
         .with_children(|section| {
             spawn_section_header(
@@ -260,11 +260,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
             // Scrim follows dialog open state and modal option
             section.spawn(create_dialog_scrim_for(theme, dialog_entity, true));
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../dialog_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../dialog_demo.rs"));
         });
 }
 

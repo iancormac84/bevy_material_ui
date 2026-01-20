@@ -3,21 +3,23 @@
 //! Demonstrates Material Design 3 menus.
 
 use bevy::prelude::*;
+use bevy_material_ui::icons::{ICON_EXPAND_MORE, ICON_MORE_VERT};
+use bevy_material_ui::list::{
+    ListItemBody, ListItemBuilder, ListItemHeadline, ListItemSupportingText,
+};
 use bevy_material_ui::prelude::*;
 
 #[derive(Component)]
-struct MenuTriggerButton;
+struct MenuTrigger;
 
 #[derive(Component)]
-struct DemoMenu;
+struct MenuDropdown;
 
 #[derive(Component)]
-struct DemoMenuItem;
+struct MenuItemMarker(pub String);
 
-#[derive(Resource)]
-struct MenuEntities {
-    menu: Entity,
-}
+#[derive(Component)]
+struct MenuSelectedText;
 
 fn main() {
     App::new()
@@ -25,24 +27,13 @@ fn main() {
         .add_plugins(MaterialUiPlugin)
         .add_plugins(TelemetryPlugin)
         .add_systems(Startup, setup)
-        .add_systems(
-            Update,
-            (
-                toggle_menu_system,
-                close_menu_on_item_system,
-                position_menu_system,
-            ),
-        )
+        .add_systems(Update, menu_demo_system)
         .run();
 }
 
 fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<TelemetryConfig>) {
     commands.spawn(Camera2d);
 
-    let mut menu_items: Vec<(Entity, &'static str)> = Vec::new();
-    let mut menu_entity: Option<Entity> = None;
-
-    // Root + container
     commands
         .spawn((
             Node {
@@ -58,152 +49,224 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ))
         .insert_test_id("menu_demo/root", &telemetry)
         .with_children(|root| {
-            root.spawn((
-                Node {
-                    position_type: PositionType::Relative,
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::FlexStart,
-                    row_gap: Val::Px(8.0),
-                    padding: UiRect::all(Val::Px(24.0)),
-                    ..default()
-                },
-                BackgroundColor(theme.surface_container_low),
-                BorderRadius::all(Val::Px(12.0)),
-            ))
+            root.spawn(Node {
+                flex_direction: FlexDirection::Column,
+                ..default()
+            })
             .with_children(|container| {
-                // Trigger button.
-                let trigger_label = "Open Menu";
+                // Trigger button
                 let trigger_button =
-                    MaterialButton::new(trigger_label).with_variant(ButtonVariant::Outlined);
-                let trigger_text_color = trigger_button.text_color(&theme);
+                    MaterialButton::new("Options").with_variant(ButtonVariant::Outlined);
+                let trigger_bg = trigger_button.background_color(&theme);
+                let trigger_border = trigger_button.border_color(&theme);
 
                 container
                     .spawn((
-                        MenuTriggerButton,
+                        MenuTrigger,
+                        trigger_button,
+                        Button,
                         Interaction::None,
-                        MaterialButtonBuilder::new(trigger_label)
-                            .outlined()
-                            .build(&theme),
+                        RippleHost::new(),
+                        Node {
+                            padding: UiRect::axes(Val::Px(16.0), Val::Px(10.0)),
+                            flex_direction: FlexDirection::Row,
+                            column_gap: Val::Px(8.0),
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(trigger_bg),
+                        BorderColor::all(trigger_border),
+                        BorderRadius::all(Val::Px(8.0)),
                     ))
                     .insert_test_id("menu_demo/trigger", &telemetry)
                     .with_children(|btn| {
+                        if let Some(icon) = MaterialIcon::from_name(ICON_MORE_VERT) {
+                            btn.spawn(icon.with_size(20.0).with_color(theme.on_surface));
+                        }
                         btn.spawn((
-                            ButtonLabel,
-                            Text::new(trigger_label),
+                            MenuSelectedText,
+                            Text::new("Options"),
                             TextFont {
                                 font_size: 14.0,
                                 ..default()
                             },
-                            TextColor(trigger_text_color),
+                            TextColor(theme.on_surface),
                         ));
+                        if let Some(icon) = MaterialIcon::from_name(ICON_EXPAND_MORE) {
+                            btn.spawn(icon.with_size(20.0).with_color(theme.on_surface));
+                        }
                     });
 
-                // Menu
-                let id = container
-                    .spawn((DemoMenu, MenuBuilder::new().build(&theme)))
-                    .insert_test_id("menu_demo/menu", &telemetry)
+                // Dropdown (hidden by default)
+                container
+                    .spawn((
+                        MenuDropdown,
+                        Visibility::Hidden,
+                        Node {
+                            width: Val::Px(200.0),
+                            flex_direction: FlexDirection::Column,
+                            padding: UiRect::vertical(Val::Px(8.0)),
+                            margin: UiRect::top(Val::Px(4.0)),
+                            ..default()
+                        },
+                        BackgroundColor(theme.surface_container),
+                        BorderRadius::all(Val::Px(4.0)),
+                        BoxShadow::from(ShadowStyle {
+                            color: Color::BLACK.with_alpha(0.2),
+                            x_offset: Val::Px(0.0),
+                            y_offset: Val::Px(4.0),
+                            spread_radius: Val::Px(0.0),
+                            blur_radius: Val::Px(8.0),
+                        }),
+                    ))
+                    .insert_test_id("menu_demo/dropdown", &telemetry)
                     .with_children(|menu| {
-                        let cut = menu
-                            .spawn((DemoMenuItem, MenuItemBuilder::new("Cut").build(&theme)))
-                            .with_children(|row| {
-                                row.spawn((
-                                    Text::new("Cut"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
-                            })
-                            .id();
-                        menu_items.push((cut, "cut"));
+                        spawn_menu_item(menu, &theme, "Cut", "Ctrl+X", false, &telemetry);
+                        spawn_menu_item(menu, &theme, "Copy", "Ctrl+C", false, &telemetry);
+                        spawn_menu_item(menu, &theme, "Paste", "Ctrl+V", false, &telemetry);
 
-                        let copy = menu
-                            .spawn((DemoMenuItem, MenuItemBuilder::new("Copy").build(&theme)))
-                            .with_children(|row| {
-                                row.spawn((
-                                    Text::new("Copy"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
-                            })
-                            .id();
-                        menu_items.push((copy, "copy"));
+                        menu.spawn((
+                            Node {
+                                width: Val::Percent(100.0),
+                                height: Val::Px(1.0),
+                                margin: UiRect::vertical(Val::Px(8.0)),
+                                ..default()
+                            },
+                            BackgroundColor(theme.outline_variant),
+                        ));
 
-                        menu.spawn(create_menu_divider(&theme));
-
-                        let paste = menu
-                            .spawn((DemoMenuItem, MenuItemBuilder::new("Paste").build(&theme)))
-                            .with_children(|row| {
-                                row.spawn((
-                                    Text::new("Paste"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
-                            })
-                            .id();
-                        menu_items.push((paste, "paste"));
-                    })
-                    .id();
-
-                menu_entity = Some(id);
+                        spawn_menu_item(menu, &theme, "Delete", "", true, &telemetry);
+                    });
             });
         });
-
-    let menu_entity = menu_entity.expect("menu entity should be spawned");
-    commands.insert_resource(MenuEntities { menu: menu_entity });
-
-    for (entity, key) in menu_items {
-        commands
-            .entity(entity)
-            .insert_test_id(format!("menu_demo/menu/item/{key}"), &telemetry);
-    }
 }
 
-fn toggle_menu_system(
-    entities: Res<MenuEntities>,
-    mut interactions: Query<&Interaction, (Changed<Interaction>, With<MenuTriggerButton>)>,
-    mut menus: Query<&mut MaterialMenu>,
+fn spawn_menu_item(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    label: &str,
+    shortcut: &str,
+    is_destructive: bool,
+    telemetry: &TelemetryConfig,
 ) {
-    let Ok(mut menu) = menus.get_mut(entities.menu) else {
-        return;
+    let headline_color = if is_destructive {
+        theme.error
+    } else {
+        theme.on_surface
+    };
+    let supporting_color = theme.on_surface_variant;
+    let has_supporting = !shortcut.is_empty();
+
+    let builder = if has_supporting {
+        ListItemBuilder::new(label).two_line()
+    } else {
+        ListItemBuilder::new(label)
     };
 
-    for interaction in interactions.iter_mut() {
-        if *interaction == Interaction::Pressed {
-            menu.open = !menu.open;
+    let test_suffix = label.to_ascii_lowercase().replace(' ', "_");
+
+    parent
+        .spawn((
+            MenuItemMarker(label.to_string()),
+            Interaction::None,
+            builder.build(theme),
+        ))
+        .insert_test_id(format!("menu_demo/item/{test_suffix}"), telemetry)
+        .with_children(|item| {
+            item.spawn((
+                ListItemBody,
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    flex_grow: 1.0,
+                    ..default()
+                },
+            ))
+            .with_children(|body| {
+                body.spawn((
+                    ListItemHeadline,
+                    Text::new(label),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(headline_color),
+                ));
+
+                if has_supporting {
+                    body.spawn((
+                        ListItemSupportingText,
+                        Text::new(shortcut),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(supporting_color),
+                    ));
+                }
+            });
+        });
+}
+
+#[allow(clippy::type_complexity)]
+fn menu_demo_system(
+    mut triggers: Query<(&ChildOf, &Interaction), (With<MenuTrigger>, Changed<Interaction>)>,
+    mut dropdowns: Query<(&ChildOf, &mut Visibility), With<MenuDropdown>>,
+    mut items: Query<(&ChildOf, &Interaction, &MenuItemMarker), Changed<Interaction>>,
+    triggers_all: Query<(Entity, &ChildOf), With<MenuTrigger>>,
+    mut selected_text: Query<(&ChildOf, &mut Text), With<MenuSelectedText>>,
+    parents: Query<&ChildOf>,
+) {
+    // Build lookup: container -> trigger entity
+    let mut trigger_by_container: std::collections::HashMap<Entity, Entity> =
+        std::collections::HashMap::new();
+    for (trigger_entity, parent) in triggers_all.iter() {
+        trigger_by_container.insert(parent.0, trigger_entity);
+    }
+
+    // Toggle dropdown on trigger press
+    for (parent, interaction) in triggers.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        let container = parent.0;
+        for (drop_parent, mut vis) in dropdowns.iter_mut() {
+            if drop_parent.0 == container {
+                *vis = match *vis {
+                    Visibility::Hidden => Visibility::Inherited,
+                    _ => Visibility::Hidden,
+                };
+            }
         }
     }
-}
 
-fn close_menu_on_item_system(
-    entities: Res<MenuEntities>,
-    mut menus: Query<&mut MaterialMenu>,
-    mut interactions: Query<&Interaction, (Changed<Interaction>, With<DemoMenuItem>)>,
-) {
-    let should_close = interactions.iter_mut().any(|i| *i == Interaction::Pressed);
-    if !should_close {
-        return;
+    // Select item
+    for (parent, interaction, label) in items.iter_mut() {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        // Item parent is the dropdown; dropdown parent is the container.
+        let dropdown_entity = parent.0;
+        let Ok(container_parent) = parents.get(dropdown_entity) else {
+            continue;
+        };
+        let container = container_parent.0;
+
+        // Update selected text on trigger button
+        if let Some(trigger_entity) = trigger_by_container.get(&container).copied() {
+            for (text_parent, mut text) in selected_text.iter_mut() {
+                if text_parent.0 == trigger_entity {
+                    *text = Text::new(label.0.as_str());
+                }
+            }
+        }
+
+        // Close dropdown
+        for (drop_parent, mut vis) in dropdowns.iter_mut() {
+            if drop_parent.0 == container {
+                *vis = Visibility::Hidden;
+            }
+        }
     }
-
-    let Ok(mut menu) = menus.get_mut(entities.menu) else {
-        return;
-    };
-    menu.open = false;
-}
-
-fn position_menu_system(entities: Res<MenuEntities>, mut nodes: Query<&mut Node, With<DemoMenu>>) {
-    let Ok(mut node) = nodes.get_mut(entities.menu) else {
-        return;
-    };
-
-    // A simple dropdown-style position.
-    node.top = Val::Px(48.0 + 8.0);
-    node.left = Val::Px(0.0);
 }

@@ -30,104 +30,107 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
                 row_gap: Val::Px(16.0),
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
         .insert_test_id("time_picker_demo/root", &telemetry)
         .with_children(|root| {
-            // Picker overlay (hidden until opened)
-            let picker_entity = root.spawn_time_picker(
-                &theme,
-                TimePickerBuilder::new()
-                    .title("Select Time")
-                    .initial_time(13, 30)
-                    .format(TimeFormat::H24)
-                    .width(Val::Px(360.0)),
-            );
+            root.spawn(Node {
+                width: Val::Percent(100.0),
+                max_width: Val::Px(560.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
+                ..default()
+            })
+            .with_children(|section| {
+                // Picker overlay (hidden until opened)
+                let picker_entity = section.spawn_time_picker(
+                    &theme,
+                    TimePickerBuilder::new()
+                        .title("Select Time")
+                        .initial_time(13, 30)
+                        .format(TimeFormat::H24)
+                        .width(Val::Px(360.0)),
+                );
 
-            // Open button
-            let label = "Open Time Picker";
-            let btn = MaterialButton::new(label).with_variant(ButtonVariant::Filled);
-            let label_color = btn.text_color(&theme);
-
-            root.spawn((
-                OpenPickerButton(picker_entity),
-                Interaction::None,
-                MaterialButtonBuilder::new(label).filled().build(&theme),
-            ))
-            .insert_test_id("time_picker_demo/open", &telemetry)
-            .with_children(|b| {
-                b.spawn((
-                    ButtonLabel,
-                    Text::new(label),
-                    TextFont {
-                        font_size: 14.0,
+                section
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        column_gap: Val::Px(16.0),
+                        align_items: AlignItems::Center,
                         ..default()
-                    },
-                    TextColor(label_color),
-                ));
-            });
+                    })
+                    .with_children(|row| {
+                        let label = "Open Time Picker";
+                        let btn = MaterialButton::new(label).with_variant(ButtonVariant::Filled);
+                        let label_color = btn.text_color(&theme);
 
-            // Result display
-            root.spawn((
-                ResultText(picker_entity),
-                Text::new("Result: None"),
-                TextFont {
-                    font_size: 14.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface_variant),
-            ))
-            .insert_test_id("time_picker_demo/result", &telemetry);
+                        row.spawn((
+                            OpenPickerButton(picker_entity),
+                            Interaction::None,
+                            MaterialButtonBuilder::new(label).filled().build(&theme),
+                        ))
+                        .insert_test_id("time_picker_demo/open", &telemetry)
+                        .with_children(|b| {
+                            b.spawn((
+                                ButtonLabel,
+                                Text::new(label),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(label_color),
+                            ));
+                        });
+
+                        row.spawn((
+                            ResultText(picker_entity),
+                            Text::new("Result: 13:30"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                        ))
+                        .insert_test_id("time_picker_demo/result", &telemetry);
+                    });
+            });
         });
 }
 
 #[allow(clippy::type_complexity)]
 fn time_picker_demo_system(
     mut open_buttons: Query<(&Interaction, &OpenPickerButton), Changed<Interaction>>,
-    mut pickers: Query<&mut MaterialTimePicker>,
-    mut submit: MessageReader<TimePickerSubmitEvent>,
-    mut cancel: MessageReader<TimePickerCancelEvent>,
+    mut pickers: ParamSet<(Query<&mut MaterialTimePicker>, Query<&MaterialTimePicker>)>,
     mut result_texts: Query<(&ResultText, &mut Text)>,
 ) {
-    // Open picker when button is pressed
+    let prefix = "Result:";
+    let canceled = "Canceled";
+
+    // Open picker when button is pressed.
     for (interaction, open_button) in open_buttons.iter_mut() {
         if *interaction != Interaction::Pressed {
             continue;
         }
 
-        if let Ok(mut picker) = pickers.get_mut(open_button.0) {
+        if let Ok(mut picker) = pickers.p0().get_mut(open_button.0) {
             picker.open = true;
         }
     }
 
-    // Update result text on submit
-    for ev in submit.read() {
-        let label = format!("Result: {:02}:{:02}", ev.hour, ev.minute);
-
-        for (display, mut text) in result_texts.iter_mut() {
-            if display.0 == ev.entity {
-                *text = Text::new(label.as_str());
-            }
-        }
-    }
-
-    // Update result text on cancel
-    for ev in cancel.read() {
-        let label = if let Ok(picker) = pickers.get(ev.entity) {
-            format!("Result: {:02}:{:02}", picker.hour, picker.minute)
+    // Render the current time for each result display.
+    for (display, mut text) in result_texts.iter_mut() {
+        let label = if let Ok(picker) = pickers.p1().get(display.0) {
+            format!("{prefix} {:02}:{:02}", picker.hour, picker.minute)
         } else {
-            "Result: Canceled".to_string()
+            format!("{prefix} {canceled}")
         };
 
-        for (display, mut text) in result_texts.iter_mut() {
-            if display.0 == ev.entity {
-                *text = Text::new(label.as_str());
-            }
-        }
+        text.0 = label;
     }
 }

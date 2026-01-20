@@ -44,11 +44,7 @@ pub fn spawn_badges_section(
                     spawn_badge_example(row, theme, Some("99+"));
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../badge_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../badge_demo.rs"));
         });
 }
 

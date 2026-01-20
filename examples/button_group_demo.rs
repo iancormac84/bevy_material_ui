@@ -23,98 +23,168 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
-                row_gap: Val::Px(24.0),
-                padding: UiRect::all(Val::Px(48.0)),
+                row_gap: Val::Px(16.0),
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
+        .insert_test_id("button_group_demo/root", &telemetry)
         .with_children(|root| {
-            root.spawn((
-                Text::new("Button Groups"),
-                TextFont {
-                    font_size: 28.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ))
-            .insert_test_id("button_group_demo/title", &telemetry);
+            root.spawn(Node {
+                width: Val::Percent(100.0),
+                max_width: Val::Px(560.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
+                ..default()
+            })
+            .with_children(|section| {
+                section
+                    .spawn((
+                        Text::new("Button Groups"),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                        Node {
+                            margin: UiRect::top(Val::Px(8.0)),
+                            ..default()
+                        },
+                    ))
+                    .insert_test_id("button_group_demo/title", &telemetry);
 
-            // A typical segmented control: 0px spacing, single selection, selection required.
-            root.spawn((
-                MaterialButtonGroup::new()
-                    .single_selection(true)
-                    .selection_required(true)
-                    .spacing(0.0),
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
-            ))
-            .insert_test_id("button_group_demo/group/horizontal", &telemetry)
-            .with_children(|group| {
-                for (i, label) in ["One", "Two", "Three"].into_iter().enumerate() {
-                    let selected = i == 0;
-                    let builder = MaterialButtonBuilder::new(label)
-                        .outlined()
-                        .checkable(true)
-                        .checked(selected)
-                        .disabled(false);
-
-                    group
-                        .spawn(builder.build(&theme))
-                        .insert_test_id(
-                            format!("button_group_demo/group/horizontal/tab/{i}"),
-                            &telemetry,
-                        )
-                        .with_children(|b| {
-                            b.spawn((
-                                ButtonLabel,
-                                Text::new(label),
-                                TextFont {
-                                    font_size: 14.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
+                section
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::FlexStart,
+                        column_gap: Val::Px(24.0),
+                        flex_wrap: FlexWrap::Wrap,
+                        margin: UiRect::vertical(Val::Px(8.0)),
+                        ..default()
+                    })
+                    .with_children(|row| {
+                        // Horizontal segmented (single selection)
+                        row.spawn((
+                            MaterialButtonGroup::new()
+                                .single_selection(true)
+                                .selection_required(true)
+                                .horizontal(),
+                            Node { ..default() },
+                        ))
+                        .insert_test_id("button_group_demo/group/horizontal", &telemetry)
+                        .with_children(|group| {
+                            spawn_toggle_button(
+                                group,
+                                &theme,
+                                &telemetry,
+                                "button_group_demo/group/horizontal/day",
+                                "Day",
+                                true,
+                            );
+                            spawn_toggle_button(
+                                group,
+                                &theme,
+                                &telemetry,
+                                "button_group_demo/group/horizontal/week",
+                                "Week",
+                                false,
+                            );
+                            spawn_toggle_button(
+                                group,
+                                &theme,
+                                &telemetry,
+                                "button_group_demo/group/horizontal/month",
+                                "Month",
+                                false,
+                            );
                         });
-                }
-            });
 
-            // Vertical group (same behavior).
-            root.spawn((
-                MaterialButtonGroup::new()
-                    .vertical()
-                    .single_selection(true)
-                    .selection_required(false)
-                    .spacing(0.0),
-                Node {
-                    flex_direction: FlexDirection::Column,
+                        // Vertical segmented (single selection)
+                        row.spawn((
+                            MaterialButtonGroup::new()
+                                .single_selection(true)
+                                .selection_required(true)
+                                .vertical(),
+                            Node { ..default() },
+                        ))
+                        .insert_test_id("button_group_demo/group/vertical", &telemetry)
+                        .with_children(|group| {
+                            spawn_toggle_button(
+                                group,
+                                &theme,
+                                &telemetry,
+                                "button_group_demo/group/vertical/low",
+                                "Low",
+                                false,
+                            );
+                            spawn_toggle_button(
+                                group,
+                                &theme,
+                                &telemetry,
+                                "button_group_demo/group/vertical/med",
+                                "Med",
+                                true,
+                            );
+                            spawn_toggle_button(
+                                group,
+                                &theme,
+                                &telemetry,
+                                "button_group_demo/group/vertical/high",
+                                "High",
+                                false,
+                            );
+                        });
+                    });
+            });
+        });
+}
+
+fn spawn_toggle_button(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    telemetry: &TelemetryConfig,
+    test_id: &str,
+    label: &str,
+    checked: bool,
+) {
+    let button = MaterialButton::new(label)
+        .with_variant(ButtonVariant::Outlined)
+        .checkable(true)
+        .checked(checked);
+
+    let text_color = button.text_color(theme);
+    let bg_color = button.background_color(theme);
+    let border_color = button.border_color(theme);
+
+    parent
+        .spawn((
+            button,
+            Button,
+            Interaction::None,
+            RippleHost::new(),
+            Node {
+                padding: UiRect::axes(Val::Px(24.0), Val::Px(10.0)),
+                border: UiRect::all(Val::Px(1.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(bg_color),
+            BorderColor::all(border_color),
+            BorderRadius::all(Val::Px(CornerRadius::FULL)),
+        ))
+        .insert_test_id(test_id, telemetry)
+        .with_children(|btn| {
+            btn.spawn((
+                Text::new(label),
+                TextFont {
+                    font_size: 14.0,
                     ..default()
                 },
-            ))
-            .insert_test_id("button_group_demo/group/vertical", &telemetry)
-            .with_children(|group| {
-                for (i, label) in ["A", "B", "C"].into_iter().enumerate() {
-                    let builder = MaterialButtonBuilder::new(label)
-                        .outlined()
-                        .checkable(true)
-                        .checked(i == 1);
-
-                    group.spawn(builder.build(&theme)).with_children(|b| {
-                        b.spawn((
-                            ButtonLabel,
-                            Text::new(label),
-                            TextFont {
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(theme.on_surface),
-                        ));
-                    });
-                }
-            });
+                TextColor(text_color),
+            ));
         });
 }

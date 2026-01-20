@@ -23,9 +23,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
-                row_gap: Val::Px(24.0),
+                row_gap: Val::Px(16.0),
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(theme.surface),
@@ -33,31 +34,50 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .insert_test_id("switch_demo/root", &telemetry)
         .id();
 
-    commands.entity(root_entity).with_children(|root| {
-        root.spawn((
-            Text::new("Switches"),
-            TextFont {
-                font_size: 28.0,
+    let section_entity = commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                max_width: Val::Px(560.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
                 ..default()
             },
-            TextColor(theme.on_surface),
-        ));
-    });
+            ChildOf(root_entity),
+        ))
+        .id();
 
-    let switch_default =
-        commands.spawn_switch_with(&theme, SwitchBuilder::new().selected(false), "Default");
-    commands
-        .entity(switch_default)
-        .insert_test_id("switch_demo/switch/default", &telemetry);
-    commands.entity(root_entity).add_child(switch_default);
+    let col_entity = commands
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(8.0),
+                margin: UiRect::vertical(Val::Px(8.0)),
+                ..default()
+            },
+            ChildOf(section_entity),
+        ))
+        .insert_test_id("switch_demo/column", &telemetry)
+        .id();
 
-    let switch_with_icon = commands.spawn_switch_with(
-        &theme,
-        SwitchBuilder::new().selected(true).with_icon(),
-        "With icon",
-    );
+    // Match the showcase example.
+    let wifi = commands.spawn_switch_with(&theme, SwitchBuilder::new().selected(true), "Wi-Fi");
     commands
-        .entity(switch_with_icon)
-        .insert_test_id("switch_demo/switch/with_icon", &telemetry);
-    commands.entity(root_entity).add_child(switch_with_icon);
+        .entity(wifi)
+        .insert_test_id("switch_demo/switch/wifi", &telemetry);
+    commands.entity(col_entity).add_child(wifi);
+
+    let bluetooth =
+        commands.spawn_switch_with(&theme, SwitchBuilder::new().selected(false), "Bluetooth");
+    commands
+        .entity(bluetooth)
+        .insert_test_id("switch_demo/switch/bluetooth", &telemetry);
+    commands.entity(col_entity).add_child(bluetooth);
+
+    let dark_mode =
+        commands.spawn_switch_with(&theme, SwitchBuilder::new().selected(false), "Dark Mode");
+    commands
+        .entity(dark_mode)
+        .insert_test_id("switch_demo/switch/dark_mode", &telemetry);
+    commands.entity(col_entity).add_child(dark_mode);
 }

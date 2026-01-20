@@ -5,10 +5,39 @@
 //! UI tinting is applied via `ImageNode.color`.
 
 use bevy::asset::RenderAssetUsages;
+use bevy::ecs::system::Command;
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use bevy::ui::widget::ImageNode;
 use std::collections::HashMap;
+
+#[derive(Debug)]
+struct InsertImageNodeIfExists {
+    entity: Entity,
+    image_node: ImageNode,
+}
+
+impl Command for InsertImageNodeIfExists {
+    fn apply(self, world: &mut World) {
+        if let Ok(mut entity) = world.get_entity_mut(self.entity) {
+            entity.insert(self.image_node);
+        }
+    }
+}
+
+#[derive(Debug)]
+struct InsertNodeIfExists {
+    entity: Entity,
+    node: Node,
+}
+
+impl Command for InsertNodeIfExists {
+    fn apply(self, world: &mut World) {
+        if let Ok(mut entity) = world.get_entity_mut(self.entity) {
+            entity.insert(self.node);
+        }
+    }
+}
 
 fn icon_pixels_rgba8(id: material_icons::IconId) -> Vec<u8> {
     let alpha = id.alpha();
@@ -293,19 +322,23 @@ fn material_icon_system(
             image_node.image = handle;
             image_node.color = icon.color;
         } else {
-            commands
-                .entity(entity)
-                .insert(ImageNode::new(handle).with_color(icon.color));
+            commands.queue(InsertImageNodeIfExists {
+                entity,
+                image_node: ImageNode::new(handle).with_color(icon.color),
+            });
         }
 
         if let Some(mut node) = node {
             node.width = Val::Px(icon.size);
             node.height = Val::Px(icon.size);
         } else {
-            commands.entity(entity).insert(Node {
-                width: Val::Px(icon.size),
-                height: Val::Px(icon.size),
-                ..default()
+            commands.queue(InsertNodeIfExists {
+                entity,
+                node: Node {
+                    width: Val::Px(icon.size),
+                    height: Val::Px(icon.size),
+                    ..default()
+                },
             });
         }
     }
@@ -350,19 +383,23 @@ fn material_icon_repair_system(
             image_node.image = handle;
             image_node.color = icon.color;
         } else {
-            commands
-                .entity(entity)
-                .insert(ImageNode::new(handle).with_color(icon.color));
+            commands.queue(InsertImageNodeIfExists {
+                entity,
+                image_node: ImageNode::new(handle).with_color(icon.color),
+            });
         }
 
         if let Some(mut node) = node {
             node.width = Val::Px(icon.size);
             node.height = Val::Px(icon.size);
         } else {
-            commands.entity(entity).insert(Node {
-                width: Val::Px(icon.size),
-                height: Val::Px(icon.size),
-                ..default()
+            commands.queue(InsertNodeIfExists {
+                entity,
+                node: Node {
+                    width: Val::Px(icon.size),
+                    height: Val::Px(icon.size),
+                    ..default()
+                },
             });
         }
     }

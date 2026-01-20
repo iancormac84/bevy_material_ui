@@ -23,80 +23,169 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
+        .insert_test_id("tabs_demo/root", &telemetry)
         .with_children(|root| {
-            let tabs_entity = root
-                .spawn(TabsBuilder::new().primary().selected(0).build(&theme))
-                .insert_test_id("tabs_demo/tabs", &telemetry)
-                .with_children(|tabs| {
-                    for (index, label) in ["Home", "Explore", "Settings"].into_iter().enumerate() {
-                        let selected = index == 0;
-                        let builder = TabBuilder::new(index, label)
-                            .variant(TabVariant::Primary)
-                            .selected(selected);
+            root.spawn(Node {
+                flex_direction: FlexDirection::Column,
+                margin: UiRect::vertical(Val::Px(8.0)),
+                width: Val::Percent(100.0),
+                max_width: Val::Px(520.0),
+                ..default()
+            })
+            .with_children(|col| {
+                let mut tabs_bar_ec = col.spawn((
+                    MaterialTabs::new()
+                        .with_variant(TabVariant::Primary)
+                        .selected(0),
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        width: Val::Percent(100.0),
+                        border: UiRect::bottom(Val::Px(1.0)),
+                        ..default()
+                    },
+                    BackgroundColor(theme.surface),
+                    BorderColor::all(theme.surface_container_highest),
+                ));
+                tabs_bar_ec.insert_test_id("tabs_demo/tabs_primary", &telemetry);
 
-                        let tab_component = MaterialTab::new(index, label)
-                            .selected(selected)
-                            .disabled(false);
-                        let content_color =
-                            tab_component.content_color(&theme, TabVariant::Primary);
+                let tabs_entity = tabs_bar_ec.id();
+                tabs_bar_ec.with_children(|tabs| {
+                    spawn_tab_button(tabs, &theme, &telemetry, 0, "Home", true);
+                    spawn_tab_button(tabs, &theme, &telemetry, 1, "Profile", false);
+                    spawn_tab_button(tabs, &theme, &telemetry, 2, "Settings", false);
+                });
 
-                        tabs.spawn(builder.build(&theme)).with_children(|tab| {
-                            tab.spawn((
-                                TabLabelText,
-                                Text::new(label),
-                                TextFont {
-                                    font_size: 14.0,
-                                    ..default()
-                                },
-                                TextColor(content_color),
-                            ));
+                col.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        min_height: Val::Px(140.0),
+                        padding: UiRect::all(Val::Px(16.0)),
+                        ..default()
+                    },
+                    BackgroundColor(theme.surface_container_low),
+                    BorderRadius::bottom(Val::Px(12.0)),
+                ))
+                .insert_test_id("tabs_demo/content", &telemetry)
+                .with_children(|content| {
+                    spawn_tab_panel(
+                        content,
+                        &theme,
+                        tabs_entity,
+                        0,
+                        "Home",
+                        "Overview content shown when the first tab is selected.",
+                        true,
+                    );
+                    spawn_tab_panel(
+                        content,
+                        &theme,
+                        tabs_entity,
+                        1,
+                        "Profile",
+                        "User profile information and settings.",
+                        false,
+                    );
+                    spawn_tab_panel(
+                        content,
+                        &theme,
+                        tabs_entity,
+                        2,
+                        "Settings",
+                        "Application configuration and preferences.",
+                        false,
+                    );
+                });
+            });
+        });
+}
 
-                            if selected {
-                                tab.spawn(create_tab_indicator(&theme, TabVariant::Primary));
-                            }
-                        });
-                    }
-                })
-                .id();
-
-            root.spawn((
-                Node {
-                    width: Val::Percent(100.0),
-                    flex_grow: 1.0,
-                    padding: UiRect::all(Val::Px(24.0)),
+fn spawn_tab_button(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    telemetry: &TelemetryConfig,
+    index: usize,
+    label: &str,
+    selected: bool,
+) {
+    let test_id = format!("tabs_demo/tab_{}", index + 1);
+    parent
+        .spawn((
+            MaterialTab::new(index, label).selected(selected),
+            Button,
+            Interaction::None,
+            Node {
+                flex_grow: 1.0,
+                height: Val::Px(48.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::NONE),
+        ))
+        .insert_test_id(test_id, telemetry)
+        .with_children(|tab| {
+            tab.spawn((
+                TabLabelText,
+                Text::new(label),
+                TextFont {
+                    font_size: 14.0,
                     ..default()
                 },
-                BackgroundColor(theme.surface_container_low),
-            ))
-            .with_children(|content| {
-                for (index, label) in ["Home", "Explore", "Settings"].into_iter().enumerate() {
-                    content
-                        .spawn((
-                            TabContent::new(index, tabs_entity),
-                            Node {
-                                width: Val::Percent(100.0),
-                                height: Val::Percent(100.0),
-                                flex_direction: FlexDirection::Column,
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                        ))
-                        .with_children(|panel| {
-                            panel.spawn((
-                                Text::new(format!("{label} content")),
-                                TextFont {
-                                    font_size: 24.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface),
-                            ));
-                        });
-                }
-            });
+                TextColor(if selected {
+                    theme.primary
+                } else {
+                    theme.on_surface_variant
+                }),
+            ));
+        });
+}
+
+fn spawn_tab_panel(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    tabs_entity: Entity,
+    index: usize,
+    title: &str,
+    description: &str,
+    visible: bool,
+) {
+    parent
+        .spawn((
+            TabContent::new(index, tabs_entity),
+            if visible {
+                Visibility::Inherited
+            } else {
+                Visibility::Hidden
+            },
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(8.0),
+                width: Val::Percent(100.0),
+                ..default()
+            },
+        ))
+        .with_children(|panel| {
+            panel.spawn((
+                Text::new(title),
+                TextFont {
+                    font_size: 18.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface),
+            ));
+            panel.spawn((
+                Text::new(description),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(theme.on_surface_variant),
+            ));
         });
 }

@@ -71,11 +71,7 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../progress_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../progress_demo.rs"));
         });
 }
 

@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 use bevy_material_ui::{
     loading_indicator::{LoadingIndicatorBuilder, ShapeMorphMaterial, SpawnLoadingIndicatorChild},
-    telemetry::TelemetryPlugin,
-    theme::MaterialTheme,
-    MaterialUiPlugin,
+    prelude::*,
 };
 
 fn main() {
@@ -27,119 +25,90 @@ fn setup(
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(40.0),
+            row_gap: Val::Px(16.0),
             ..default()
         })
         .with_children(|parent| {
-            // Title
-            parent.spawn((
-                Text::new("Material Design 3 Loading Indicators"),
-                TextFont {
-                    font_size: 32.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-
-            // Container for loading indicators
             parent
                 .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(60.0),
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(16.0),
+                    width: Val::Percent(100.0),
+                    max_width: Val::Px(420.0),
+                    margin: UiRect::vertical(Val::Px(8.0)),
                     ..default()
                 })
-                .with_children(|parent| {
-                    // Standard loading indicator
-                    parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(16.0),
+                .with_children(|col| {
+                    // Default
+                    col.spawn((
+                        Text::new("Loading indicator"),
+                        TextFont {
+                            font_size: 14.0,
                             ..default()
-                        })
-                        .with_children(|parent| {
-                            parent.spawn((
-                                Text::new("Standard"),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface_variant),
-                            ));
-                            parent.spawn_loading_indicator(&theme, &mut materials);
-                        });
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+                    col.spawn_loading_indicator(&theme, &mut materials);
 
-                    // Multi-color loading indicator
-                    parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(16.0),
+                    // Contained
+                    col.spawn((
+                        Text::new("Loading indicator with container"),
+                        TextFont {
+                            font_size: 14.0,
                             ..default()
-                        })
-                        .with_children(|parent| {
-                            parent.spawn((
-                                Text::new("Multi-Color"),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface_variant),
-                            ));
-                            parent.spawn_loading_indicator_with(
-                                &theme,
-                                &mut materials,
-                                LoadingIndicatorBuilder::new().multi_color(),
-                            );
-                        });
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+                    col.spawn_loading_indicator_with(
+                        &theme,
+                        &mut materials,
+                        LoadingIndicatorBuilder::new().contained(),
+                    );
 
-                    // Larger size
-                    parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(16.0),
+                    // Multi-color
+                    col.spawn((
+                        Text::new("Loading indicator with multiple colors"),
+                        TextFont {
+                            font_size: 14.0,
                             ..default()
-                        })
-                        .with_children(|parent| {
-                            parent.spawn((
-                                Text::new("Large (72px)"),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface_variant),
-                            ));
-                            parent.spawn_loading_indicator_with(
-                                &theme,
-                                &mut materials,
-                                LoadingIndicatorBuilder::new().size(72.0),
-                            );
-                        });
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+                    col.spawn_loading_indicator_with(
+                        &theme,
+                        &mut materials,
+                        LoadingIndicatorBuilder::new().multi_color(),
+                    );
 
-                    // Faster animation
-                    parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(16.0),
+                    // Small
+                    col.spawn((
+                        Text::new("Small loading indicator"),
+                        TextFont {
+                            font_size: 14.0,
                             ..default()
-                        })
-                        .with_children(|parent| {
-                            parent.spawn((
-                                Text::new("Fast (2x speed)"),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(theme.on_surface_variant),
-                            ));
-                            parent.spawn_loading_indicator_with(
-                                &theme,
-                                &mut materials,
-                                LoadingIndicatorBuilder::new().speed(2.0),
-                            );
-                        });
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+                    col.spawn_loading_indicator_with(
+                        &theme,
+                        &mut materials,
+                        LoadingIndicatorBuilder::new().size(36.0),
+                    );
+
+                    // Large + fast
+                    col.spawn((
+                        Text::new("Large loading indicator (fast)"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface_variant),
+                    ));
+                    col.spawn_loading_indicator_with(
+                        &theme,
+                        &mut materials,
+                        LoadingIndicatorBuilder::new().size(64.0).speed(2.0),
+                    );
                 });
         });
 }

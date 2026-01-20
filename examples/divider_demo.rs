@@ -33,14 +33,15 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .insert_test_id("divider_demo/root", &telemetry)
         .with_children(|root| {
             root.spawn((Node {
-                width: Val::Px(420.0),
+                width: Val::Percent(100.0),
+                max_width: Val::Px(400.0),
                 flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(12.0),
+                row_gap: Val::Px(16.0),
                 ..default()
             },))
                 .with_children(|col| {
                     col.spawn((
-                        Text::new("Above"),
+                        Text::new("Content above divider"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
@@ -51,7 +52,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     col.spawn_horizontal_divider(&theme);
 
                     col.spawn((
-                        Text::new("Between"),
+                        Text::new("Content below divider"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
@@ -62,35 +63,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     col.spawn_inset_divider(&theme);
 
                     col.spawn((
-                        Text::new("Below"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(theme.on_surface),
-                    ));
-                });
-
-            root.spawn((Node {
-                flex_direction: FlexDirection::Row,
-                column_gap: Val::Px(12.0),
-                align_items: AlignItems::Center,
-                ..default()
-            },))
-                .with_children(|row| {
-                    row.spawn((
-                        Text::new("Left"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(theme.on_surface),
-                    ));
-
-                    row.spawn_vertical_divider(&theme);
-
-                    row.spawn((
-                        Text::new("Right"),
+                        Text::new("After inset divider"),
                         TextFont {
                             font_size: 14.0,
                             ..default()

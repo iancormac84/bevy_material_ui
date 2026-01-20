@@ -17,6 +17,7 @@ use bevy::asset::AssetPlugin;
 #[cfg(feature = "bevy_full")]
 use bevy::asset::RenderAssetUsages;
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
+use bevy::ecs::system::SystemParam;
 use bevy::input::{keyboard::KeyCode, ButtonInput};
 #[cfg(feature = "bevy_full")]
 use bevy::mesh::{Indices, PrimitiveTopology};
@@ -37,6 +38,7 @@ use views::*;
 pub use common::ComponentSection;
 pub use tab_state::TabStateCache;
 
+use bevy_material_ui::icon_button::IconButtonClickEvent;
 use bevy_material_ui::list::MaterialListItem;
 
 #[cfg(feature = "bevy_full")]
@@ -76,6 +78,27 @@ struct SettingsDialogOkButton;
 #[derive(Resource, Default)]
 struct PresentModeSettings {
     auto_no_vsync: bool,
+}
+
+#[derive(SystemParam)]
+struct SetupUiParams<'w, 's> {
+    theme: Res<'w, MaterialTheme>,
+    windows: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+    selected: Res<'w, SelectedSection>,
+    tab_cache: Res<'w, TabStateCache>,
+    theme_selection: Res<'w, ShowcaseThemeSelection>,
+    materials: ResMut<'w, Assets<ShapeMorphMaterial>>,
+    lists_state: Res<'w, views::lists::ListsViewState>,
+}
+
+#[derive(Clone)]
+struct ShowcaseUiBuildContext<'a> {
+    theme: &'a MaterialTheme,
+    selected: ComponentSection,
+    icon_font: Handle<Font>,
+    tab_cache: &'a TabStateCache,
+    seed_argb: u32,
+    lists_state: &'a views::lists::ListsViewState,
 }
 
 #[derive(Resource)]
@@ -174,6 +197,7 @@ pub fn run() {
                 handle_nav_clicks,
                 update_nav_highlights,
                 update_detail_content,
+                code_block_copy_system,
                 views::lists::handle_list_virtualize_toggle,
                 progress_demo_animate_system,
                 demo_click_log_system,
@@ -316,8 +340,10 @@ fn translations_rescan_files_system(
         *timer = Timer::from_seconds(1.0, TimerMode::Repeating);
     }
 
-    // Only scan on a slow cadence unless we just created/saved a file.
-    let should_scan = state.needs_rescan || timer.tick(time.delta()).just_finished();
+    // Scan immediately on startup (so the dropdown isn't empty for the first second),
+    // then on a slow cadence unless we just created/saved a file.
+    let should_scan =
+        state.needs_rescan || state.entries.is_empty() || timer.tick(time.delta()).just_finished();
     if !should_scan {
         return;
     }
@@ -359,13 +385,14 @@ fn translations_rescan_files_system(
 }
 
 fn translations_populate_select_options_system(
-    state: Res<TranslationsDemoState>,
+    mut state: ResMut<TranslationsDemoState>,
     mut assets: ResMut<TranslationsDemoAssets>,
     asset_server: Res<AssetServer>,
     mut selects: Query<(
         &mut MaterialSelect,
         &bevy_material_ui::select::SelectLocalization,
     )>,
+    language: Res<MaterialLanguage>,
 ) {
     // Keep handles alive so the i18n ingest system sees newly created files.
     for entry in state.entries.iter() {
@@ -387,10 +414,31 @@ fn translations_populate_select_options_system(
 
     let mut options = Vec::with_capacity(state.entries.len());
     for entry in state.entries.iter() {
-        options.push(SelectOption::new(entry.file_name.clone()).value(entry.asset_path.clone()));
+        options.push(SelectOption::new(entry.language_tag.clone()).value(entry.asset_path.clone()));
     }
 
-    select.options = options;
+    // Avoid forcing Changed<MaterialSelect> every frame when the file list is stable.
+    let options_changed = select.options.len() != options.len()
+        || select
+            .options
+            .iter()
+            .zip(options.iter())
+            .any(|(a, b)| a.label != b.label || a.value.as_deref() != b.value.as_deref());
+
+    if options_changed {
+        select.options = options;
+    }
+
+    // If nothing is selected yet, default to the currently active language tag (when available).
+    if state.selected_asset_path.is_none() {
+        if let Some(entry) = state
+            .entries
+            .iter()
+            .find(|e| e.language_tag == language.tag)
+        {
+            state.selected_asset_path = Some(entry.asset_path.clone());
+        }
+    }
 
     // Keep selection stable.
     if let Some(selected) = state.selected_asset_path.as_deref() {
@@ -1994,16 +2042,16 @@ fn write_telemetry(telemetry: Res<ComponentTelemetry>) {
     }
 }
 
-fn setup_ui(
-    mut commands: Commands,
-    theme: Res<MaterialTheme>,
-    windows: Query<&Window, With<PrimaryWindow>>,
-    selected: Res<SelectedSection>,
-    tab_cache: Res<TabStateCache>,
-    theme_selection: Res<ShowcaseThemeSelection>,
-    mut materials: ResMut<Assets<ShapeMorphMaterial>>,
-    lists_state: Res<views::lists::ListsViewState>,
-) {
+fn setup_ui(mut commands: Commands, params: SetupUiParams) {
+    let SetupUiParams {
+        theme,
+        windows,
+        selected,
+        tab_cache,
+        theme_selection,
+        mut materials,
+        lists_state,
+    } = params;
     // UI camera (renders over the 3d scene)
     commands.spawn((
         Camera2d,
@@ -2258,16 +2306,16 @@ fn setup_ui(
         });
     }
 
-    spawn_ui_root(
-        &mut commands,
-        &theme,
-        selected.current,
+    let ui_ctx = ShowcaseUiBuildContext {
+        theme: &theme,
+        selected: selected.current,
         icon_font,
-        &tab_cache,
-        theme_selection.seed_argb,
-        &mut materials,
-        &lists_state,
-    );
+        tab_cache: &tab_cache,
+        seed_argb: theme_selection.seed_argb,
+        lists_state: &lists_state,
+    };
+
+    spawn_ui_root(&mut commands, &ui_ctx, &mut materials);
 }
 
 fn settings_button_click_system(
@@ -2340,14 +2388,10 @@ fn settings_dialog_ok_close_system(
 
 fn spawn_ui_root(
     commands: &mut Commands,
-    theme: &MaterialTheme,
-    selected: ComponentSection,
-    icon_font: Handle<Font>,
-    tab_cache: &TabStateCache,
-    seed_argb: u32,
+    ctx: &ShowcaseUiBuildContext,
     materials: &mut Assets<ShapeMorphMaterial>,
-    lists_state: &views::lists::ListsViewState,
 ) {
+    let theme = ctx.theme;
     commands
         .spawn((
             UiRoot,
@@ -2403,7 +2447,7 @@ fn spawn_ui_root(
                         })
                         .with_children(|nav| {
                             for section in ComponentSection::all() {
-                                spawn_nav_item(nav, theme, *section, *section == selected);
+                                spawn_nav_item(nav, theme, *section, *section == ctx.selected);
                             }
                             // Scrollbars spawn automatically
                         });
@@ -2422,16 +2466,7 @@ fn spawn_ui_root(
                             BackgroundColor(theme.surface),
                         ))
                         .with_children(|detail| {
-                            spawn_detail_scroller(
-                                detail,
-                                theme,
-                                selected,
-                                icon_font,
-                                tab_cache,
-                                seed_argb,
-                                materials,
-                                lists_state,
-                            );
+                            spawn_detail_scroller(detail, materials, ctx);
                         });
                 },
             );
@@ -2440,14 +2475,10 @@ fn spawn_ui_root(
 
 fn spawn_detail_scroller(
     parent: &mut ChildSpawnerCommands,
-    theme: &MaterialTheme,
-    selected: ComponentSection,
-    icon_font: Handle<Font>,
-    tab_cache: &TabStateCache,
-    seed_argb: u32,
     materials: &mut Assets<ShapeMorphMaterial>,
-    lists_state: &views::lists::ListsViewState,
+    ctx: &ShowcaseUiBuildContext,
 ) {
+    let theme = ctx.theme;
     parent
         .spawn((
             MainContentScroll,
@@ -2457,7 +2488,6 @@ fn spawn_detail_scroller(
             Node {
                 flex_grow: 1.0,
                 width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
                 // Important for scroll containers inside flex parents
                 min_height: Val::Px(0.0),
                 flex_direction: FlexDirection::Column,
@@ -2487,16 +2517,7 @@ fn spawn_detail_scroller(
                     BorderRadius::all(Val::Px(16.0)),
                 ))
                 .with_children(|surface| {
-                    spawn_selected_section(
-                        surface,
-                        theme,
-                        selected,
-                        icon_font,
-                        tab_cache,
-                        seed_argb,
-                        materials,
-                        lists_state,
-                    );
+                    spawn_selected_section(surface, materials, ctx);
                 });
 
             // Scrollbars spawn automatically via ScrollPlugin's ensure_scrollbars_system
@@ -2807,16 +2828,16 @@ fn rebuild_ui_on_theme_change_system(
         commands.entity(root).despawn();
     }
 
-    spawn_ui_root(
-        &mut commands,
-        &theme,
-        selected.current,
-        Handle::<Font>::default(),
-        &tab_cache,
-        theme_selection.seed_argb,
-        &mut materials,
-        &lists_state,
-    );
+    let ui_ctx = ShowcaseUiBuildContext {
+        theme: &theme,
+        selected: selected.current,
+        icon_font: Handle::<Font>::default(),
+        tab_cache: &tab_cache,
+        seed_argb: theme_selection.seed_argb,
+        lists_state: &lists_state,
+    };
+
+    spawn_ui_root(&mut commands, &ui_ctx, &mut materials);
 }
 
 fn snackbar_demo_options_system(
@@ -3035,30 +3056,19 @@ fn dialog_demo_apply_position_system(
     let show_button = show_buttons.iter().next();
 
     let (anchor, placement) = match options.position {
-        DialogPosition::CenterWindow => (
-            ui_root,
-            MaterialDialogPlacement::CenterInAnchor,
-        ),
+        DialogPosition::CenterWindow => (ui_root, MaterialDialogPlacement::CenterInAnchor),
         DialogPosition::CenterParent => (
             dialogs_section_root,
             MaterialDialogPlacement::CenterInAnchor,
         ),
-        DialogPosition::BelowTrigger => (
-            show_button,
-            MaterialDialogPlacement::below_anchor(12.0),
-        ),
-        DialogPosition::AboveTrigger => (
-            show_button,
-            MaterialDialogPlacement::above_anchor(12.0),
-        ),
-        DialogPosition::RightOfTrigger => (
-            show_button,
-            MaterialDialogPlacement::right_of_anchor(12.0),
-        ),
-        DialogPosition::LeftOfTrigger => (
-            show_button,
-            MaterialDialogPlacement::left_of_anchor(12.0),
-        ),
+        DialogPosition::BelowTrigger => (show_button, MaterialDialogPlacement::below_anchor(12.0)),
+        DialogPosition::AboveTrigger => (show_button, MaterialDialogPlacement::above_anchor(12.0)),
+        DialogPosition::RightOfTrigger => {
+            (show_button, MaterialDialogPlacement::right_of_anchor(12.0))
+        }
+        DialogPosition::LeftOfTrigger => {
+            (show_button, MaterialDialogPlacement::left_of_anchor(12.0))
+        }
     };
 
     for dialog in dialogs.iter() {
@@ -3162,61 +3172,63 @@ fn update_detail_content(
 
     let section = selected.current;
     commands.entity(detail_entity).with_children(|detail| {
-        spawn_detail_scroller(
-            detail,
-            &theme,
-            section,
-            Handle::<Font>::default(),
-            &tab_cache,
-            theme_selection.seed_argb,
-            &mut materials,
-            &lists_state,
-        );
+        let ui_ctx = ShowcaseUiBuildContext {
+            theme: &theme,
+            selected: section,
+            icon_font: Handle::<Font>::default(),
+            tab_cache: &tab_cache,
+            seed_argb: theme_selection.seed_argb,
+            lists_state: &lists_state,
+        };
+
+        spawn_detail_scroller(detail, &mut materials, &ui_ctx);
     });
 }
 
 fn spawn_selected_section(
     parent: &mut ChildSpawnerCommands,
-    theme: &MaterialTheme,
-    section: ComponentSection,
-    icon_font: Handle<Font>,
-    tab_cache: &TabStateCache,
-    seed_argb: u32,
     materials: &mut Assets<ShapeMorphMaterial>,
-    lists_state: &views::lists::ListsViewState,
+    ctx: &ShowcaseUiBuildContext,
 ) {
-    match section {
+    let theme = ctx.theme;
+    match ctx.selected {
         ComponentSection::Buttons => spawn_buttons_section(parent, theme),
-        ComponentSection::Checkboxes => spawn_checkboxes_section(parent, theme, Some(icon_font)),
+        ComponentSection::Checkboxes => {
+            spawn_checkboxes_section(parent, theme, Some(ctx.icon_font.clone()))
+        }
         ComponentSection::Switches => spawn_switches_section(parent, theme),
         ComponentSection::RadioButtons => spawn_radios_section(parent, theme),
-        ComponentSection::Chips => spawn_chips_section(parent, theme, icon_font),
-        ComponentSection::Fab => spawn_fab_section(parent, theme, icon_font),
-        ComponentSection::Badges => spawn_badges_section(parent, theme, icon_font),
+        ComponentSection::Chips => spawn_chips_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Fab => spawn_fab_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Badges => spawn_badges_section(parent, theme, ctx.icon_font.clone()),
         ComponentSection::Progress => spawn_progress_section(parent, theme),
         ComponentSection::Cards => spawn_cards_section(parent, theme),
         ComponentSection::Dividers => spawn_dividers_section(parent, theme),
-        ComponentSection::Lists => spawn_list_section(parent, theme, icon_font, lists_state),
-        ComponentSection::Icons => spawn_icons_section(parent, theme, icon_font),
-        ComponentSection::IconButtons => spawn_icon_buttons_section(parent, theme, icon_font),
+        ComponentSection::Lists => {
+            spawn_list_section(parent, theme, ctx.icon_font.clone(), ctx.lists_state)
+        }
+        ComponentSection::Icons => spawn_icons_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::IconButtons => {
+            spawn_icon_buttons_section(parent, theme, ctx.icon_font.clone())
+        }
         ComponentSection::Sliders => spawn_sliders_section(parent, theme),
         ComponentSection::TextFields => spawn_text_fields_section(parent, theme),
         ComponentSection::Dialogs => spawn_dialogs_section(parent, theme),
         ComponentSection::DatePicker => spawn_date_picker_section(parent, theme),
         ComponentSection::TimePicker => spawn_time_picker_section(parent, theme),
-        ComponentSection::Menus => spawn_menus_section(parent, theme, icon_font),
-        ComponentSection::Tabs => spawn_tabs_section(parent, theme, tab_cache),
-        ComponentSection::Select => spawn_select_section(parent, theme, icon_font),
-        ComponentSection::Snackbar => spawn_snackbar_section(parent, theme, icon_font),
-        ComponentSection::Tooltips => spawn_tooltip_section(parent, theme, icon_font),
-        ComponentSection::AppBar => spawn_app_bar_section(parent, theme, icon_font),
-        ComponentSection::Toolbar => spawn_toolbar_section(parent, theme, icon_font),
-        ComponentSection::Layouts => spawn_layouts_section(parent, theme, icon_font),
+        ComponentSection::Menus => spawn_menus_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Tabs => spawn_tabs_section(parent, theme, ctx.tab_cache),
+        ComponentSection::Select => spawn_select_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Snackbar => spawn_snackbar_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Tooltips => spawn_tooltip_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::AppBar => spawn_app_bar_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Toolbar => spawn_toolbar_section(parent, theme, ctx.icon_font.clone()),
+        ComponentSection::Layouts => spawn_layouts_section(parent, theme, ctx.icon_font.clone()),
         ComponentSection::LoadingIndicator => {
             spawn_loading_indicator_section(parent, theme, materials)
         }
         ComponentSection::Search => spawn_search_section(parent, theme),
-        ComponentSection::ThemeColors => spawn_theme_section(parent, theme, seed_argb),
+        ComponentSection::ThemeColors => spawn_theme_section(parent, theme, ctx.seed_argb),
         ComponentSection::Translations => spawn_translations_section(parent, theme),
     }
 }
@@ -3378,10 +3390,13 @@ fn create_d10_mesh() -> Mesh {
         );
     }
 
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::RENDER_WORLD)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
-        .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
-        .with_inserted_indices(Indices::U32(indices))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD,
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, positions)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normals)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 #[cfg(feature = "bevy_full")]

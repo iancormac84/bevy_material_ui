@@ -38,10 +38,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ))
         .insert_test_id("select_demo/root", &telemetry)
         .with_children(|root| {
-                // Use enough options to demonstrate a scrollable dropdown.
-                let options = (1..=40)
-                    .map(|i| SelectOption::new(format!("Option {i}")))
-                    .collect::<Vec<_>>();
+            // Use enough options to demonstrate a scrollable dropdown.
+            let options = (1..=40)
+                .map(|i| SelectOption::new(format!("Option {i}")))
+                .collect::<Vec<_>>();
 
             root.spawn((
                 Text::new("Select"),

@@ -380,8 +380,6 @@ impl LoadingIndicatorBuilder {
             },
             BackgroundColor(bg),
             BorderRadius::all(Val::Px(size / 2.0)),
-            Transform::default(),
-            GlobalTransform::default(),
         )
     }
 }

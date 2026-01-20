@@ -170,10 +170,6 @@ pub fn spawn_app_bar_section(
                     });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../app_bar_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../app_bar_demo.rs"));
         });
 }

@@ -4,7 +4,31 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::app_bar::spawn_top_app_bar_with_right_content;
+use bevy_material_ui::icons::{ICON_ADD, ICON_CHECK, ICON_CLOSE, ICON_MENU, ICON_SEARCH};
 use bevy_material_ui::prelude::*;
+use bevy_material_ui::text_field::{spawn_text_field_control, InputType};
+
+fn spawn_standard_icon_button(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    icon_name: &str,
+) {
+    let icon_btn =
+        MaterialIconButton::new(icon_name.to_string()).with_variant(IconButtonVariant::Standard);
+    let icon_color = icon_btn.icon_color(theme);
+
+    parent
+        .spawn(
+            IconButtonBuilder::new(icon_name.to_string())
+                .standard()
+                .build(theme),
+        )
+        .with_children(|btn| {
+            if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(icon_name) {
+                btn.spawn(icon.with_size(24.0).with_color(icon_color));
+            }
+        });
+}
 
 fn main() {
     App::new()
@@ -32,16 +56,49 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .insert_test_id("app_bar_demo/root", &telemetry)
         .id();
 
-    // Top app bar
+    // Header label
+    commands.entity(root_id).with_children(|root| {
+        root.spawn((
+            Text::new("Top App Bar (Small)"),
+            TextFont {
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(theme.on_surface),
+            Node {
+                margin: UiRect::top(Val::Px(16.0)),
+                ..default()
+            },
+        ));
+    });
+
+    // Top app bar with right-side search field slot.
     let top = spawn_top_app_bar_with_right_content(
         &mut commands,
         &theme,
         TopAppBarBuilder::new("Page Title")
             .small()
             .with_navigation("menu")
-            .add_action("search", "search")
             .add_action("more_vert", "more"),
-        |_right| {},
+        |right| {
+            right
+                .spawn(Node {
+                    width: Val::Px(240.0),
+                    ..default()
+                })
+                .with_children(|slot| {
+                    spawn_text_field_control(
+                        slot,
+                        &theme,
+                        TextFieldBuilder::new()
+                            .label("Search")
+                            .placeholder("Search")
+                            .input_type(InputType::Text)
+                            .outlined()
+                            .width(Val::Percent(100.0)),
+                    );
+                });
+        },
     );
 
     commands
@@ -49,56 +106,74 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .insert_test_id("app_bar_demo/top", &telemetry);
     commands.entity(root_id).add_child(top);
 
-    // Spacer
-    let spacer = commands
-        .spawn(Node {
-            height: Val::Px(16.0),
-            ..default()
-        })
-        .id();
-    commands.entity(root_id).add_child(spacer);
-
-    // Main body content
-    let body = commands
-        .spawn((
-            Node {
-                flex_grow: 1.0,
-                width: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(theme.surface),
-        ))
-        .insert_test_id("app_bar_demo/body", &telemetry)
-        .id();
-
-    let body_text = commands
-        .spawn((
-            Text::new("Top + Bottom App Bars"),
+    // Bottom section
+    commands.entity(root_id).with_children(|root| {
+        root.spawn((
+            Text::new("Bottom App Bar"),
             TextFont {
-                font_size: 16.0,
+                font_size: 14.0,
                 ..default()
             },
             TextColor(theme.on_surface),
+            Node {
+                margin: UiRect::top(Val::Px(32.0)),
+                ..default()
+            },
+        ));
+
+        // Bottom app bar preview
+        root.spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(80.0),
+                padding: UiRect::horizontal(Val::Px(16.0)),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            BackgroundColor(theme.surface_container),
         ))
-        .id();
-
-    commands.entity(body).add_child(body_text);
-    commands.entity(root_id).add_child(body);
-
-    // Bottom app bar (absolute positioned at bottom)
-    let bottom = commands
-        .spawn(
-            BottomAppBarBuilder::new()
-                .add_action("home", "home")
-                .add_action("favorite", "favorite")
-                .with_fab("add")
-                .elevated()
-                .build(&theme),
-        )
         .insert_test_id("app_bar_demo/bottom", &telemetry)
-        .id();
+        .with_children(|bar| {
+            // Left actions
+            bar.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(8.0),
+                ..default()
+            })
+            .with_children(|actions| {
+                for icon_name in [ICON_MENU, ICON_SEARCH, ICON_CHECK, ICON_CLOSE] {
+                    spawn_standard_icon_button(actions, &theme, icon_name);
+                }
+            });
 
-    commands.entity(root_id).add_child(bottom);
+            // FAB preview
+            {
+                let fab_btn = MaterialFab::new(ICON_ADD.to_string()).with_size(FabSize::Regular);
+                let bg_color = fab_btn.background_color(&theme);
+                let icon_color = fab_btn.content_color(&theme);
+
+                bar.spawn((
+                    fab_btn,
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        width: Val::Px(56.0),
+                        height: Val::Px(56.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(bg_color),
+                    BorderRadius::all(Val::Px(16.0)),
+                ))
+                .with_children(|btn| {
+                    if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(ICON_ADD) {
+                        btn.spawn(icon.with_size(24.0).with_color(icon_color));
+                    }
+                });
+            }
+        });
+    });
 }

@@ -485,11 +485,7 @@ pub fn spawn_theme_section(
                         });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../theme_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../theme_demo.rs"));
         });
 }
 

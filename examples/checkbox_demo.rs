@@ -27,50 +27,55 @@ fn setup(
 ) {
     commands.spawn(Camera2d);
 
-    commands
+    let root_entity = commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::FlexStart,
                 align_items: AlignItems::Center,
                 row_gap: Val::Px(16.0),
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
         .insert_test_id("checkbox_demo/root", &telemetry)
-        .with_children(|root| {
-            root.spawn((
-                Text::new("Checkboxes"),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-        });
+        .id();
+
+    let section_entity = commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                max_width: Val::Px(560.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
+                ..default()
+            },
+            ChildOf(root_entity),
+        ))
+        .id();
 
     // Spawn checkboxes as separate rows so we can attach stable IDs.
+    // Match the showcase: three options, with option 1 checked.
     let checkbox_defs = [
-        ("unchecked", CheckboxState::Unchecked, "Unchecked"),
-        ("checked", CheckboxState::Checked, "Checked"),
-        (
-            "indeterminate",
-            CheckboxState::Indeterminate,
-            "Indeterminate",
-        ),
+        ("option_1", CheckboxState::Checked, "Option 1"),
+        ("option_2", CheckboxState::Unchecked, "Option 2"),
+        ("option_3", CheckboxState::Unchecked, "Option 3"),
     ];
 
     // A simple column for the checkboxes.
     let column = commands
-        .spawn(Node {
-            width: Val::Px(360.0),
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(12.0),
-            ..default()
-        })
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(8.0),
+                margin: UiRect::vertical(Val::Px(8.0)),
+                ..default()
+            },
+            ChildOf(section_entity),
+        ))
         .insert_test_id("checkbox_demo/column", &telemetry)
         .id();
 

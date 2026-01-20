@@ -25,17 +25,16 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                column_gap: Val::Px(24.0),
+                column_gap: Val::Px(16.0),
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
         .insert_test_id("fab_demo/root", &telemetry)
         .with_children(|root| {
-            root.spawn_fab(&theme, "add", FabSize::Regular);
-
-            root.spawn_small_fab(&theme, "edit");
-
+            root.spawn_small_fab(&theme, "add");
+            root.spawn_regular_fab(&theme, "add");
+            root.spawn_large_fab(&theme, "add");
             root.spawn_extended_fab(&theme, "add", "Create");
         });
 }

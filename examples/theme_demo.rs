@@ -29,7 +29,11 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, mut theme: ResMut<MaterialTheme>, telemetry: Res<TelemetryConfig>) {
+fn setup(
+    mut commands: Commands,
+    mut theme: ResMut<MaterialTheme>,
+    telemetry: Res<TelemetryConfig>,
+) {
     // Pick a seed so the demo is visually distinctive.
     *theme = MaterialTheme::from_seed(Color::srgb_u8(0x67, 0x50, 0xA4), ThemeMode::Dark);
 
@@ -59,19 +63,23 @@ fn setup(mut commands: Commands, mut theme: ResMut<MaterialTheme>, telemetry: Re
                 TextColor(theme.on_surface_variant),
             ));
 
-            root.spawn(MaterialButtonBuilder::new("A Themed Button").filled().build(&theme))
-                .insert_test_id("theme_demo/button", &telemetry)
-                .with_children(|b| {
-                    b.spawn((
-                        ButtonLabel,
-                        Text::new("A Themed Button"),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(theme.on_primary),
-                    ));
-                });
+            root.spawn(
+                MaterialButtonBuilder::new("A Themed Button")
+                    .filled()
+                    .build(&theme),
+            )
+            .insert_test_id("theme_demo/button", &telemetry)
+            .with_children(|b| {
+                b.spawn((
+                    ButtonLabel,
+                    Text::new("A Themed Button"),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_primary),
+                ));
+            });
         });
 }
 

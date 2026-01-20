@@ -86,10 +86,6 @@ pub fn spawn_toolbar_section(
                     spawn_standard_icon_button(toolbar, theme, ICON_MORE_VERT);
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../toolbar_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../toolbar_demo.rs"));
         });
 }

@@ -22,41 +22,55 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Row,
+                flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                column_gap: Val::Px(24.0),
-                padding: UiRect::all(Val::Px(48.0)),
+                row_gap: Val::Px(16.0),
+                padding: UiRect::all(Val::Px(24.0)),
                 ..default()
             },
             BackgroundColor(theme.surface),
         ))
         .insert_test_id("card_demo/root", &telemetry)
         .with_children(|root| {
-            let cards = [
-                ("elevated", CardBuilder::new().elevated()),
-                ("filled", CardBuilder::new().filled()),
-                ("outlined", CardBuilder::new().outlined()),
-            ];
+            root.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(16.0),
+                flex_wrap: FlexWrap::Wrap,
+                ..default()
+            })
+            .with_children(|row| {
+                let cards = [
+                    ("elevated", "Elevated", CardBuilder::new().elevated()),
+                    ("filled", "Filled", CardBuilder::new().filled()),
+                    ("outlined", "Outlined", CardBuilder::new().outlined()),
+                ];
 
-            for (id, builder) in cards {
-                root.spawn(
-                    builder
-                        .width(Val::Px(220.0))
-                        .height(Val::Px(140.0))
-                        .build(&theme),
-                )
-                .insert_test_id(format!("card_demo/card/{id}"), &telemetry)
-                .with_children(|card| {
-                    card.spawn((
-                        Text::new(format!("{id} card")),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(theme.on_surface),
-                    ));
-                });
-            }
+                for (id, title, builder) in cards {
+                    row.spawn((
+                        Interaction::None,
+                        builder.width(Val::Px(160.0)).padding(16.0).build(&theme),
+                    ))
+                    .insert_test_id(format!("card_demo/card/{id}"), &telemetry)
+                    .with_children(|card| {
+                        card.spawn((
+                            Text::new(title),
+                            TextFont {
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface),
+                        ));
+                        card.spawn((
+                            Text::new("Card content goes here with supporting text."),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(theme.on_surface_variant),
+                        ));
+                    });
+                }
+            });
         });
 }

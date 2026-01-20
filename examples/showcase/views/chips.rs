@@ -43,10 +43,6 @@ pub fn spawn_chips_section(
                     spawn_chip_i18n(row, theme, "showcase.chips.action", "Action", false);
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../chip_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../chip_demo.rs"));
         });
 }

@@ -63,10 +63,6 @@ pub fn spawn_checkboxes_section(
                     );
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../checkbox_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../checkbox_demo.rs"));
         });
 }

@@ -34,22 +34,37 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         ))
         .insert_test_id("search_demo/root", &telemetry)
         .with_children(|root| {
-            root.spawn((
-                Text::new("Search Bars"),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-
             root.spawn(Node {
-                width: Val::Px(560.0),
+                width: Val::Percent(100.0),
+                max_width: Val::Px(560.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(16.0),
+                margin: UiRect::vertical(Val::Px(8.0)),
                 ..default()
             })
             .with_children(|col| {
+                col.spawn((
+                    Text::new("Default search bar"),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_surface_variant),
+                ));
                 col.spawn_search_bar(&theme, "Search...");
 
+                col.spawn((
+                    Text::new("With navigation icon"),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_surface_variant),
+                    Node {
+                        margin: UiRect::top(Val::Px(16.0)),
+                        ..default()
+                    },
+                ));
                 col.spawn_search_bar_with(
                     &theme,
                     SearchBarBuilder::new("Search...").with_navigation(
@@ -57,6 +72,18 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     ),
                 );
 
+                col.spawn((
+                    Text::new("With search text"),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_surface_variant),
+                    Node {
+                        margin: UiRect::top(Val::Px(16.0)),
+                        ..default()
+                    },
+                ));
                 col.spawn_search_bar_with(
                     &theme,
                     SearchBarBuilder::new("Search...")

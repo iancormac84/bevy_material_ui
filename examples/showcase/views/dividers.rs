@@ -76,10 +76,6 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                     ));
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../divider_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../divider_demo.rs"));
         });
 }

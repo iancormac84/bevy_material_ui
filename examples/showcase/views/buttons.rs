@@ -159,11 +159,7 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../button_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../button_demo.rs"));
         });
 }
 

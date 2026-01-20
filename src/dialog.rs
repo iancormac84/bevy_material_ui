@@ -5,11 +5,11 @@
 //!
 //! Reference: <https://m3.material.io/components/dialogs/overview>
 
+use bevy::ecs::system::ParamSet;
 use bevy::picking::Pickable;
 use bevy::prelude::*;
 use bevy::ui::BoxShadow;
 use bevy::ui::FocusPolicy;
-use bevy::ecs::system::ParamSet;
 
 use crate::{
     elevation::Elevation,
@@ -184,11 +184,10 @@ fn dialog_promote_to_overlay_system(
     for (dialog_entity, parent, dialog) in added_dialogs.iter() {
         // Anchor placement to the caller-provided anchor if available.
         // Otherwise: use original parent if present, else fall back to the overlay.
-        let anchor = existing_anchors.get(dialog_entity).map(|a| a.0).unwrap_or_else(|_| {
-            parent
-                .map(|p| p.parent())
-                .unwrap_or(overlay)
-        });
+        let anchor = existing_anchors
+            .get(dialog_entity)
+            .map(|a| a.0)
+            .unwrap_or_else(|_| parent.map(|p| p.parent()).unwrap_or(overlay));
 
         // Ensure we always have a stable anchor available after promotion (ChildOf changes).
         commands

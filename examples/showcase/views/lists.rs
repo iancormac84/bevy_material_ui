@@ -493,11 +493,7 @@ pub fn spawn_list_section(
                     });
                 });
 
-            spawn_code_block(
-                section,
-                &theme_clone,
-                include_str!("../../list_demo.rs"),
-            );
+            spawn_code_block(section, &theme_clone, include_str!("../../list_demo.rs"));
         });
 }
 
@@ -514,7 +510,9 @@ fn spawn_large_list_demo(
                 .supporting_text("Supporting text")
                 .leading_icon(ICON_EMAIL)
         } else {
-            ListItemBuilder::new(format!("Item {i}")).one_line().leading_icon(ICON_EMAIL)
+            ListItemBuilder::new(format!("Item {i}"))
+                .one_line()
+                .leading_icon(ICON_EMAIL)
         };
         items.push(builder);
     }
@@ -550,11 +548,7 @@ fn spawn_large_list_demo(
         ))
         .with_children(|list| {
             for builder in items {
-                list.spawn((
-                    SelectableListItem,
-                    builder.build(theme),
-                    Interaction::None,
-                ));
+                list.spawn((SelectableListItem, builder.build(theme), Interaction::None));
             }
         });
 }
@@ -592,7 +586,11 @@ pub(crate) fn handle_list_virtualize_toggle(
     }
 }
 
-fn clear_children_recursive_local(commands: &mut Commands, children_q: &Query<&Children>, entity: Entity) {
+fn clear_children_recursive_local(
+    commands: &mut Commands,
+    children_q: &Query<&Children>,
+    entity: Entity,
+) {
     let Ok(children) = children_q.get(entity) else {
         return;
     };

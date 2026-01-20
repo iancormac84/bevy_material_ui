@@ -98,10 +98,6 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     );
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../search_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../search_demo.rs"));
         });
 }

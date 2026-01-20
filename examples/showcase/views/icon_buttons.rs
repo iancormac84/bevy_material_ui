@@ -64,11 +64,7 @@ pub fn spawn_icon_buttons_section(
                     );
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../icon_button_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../icon_button_demo.rs"));
         });
 }
 

@@ -79,10 +79,6 @@ pub fn spawn_text_fields_section(parent: &mut ChildSpawnerCommands, theme: &Mate
                     );
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../textfield_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../textfield_demo.rs"));
         });
 }

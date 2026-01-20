@@ -76,10 +76,6 @@ pub fn spawn_time_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
                     ));
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../time_picker_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../time_picker_demo.rs"));
         });
 }

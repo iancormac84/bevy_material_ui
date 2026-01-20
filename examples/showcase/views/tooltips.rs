@@ -193,10 +193,6 @@ pub fn spawn_tooltip_section(
                     ));
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../tooltip_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../tooltip_demo.rs"));
         });
 }

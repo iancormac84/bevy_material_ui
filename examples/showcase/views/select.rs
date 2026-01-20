@@ -42,9 +42,7 @@ pub fn spawn_select_section(
 
             // Use enough items to demonstrate a scrollable dropdown with a max height.
             let many_options = (1..=40)
-                .map(|i| {
-                    SelectOption::new(format!("Option {i}")).value(format!("option_{i}"))
-                })
+                .map(|i| SelectOption::new(format!("Option {i}")).value(format!("option_{i}")))
                 .collect::<Vec<_>>();
 
             section
@@ -127,10 +125,6 @@ pub fn spawn_select_section(
                     });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../select_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../select_demo.rs"));
         });
 }

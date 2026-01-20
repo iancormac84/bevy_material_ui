@@ -19,20 +19,24 @@ fn main() {
     let asset_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
 
     App::new()
-        .add_plugins(
-            DefaultPlugins.set(AssetPlugin {
-                file_path: asset_root.to_string_lossy().to_string(),
-                ..default()
-            }),
-        )
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            file_path: asset_root.to_string_lossy().to_string(),
+            ..default()
+        }))
         .add_plugins(MaterialUiPlugin)
         // Pick a known language so LocalizedText updates are deterministic.
         .insert_resource(MaterialLanguage {
             tag: "en-US".to_string(),
         })
         .add_systems(Startup, (load_showcase_i18n_assets, setup_ui))
-        .add_systems(Update, toggle_language_system)
+        .add_systems(Update, (toggle_language_system, touch_i18n_handles_system))
         .run();
+}
+
+fn touch_i18n_handles_system(handles: Res<ShowcaseI18nHandles>) {
+    // Touch the handles so Rust doesn't warn about the field being unused.
+    // Keeping this resource alive ensures translations stay loaded.
+    let _ = handles.0.len();
 }
 
 fn load_showcase_i18n_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -124,35 +128,33 @@ fn setup_ui(mut commands: Commands, theme: Res<MaterialTheme>) {
             ))
             .with_children(|list| {
                 for i in 1..=40 {
-                    list.spawn((
-                        Node {
-                            width: Val::Percent(100.0),
-                            padding: UiRect::vertical(Val::Px(6.0)),
-                            ..default()
-                        },
-                    ))
-                    .with_children(|row| {
-                        row.spawn((
-                            Text::new(format!("Row {i}: ")),
-                            TextFont {
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(theme.on_surface),
-                        ));
+                    list.spawn((Node {
+                        width: Val::Percent(100.0),
+                        padding: UiRect::vertical(Val::Px(6.0)),
+                        ..default()
+                    },))
+                        .with_children(|row| {
+                            row.spawn((
+                                Text::new(format!("Row {i}: ")),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(theme.on_surface),
+                            ));
 
-                        // Some localized strings to validate runtime translation updates.
-                        row.spawn((
-                            Text::new(""),
-                            LocalizedText::new("showcase.common.result_prefix")
-                                .with_default("Result:"),
-                            TextFont {
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(theme.on_surface_variant),
-                        ));
-                    });
+                            // Some localized strings to validate runtime translation updates.
+                            row.spawn((
+                                Text::new(""),
+                                LocalizedText::new("showcase.common.result_prefix")
+                                    .with_default("Result:"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(theme.on_surface_variant),
+                            ));
+                        });
                 }
             });
         });

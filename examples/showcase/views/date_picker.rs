@@ -75,10 +75,6 @@ pub fn spawn_date_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
                     ));
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../date_picker_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../date_picker_demo.rs"));
         });
 }

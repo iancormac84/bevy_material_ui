@@ -2,6 +2,8 @@
 
 use bevy::prelude::*;
 use bevy::text::{Justify, LineBreak, TextLayout};
+use bevy::ui::{OverflowAxis, ScrollPosition};
+use bevy_material_ui::icon_button::IconButtonClickEvent;
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::theme::ThemeMode;
 use std::collections::HashMap;
@@ -481,37 +483,156 @@ pub struct ListSelectionModeOption(pub bevy_material_ui::list::ListSelectionMode
 // Helper Functions
 // ============================================================================
 
+#[derive(Component)]
+pub struct CodeBlockSnippet(pub String);
+
+#[derive(Component)]
+pub struct CodeBlockCopyButton(pub Entity);
+
+#[cfg(feature = "clipboard")]
+pub fn try_copy_to_clipboard(text: &str) -> Result<(), String> {
+    let mut clipboard = arboard::Clipboard::new().map_err(|e| e.to_string())?;
+    clipboard
+        .set_text(text.to_string())
+        .map_err(|e| e.to_string())
+}
+
+#[cfg(not(feature = "clipboard"))]
+pub fn try_copy_to_clipboard(_text: &str) -> Result<(), String> {
+    Err("Clipboard support is disabled. Run with `--features clipboard`.".to_string())
+}
+
+pub fn code_block_copy_system(
+    mut click_events: MessageReader<IconButtonClickEvent>,
+    buttons: Query<&CodeBlockCopyButton>,
+    snippets: Query<&CodeBlockSnippet>,
+    mut telemetry: ResMut<ComponentTelemetry>,
+) {
+    for ev in click_events.read() {
+        let Ok(target) = buttons.get(ev.entity) else {
+            continue;
+        };
+
+        let Ok(snippet) = snippets.get(target.0) else {
+            telemetry.log_event("Showcase: failed to copy code block (missing snippet)");
+            continue;
+        };
+
+        match try_copy_to_clipboard(&snippet.0) {
+            Ok(()) => {
+                telemetry.log_event("Showcase: copied code block to clipboard");
+                info!("Copied code block to clipboard");
+            }
+            Err(err) => {
+                telemetry.log_event("Showcase: failed to copy code block");
+                warn!("Failed to copy code block to clipboard: {err}");
+            }
+        }
+    }
+}
+
 /// Spawn a code block with syntax highlighting style
 pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, code: &str) {
-    parent
-        .spawn((
-            Node {
+    let mut block_commands = parent.spawn((
+        CodeBlockSnippet(code.to_owned()),
+        Node {
+            width: Val::Percent(100.0),
+            padding: UiRect::all(Val::Px(16.0)),
+            margin: UiRect::top(Val::Px(8.0)),
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(8.0),
+            ..default()
+        },
+        BackgroundColor(theme.surface_container.with_alpha(0.8)),
+        BorderRadius::all(Val::Px(8.0)),
+    ));
+    let block_entity = block_commands.id();
+
+    block_commands.with_children(|block| {
+        // Header row: label + copy button (stays visible while code scrolls)
+        block
+            .spawn((Node {
                 width: Val::Percent(100.0),
-                padding: UiRect::all(Val::Px(16.0)),
-                margin: UiRect::top(Val::Px(8.0)),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::FlexStart,
+                align_items: AlignItems::Center,
+                column_gap: Val::Px(8.0),
                 ..default()
-            },
-            BackgroundColor(theme.surface_container.with_alpha(0.8)),
-            BorderRadius::all(Val::Px(8.0)),
-        ))
-        .with_children(|block| {
-            block.spawn((
-                Text::new(code),
-                TextFont {
-                    font_size: 12.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface.with_alpha(0.87)),
-                // Prevent long lines from forcing the whole page to be wider than the viewport.
-                // This keeps the *page* horizontal scrollbar from appearing unless some other
-                // component truly overflows horizontally.
-                TextLayout::new(Justify::Left, LineBreak::WordOrCharacter),
+            },))
+            .with_children(|header| {
+                let disabled = !cfg!(feature = "clipboard");
+                let mut button_style = MaterialIconButton::new("content_copy");
+                button_style.variant = IconButtonVariant::FilledTonal;
+                button_style.disabled = disabled;
+                let icon_color = button_style.icon_color(theme);
+
+                header
+                    .spawn((
+                        CodeBlockCopyButton(block_entity),
+                        IconButtonBuilder::new("content_copy")
+                            .filled_tonal()
+                            .disabled(disabled)
+                            .build(theme),
+                        Interaction::None,
+                    ))
+                    .with_children(|btn| {
+                        if let Some(icon) = MaterialIcon::from_name("content_copy")
+                            .or_else(|| MaterialIcon::from_name("copy"))
+                            .or_else(|| MaterialIcon::from_name("content_paste"))
+                        {
+                            btn.spawn(
+                                icon.with_size(bevy_material_ui::icon_button::ICON_SIZE)
+                                    .with_color(icon_color),
+                            );
+                        }
+                    });
+
+                header.spawn((
+                    Text::new("Copy"),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_surface_variant),
+                ));
+            });
+
+        // Code content: allow horizontal scrolling for long lines, but don't add a
+        // per-block vertical scrollbar (let the main page scroll instead).
+        block
+            .spawn((
+                ScrollContainerBuilder::new()
+                    .horizontal()
+                    .with_scrollbars(false)
+                    .build(),
+                ScrollPosition::default(),
                 Node {
                     width: Val::Percent(100.0),
+                    overflow: Overflow {
+                        x: OverflowAxis::Scroll,
+                        y: OverflowAxis::Visible,
+                    },
                     ..default()
                 },
-            ));
-        });
+            ))
+            .with_children(|scroller| {
+                scroller.spawn((
+                    Text::new(code),
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
+                    TextColor(theme.on_surface.with_alpha(0.87)),
+                    // Prefer horizontal scrolling for long code lines inside the code block.
+                    TextLayout::new(Justify::Left, LineBreak::NoWrap),
+                    Node {
+                        // Allow the text to define its own width so horizontal scrolling can kick in.
+                        min_width: Val::Px(0.0),
+                        ..default()
+                    },
+                ));
+            });
+    });
 }
 
 /// Spawn a section header with title and description

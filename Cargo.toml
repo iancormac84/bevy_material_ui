@@ -104,35 +104,180 @@ required-features = ["bevy_minimal"]
 [[example]]
 name = "button_demo"
 path = "examples/button_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "button_group_demo"
+path = "examples/button_group_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "badge_demo"
+path = "examples/badge_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "app_bar_demo"
+path = "examples/app_bar_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "slider_demo"
 path = "examples/slider_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "switch_demo"
 path = "examples/switch_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "textfield_demo"
 path = "examples/textfield_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "card_demo"
 path = "examples/card_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "chip_demo"
+path = "examples/chip_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "checkbox_demo"
+path = "examples/checkbox_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "radio_demo"
+path = "examples/radio_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "progress_demo"
+path = "examples/progress_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "list_demo"
 path = "examples/list_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "icons_demo"
 path = "examples/icons_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "icon_button_demo"
+path = "examples/icon_button_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "all_icon_buttons"
 path = "examples/all_icon_buttons.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "divider_demo"
+path = "examples/divider_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "fab_demo"
+path = "examples/fab_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "dialog_demo"
+path = "examples/dialog_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "menu_demo"
+path = "examples/menu_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "select_demo"
+path = "examples/select_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "snackbar_demo"
+path = "examples/snackbar_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "tabs_demo"
+path = "examples/tabs_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "tooltip_demo"
+path = "examples/tooltip_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "toolbar_demo"
+path = "examples/toolbar_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "scroll_demo"
+path = "examples/scroll_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "search_demo"
+path = "examples/search_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "layouts_demo"
+path = "examples/layouts_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "loading_indicator_demo"
+path = "examples/loading_indicator_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "date_picker_demo"
+path = "examples/date_picker_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "time_picker_demo"
+path = "examples/time_picker_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "theme_demo"
+path = "examples/theme_demo.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "translations_demo"
+path = "examples/translations_demo.rs"
+required-features = ["bevy_minimal"]
 
 [[example]]
 name = "palette_tool"
 path = "examples/palette_tool.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "debug_hctsolver"
+path = "examples/debug_hctsolver.rs"
+required-features = ["bevy_minimal"]
+
+[[example]]
+name = "test_green_colors"
+path = "examples/test_green_colors.rs"
+required-features = ["bevy_minimal"]
+

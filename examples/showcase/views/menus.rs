@@ -120,11 +120,7 @@ pub fn spawn_menus_section(
                         });
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../menu_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../menu_demo.rs"));
         });
 }
 

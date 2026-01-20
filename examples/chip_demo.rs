@@ -1,6 +1,6 @@
 //! Chip Demo
 //!
-//! Demonstrates assist, filter, input, and suggestion chips.
+//! Demonstrates filter chips.
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
@@ -35,19 +35,16 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
         .with_children(|root| {
             root.spawn((Node {
                 flex_direction: FlexDirection::Row,
-                column_gap: Val::Px(12.0),
+                column_gap: Val::Px(8.0),
                 flex_wrap: FlexWrap::Wrap,
                 justify_content: JustifyContent::Center,
                 ..default()
             },))
                 .with_children(|row| {
-                    row.spawn_chip_with(&theme, ChipBuilder::assist("Assist"));
-
-                    row.spawn_chip_with(&theme, ChipBuilder::filter("Filter").selected(true));
-
-                    row.spawn_chip_with(&theme, ChipBuilder::input("Input").deletable(true));
-
-                    row.spawn_chip_with(&theme, ChipBuilder::suggestion("Suggestion"));
+                    row.spawn_chip_with(&theme, ChipBuilder::filter("Filter"));
+                    row.spawn_chip_with(&theme, ChipBuilder::filter("Selected").selected(true));
+                    row.spawn_chip_with(&theme, ChipBuilder::filter("Tag"));
+                    row.spawn_chip_with(&theme, ChipBuilder::filter("Action"));
                 });
         });
 }

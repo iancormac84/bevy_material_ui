@@ -43,10 +43,6 @@ pub fn spawn_fab_section(
                     spawn_extended_fab_i18n(row, theme, "add", "showcase.fab.create", "Create");
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../fab_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../fab_demo.rs"));
         });
 }

@@ -504,7 +504,13 @@ fn list_virtualization_system(
     mut commands: Commands,
     theme: Option<Res<MaterialTheme>>,
     lists: Query<
-        (Entity, &MaterialListData, &ListVirtualCache, &ScrollPosition, &ComputedNode),
+        (
+            Entity,
+            &MaterialListData,
+            &ListVirtualCache,
+            &ScrollPosition,
+            &ComputedNode,
+        ),
         With<ScrollableList>,
     >,
     top_spacers: Query<(Entity, &ListVirtualOwner), With<ListVirtualTopSpacer>>,
@@ -560,7 +566,9 @@ fn list_virtualization_system(
         let has_pool = top_spacers.iter().any(|(_, owner)| owner.0 == list_entity);
         if !has_pool {
             let estimated_visible = (viewport_h / cache.min_item_height).ceil().max(1.0) as usize;
-            let pool_size = (estimated_visible + 2 * data.overscan_rows).min(data.items.len()).max(1);
+            let pool_size = (estimated_visible + 2 * data.overscan_rows)
+                .min(data.items.len())
+                .max(1);
 
             commands.entity(list_entity).with_children(|parent| {
                 parent.spawn((

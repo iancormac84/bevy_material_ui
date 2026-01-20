@@ -65,10 +65,6 @@ pub fn spawn_radios_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     );
                 });
 
-            spawn_code_block(
-                section,
-                theme,
-                include_str!("../../radio_demo.rs"),
-            );
+            spawn_code_block(section, theme, include_str!("../../radio_demo.rs"));
         });
 }

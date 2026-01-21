@@ -43,7 +43,7 @@ Build and run the WebGL showcase locally:
 Example commands:
 
 - `rustup target add wasm32-unknown-unknown`
-- `cargo install wasm-bindgen-cli --version 0.2.92`
+- `cargo install wasm-bindgen-cli --version 0.2.106`
 - `cargo build --release --no-default-features --features bevy_minimal,webgl --target wasm32-unknown-unknown --example showcase_minimal`
 - `wasm-bindgen --out-dir web --target web target/wasm32-unknown-unknown/release/examples/showcase_minimal.wasm`
 - Serve the `web/` folder (any static server)

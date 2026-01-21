@@ -4,6 +4,7 @@
 //! Reference: <https://m3.material.io/components/sliders/overview>
 
 use bevy::prelude::*;
+use bevy::input::touch::{TouchInput, TouchPhase, Touches};
 use bevy::ui::UiGlobalTransform;
 
 use std::collections::HashMap;
@@ -43,6 +44,7 @@ impl Plugin for SliderPlugin {
         app.add_message::<SliderChangeEvent>().add_systems(
             Update,
             (
+                touch_slider_interaction_system,
                 slider_interaction_system,
                 slider_visual_update_system.after(slider_interaction_system),
                 slider_theme_refresh_system.after(slider_visual_update_system),
@@ -448,6 +450,55 @@ pub const SLIDER_HANDLE_SIZE_PRESSED: f32 = 24.0;
 pub const SLIDER_TICK_SIZE: f32 = 4.0;
 pub const SLIDER_LABEL_HEIGHT: f32 = 28.0;
 
+#[derive(Default)]
+struct TouchSliderState {
+    active_id: Option<u64>,
+    active_slider: Option<Entity>,
+    use_scaled: bool,
+}
+
+fn pick_slider_entity(
+    sliders: &Query<
+        (
+            Entity,
+            &mut MaterialSlider,
+            &SliderParts,
+            &ComputedNode,
+            &UiGlobalTransform,
+        ),
+        With<MaterialSlider>,
+    >,
+    position: Vec2,
+) -> Option<Entity> {
+    let mut best: Option<(f32, Entity)> = None;
+    for (entity, slider, _parts, computed_node, transform) in sliders.iter() {
+        if slider.disabled {
+            continue;
+        }
+        let size = computed_node.size();
+        if size.x <= 0.0 || size.y <= 0.0 {
+            continue;
+        }
+        let center = transform.translation.trunc();
+        let half = size * 0.5;
+        let min = center - half;
+        let max = center + half;
+        let inside = position.x >= min.x
+            && position.x <= max.x
+            && position.y >= min.y
+            && position.y <= max.y;
+        if !inside {
+            continue;
+        }
+        let area = size.x * size.y;
+        match best {
+            Some((best_area, _)) if area >= best_area => {}
+            _ => best = Some((area, entity)),
+        }
+    }
+    best.map(|(_, entity)| entity)
+}
+
 /// System to handle slider interactions
 fn slider_interaction_system(
     mut interaction_query: Query<
@@ -506,123 +557,347 @@ fn slider_interaction_system(
 
         // Handle dragging
         if slider.dragging {
-            // Prefer mapping cursor position to the actual track geometry rather than the slider
-            // root node. This makes the slider behave correctly even when the rail isn't
-            // perfectly superimposed within the parent layout.
-            let Ok((track_node, track_transform)) = computed.get(parts.track) else {
-                continue;
-            };
+            apply_slider_drag(
+                entity,
+                cursor_physical,
+                slider,
+                parts,
+                computed_node,
+                transform,
+                &computed,
+                &mut change_events,
+                &time,
+                &trace,
+                &mut trace_state,
+            );
+        }
+    }
+}
 
-            let slider_center = transform.translation;
-            let slider_size = computed_node.size();
-            let track_center = track_transform.translation;
-            let track_size = track_node.size();
+fn touch_slider_interaction_system(
+    mut touch_reader: MessageReader<TouchInput>,
+    windows: Query<&Window, With<bevy::window::PrimaryWindow>>,
+    mut sliders: Query<
+        (
+            Entity,
+            &mut MaterialSlider,
+            &SliderParts,
+            &ComputedNode,
+            &UiGlobalTransform,
+        ),
+        With<MaterialSlider>,
+    >,
+    computed: Query<(&ComputedNode, &UiGlobalTransform)>,
+    mut change_events: MessageWriter<SliderChangeEvent>,
+    time: Res<Time>,
+    trace: Res<SliderTraceSettings>,
+    mut trace_state: ResMut<SliderTraceState>,
+    touches: Res<Touches>,
+    mut state: Local<TouchSliderState>,
+) {
+    let Ok(window) = windows.single() else { return };
+    let scale = window.scale_factor();
 
-            // Convert logical style values (thumb radius) to physical pixels for geometry math.
-            // `inverse_scale_factor` is effectively (logical_px / physical_px) for this node.
-            let logical_per_physical = computed_node.inverse_scale_factor;
-            if !logical_per_physical.is_finite() || logical_per_physical <= 0.0 {
-                continue;
-            }
-            let physical_per_logical = 1.0 / logical_per_physical;
+    for touch in touch_reader.read() {
+        let position = touch.position * scale;
 
-            // Layout may not be computed yet (or may be zero during first-frame interactions).
-            if slider_size.x <= 0.0
-                || slider_size.y <= 0.0
-                || track_size.x <= 0.0
-                || track_size.y <= 0.0
-            {
-                continue;
-            }
-
-            // Keep the cursor->value mapping consistent with the thumb not being allowed to
-            // overlap past the ends of the slider.
-            let handle_radius_physical = slider.thumb_radius.max(0.0) * physical_per_logical;
-
-            let slider_left = slider_center.x - slider_size.x / 2.0;
-            let slider_top = slider_center.y - slider_size.y / 2.0;
-            let slider_right = slider_left + slider_size.x;
-            let slider_bottom = slider_top + slider_size.y;
-
-            let track_left = track_center.x - track_size.x / 2.0;
-            let track_top = track_center.y - track_size.y / 2.0;
-            let track_right = track_left + track_size.x;
-            let track_bottom = track_top + track_size.y;
-
-            // Constrain the usable drag range to both:
-            // - the track extents, inset by the thumb radius
-            // - the slider root extents, inset by the thumb radius (keeps thumb clickable)
-            let usable_left =
-                (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
-            let usable_right =
-                (track_right - handle_radius_physical).min(slider_right - handle_radius_physical);
-            let usable_top =
-                (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
-            let usable_bottom =
-                (track_bottom - handle_radius_physical).min(slider_bottom - handle_radius_physical);
-
-            let position_percent = match slider.orientation {
-                SliderOrientation::Horizontal => {
-                    let span = usable_right - usable_left;
-                    if span <= 0.0 {
-                        continue;
-                    }
-                    let x = cursor_physical.x.clamp(usable_left, usable_right);
-                    let p = ((x - usable_left) / span).clamp(0.0, 1.0);
-                    if !p.is_finite() {
-                        continue;
-                    }
-                    p
+        match touch.phase {
+            TouchPhase::Started => {
+                let mut picked = pick_slider_entity(&sliders, position);
+                let mut use_scaled = true;
+                if picked.is_none() {
+                    picked = pick_slider_entity(&sliders, touch.position);
+                    use_scaled = false;
                 }
-                SliderOrientation::Vertical => {
-                    let span = usable_bottom - usable_top;
-                    if span <= 0.0 {
-                        continue;
+
+                if let Some(entity) = picked {
+                    if let Ok((_entity, mut slider, parts, computed_node, transform)) =
+                        sliders.get_mut(entity)
+                    {
+                        slider.dragging = true;
+                        slider.hovered = false;
+                        state.active_id = Some(touch.id);
+                        state.active_slider = Some(entity);
+                        state.use_scaled = use_scaled;
+                        let drag_pos = if use_scaled { position } else { touch.position };
+                        apply_slider_drag(
+                            entity,
+                            drag_pos,
+                            &mut slider,
+                            parts,
+                            computed_node,
+                            transform,
+                            &computed,
+                            &mut change_events,
+                            &time,
+                            &trace,
+                            &mut trace_state,
+                        );
                     }
-                    let y = cursor_physical.y.clamp(usable_top, usable_bottom);
-                    let p = ((y - usable_top) / span).clamp(0.0, 1.0);
-                    if !p.is_finite() {
-                        continue;
-                    }
-                    p
                 }
-            };
-
-            // Convert visual position into normalized value (min..max), respecting direction.
-            let normalized = match slider.direction {
-                SliderDirection::StartToEnd => position_percent,
-                SliderDirection::EndToStart => 1.0 - position_percent,
-            };
-            if !normalized.is_finite() {
-                continue;
             }
-
-            let old_value = slider.value;
-            slider.set_from_normalized(normalized);
-
-            if slider_trace_should_log(entity, time.elapsed_secs(), &trace, &mut trace_state) {
-                info!(
-                    target: "bevy_material_ui::slider",
-                    "drag entity={:?} cursor_phys={:?} slider_size_phys={:?} track_size_phys={:?} handle_r_phys={:.2} pos={:.3} norm={:.3} value={:.3}->{:.3}",
+            TouchPhase::Moved => {
+                if state.active_id != Some(touch.id) {
+                    continue;
+                }
+                let Some(entity) = state.active_slider else {
+                    continue;
+                };
+                let Ok((_entity, mut slider, parts, computed_node, transform)) =
+                    sliders.get_mut(entity)
+                else {
+                    continue;
+                };
+                if slider.disabled {
+                    continue;
+                }
+                slider.dragging = true;
+                slider.hovered = false;
+                let drag_pos = if state.use_scaled {
+                    position
+                } else {
+                    touch.position
+                };
+                apply_slider_drag(
                     entity,
-                    cursor_physical,
-                    slider_size,
-                    track_size,
-                    handle_radius_physical,
-                    position_percent,
-                    normalized,
-                    old_value,
-                    slider.value
+                    drag_pos,
+                    &mut slider,
+                    parts,
+                    computed_node,
+                    transform,
+                    &computed,
+                    &mut change_events,
+                    &time,
+                    &trace,
+                    &mut trace_state,
                 );
             }
-
-            if (slider.value - old_value).abs() > f32::EPSILON {
-                change_events.write(SliderChangeEvent {
-                    entity,
-                    value: slider.value,
-                });
+            TouchPhase::Ended | TouchPhase::Canceled => {
+                if state.active_id == Some(touch.id) {
+                    if let Some(entity) = state.active_slider {
+                        if let Ok((_entity, mut slider, _parts, _node, _transform)) =
+                            sliders.get_mut(entity)
+                        {
+                            slider.dragging = false;
+                            slider.hovered = false;
+                        }
+                    }
+                    state.active_id = None;
+                    state.active_slider = None;
+                    state.use_scaled = true;
+                }
             }
         }
+    }
+
+    // Fallback path: use the `Touches` resource in case touch events are missing.
+    if state.active_id.is_none() {
+        if let Some(touch) = touches.iter_just_pressed().next() {
+            let scaled = touch.position() * scale;
+            let mut picked = None;
+            let mut use_scaled = true;
+
+            picked = pick_slider_entity(&sliders, scaled);
+            if picked.is_none() {
+                picked = pick_slider_entity(&sliders, touch.position());
+                use_scaled = false;
+            }
+
+            if let Some(entity) = picked {
+                if let Ok((_entity, mut slider, parts, computed_node, transform)) =
+                    sliders.get_mut(entity)
+                {
+                    slider.dragging = true;
+                    slider.hovered = false;
+                    state.active_id = Some(touch.id());
+                    state.active_slider = Some(entity);
+                    state.use_scaled = use_scaled;
+                    let drag_pos = if use_scaled { scaled } else { touch.position() };
+                    apply_slider_drag(
+                        entity,
+                        drag_pos,
+                        &mut slider,
+                        parts,
+                        computed_node,
+                        transform,
+                        &computed,
+                        &mut change_events,
+                        &time,
+                        &trace,
+                        &mut trace_state,
+                    );
+                }
+            }
+        }
+    }
+
+    if let (Some(active_id), Some(entity)) = (state.active_id, state.active_slider) {
+        if let Some(touch) = touches.get_pressed(active_id) {
+            let scaled = touch.position() * scale;
+            let drag_pos = if state.use_scaled { scaled } else { touch.position() };
+            if let Ok((_entity, mut slider, parts, computed_node, transform)) =
+                sliders.get_mut(entity)
+            {
+                if !slider.disabled {
+                    slider.dragging = true;
+                    slider.hovered = false;
+                    apply_slider_drag(
+                        entity,
+                        drag_pos,
+                        &mut slider,
+                        parts,
+                        computed_node,
+                        transform,
+                        &computed,
+                        &mut change_events,
+                        &time,
+                        &trace,
+                        &mut trace_state,
+                    );
+                }
+            }
+        }
+
+        if touches.just_released(active_id) || touches.just_canceled(active_id) {
+            if let Ok((_entity, mut slider, _parts, _node, _transform)) = sliders.get_mut(entity) {
+                slider.dragging = false;
+                slider.hovered = false;
+            }
+            state.active_id = None;
+            state.active_slider = None;
+            state.use_scaled = true;
+        }
+    }
+}
+
+fn apply_slider_drag(
+    entity: Entity,
+    cursor_physical: Vec2,
+    slider: &mut MaterialSlider,
+    parts: &SliderParts,
+    computed_node: &ComputedNode,
+    transform: &UiGlobalTransform,
+    computed: &Query<(&ComputedNode, &UiGlobalTransform)>,
+    change_events: &mut MessageWriter<SliderChangeEvent>,
+    time: &Time,
+    trace: &SliderTraceSettings,
+    trace_state: &mut SliderTraceState,
+) {
+    // Prefer mapping cursor position to the actual track geometry rather than the slider
+    // root node. This makes the slider behave correctly even when the rail isn't
+    // perfectly superimposed within the parent layout.
+    let Ok((track_node, track_transform)) = computed.get(parts.track) else {
+        return;
+    };
+
+    let slider_center = transform.translation;
+    let slider_size = computed_node.size();
+    let track_center = track_transform.translation;
+    let track_size = track_node.size();
+
+    // Convert logical style values (thumb radius) to physical pixels for geometry math.
+    // `inverse_scale_factor` is effectively (logical_px / physical_px) for this node.
+    let logical_per_physical = computed_node.inverse_scale_factor;
+    if !logical_per_physical.is_finite() || logical_per_physical <= 0.0 {
+        return;
+    }
+    let physical_per_logical = 1.0 / logical_per_physical;
+
+    // Layout may not be computed yet (or may be zero during first-frame interactions).
+    if slider_size.x <= 0.0
+        || slider_size.y <= 0.0
+        || track_size.x <= 0.0
+        || track_size.y <= 0.0
+    {
+        return;
+    }
+
+    // Keep the cursor->value mapping consistent with the thumb not being allowed to
+    // overlap past the ends of the slider.
+    let handle_radius_physical = slider.thumb_radius.max(0.0) * physical_per_logical;
+
+    let slider_left = slider_center.x - slider_size.x / 2.0;
+    let slider_top = slider_center.y - slider_size.y / 2.0;
+    let slider_right = slider_left + slider_size.x;
+    let slider_bottom = slider_top + slider_size.y;
+
+    let track_left = track_center.x - track_size.x / 2.0;
+    let track_top = track_center.y - track_size.y / 2.0;
+    let track_right = track_left + track_size.x;
+    let track_bottom = track_top + track_size.y;
+
+    // Constrain the usable drag range to both:
+    // - the track extents, inset by the thumb radius
+    // - the slider root extents, inset by the thumb radius (keeps thumb clickable)
+    let usable_left =
+        (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
+    let usable_right =
+        (track_right - handle_radius_physical).min(slider_right - handle_radius_physical);
+    let usable_top =
+        (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
+    let usable_bottom =
+        (track_bottom - handle_radius_physical).min(slider_bottom - handle_radius_physical);
+
+    let position_percent = match slider.orientation {
+        SliderOrientation::Horizontal => {
+            let span = usable_right - usable_left;
+            if span <= 0.0 {
+                return;
+            }
+            let x = cursor_physical.x.clamp(usable_left, usable_right);
+            let p = ((x - usable_left) / span).clamp(0.0, 1.0);
+            if !p.is_finite() {
+                return;
+            }
+            p
+        }
+        SliderOrientation::Vertical => {
+            let span = usable_bottom - usable_top;
+            if span <= 0.0 {
+                return;
+            }
+            let y = cursor_physical.y.clamp(usable_top, usable_bottom);
+            let p = ((y - usable_top) / span).clamp(0.0, 1.0);
+            if !p.is_finite() {
+                return;
+            }
+            p
+        }
+    };
+
+    // Convert visual position into normalized value (min..max), respecting direction.
+    let normalized = match slider.direction {
+        SliderDirection::StartToEnd => position_percent,
+        SliderDirection::EndToStart => 1.0 - position_percent,
+    };
+    if !normalized.is_finite() {
+        return;
+    }
+
+    let old_value = slider.value;
+    slider.set_from_normalized(normalized);
+
+    if slider_trace_should_log(entity, time.elapsed_secs(), trace, trace_state) {
+        info!(
+            target: "bevy_material_ui::slider",
+            "drag entity={:?} cursor_phys={:?} slider_size_phys={:?} track_size_phys={:?} handle_r_phys={:.2} pos={:.3} norm={:.3} value={:.3}->{:.3}",
+            entity,
+            cursor_physical,
+            slider_size,
+            track_size,
+            handle_radius_physical,
+            position_percent,
+            normalized,
+            old_value,
+            slider.value
+        );
+    }
+
+    if (slider.value - old_value).abs() > f32::EPSILON {
+        change_events.write(SliderChangeEvent {
+            entity,
+            value: slider.value,
+        });
     }
 }
 

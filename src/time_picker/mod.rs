@@ -1829,6 +1829,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 .value(hour_value)
                                 .outlined()
                                 .input_type(InputType::Number)
+                                .auto_focus(true)
                                 .width(Val::Px(96.0)),
                             TimePickerHourField { picker: entity },
                         );

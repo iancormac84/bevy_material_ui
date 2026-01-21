@@ -633,17 +633,25 @@ fn date_picker_month_nav_system(
         }
 
         if let Ok(mut picker) = pickers.get_mut(nav.picker) {
-            if picker.open && picker.input_mode == DateInputMode::Calendar && !picker.showing_years
-            {
-                picker.display_month = picker.display_month.add_months(nav.delta);
+            if !picker.open {
+                continue;
+            }
 
-                // Clamp to constraints
-                if picker.display_month < picker.constraints.start {
-                    picker.display_month = picker.constraints.start;
-                }
-                if picker.display_month > picker.constraints.end {
-                    picker.display_month = picker.constraints.end;
-                }
+            // Allow changing the tracked month even while in text-input mode.
+            // This keeps the user in the current view (calendar vs input) while updating
+            // the header month/year (and the calendar view if/when they switch back).
+            if picker.showing_years {
+                continue;
+            }
+
+            picker.display_month = picker.display_month.add_months(nav.delta);
+
+            // Clamp to constraints
+            if picker.display_month < picker.constraints.start {
+                picker.display_month = picker.constraints.start;
+            }
+            if picker.display_month > picker.constraints.end {
+                picker.display_month = picker.constraints.end;
             }
         }
     }
@@ -659,9 +667,17 @@ fn date_picker_year_selector_toggle_system(
         }
 
         if let Ok(mut picker) = pickers.get_mut(toggle.picker) {
-            if picker.open && picker.input_mode == DateInputMode::Calendar {
-                picker.showing_years = !picker.showing_years;
+            if !picker.open {
+                continue;
             }
+
+            // Same behavior as Android: interacting with calendar chrome while in
+            // input mode returns to the calendar.
+            if picker.input_mode != DateInputMode::Calendar {
+                picker.input_mode = DateInputMode::Calendar;
+            }
+
+            picker.showing_years = !picker.showing_years;
         }
     }
 }
@@ -2111,6 +2127,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 TextFieldBuilder::new()
                                     .outlined()
                                     .width(Val::Percent(100.0))
+                                    .auto_focus(true)
                                     .date_pattern(default_pattern)
                                     .value(date_text)
                                     .supporting_text(format!(
@@ -2147,6 +2164,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                             .label("Start")
                                             .outlined()
                                             .width(Val::Percent(50.0))
+                                            .auto_focus(true)
                                             .date_pattern(default_pattern)
                                             .value(start_text)
                                             .supporting_text(default_pattern.hint()),

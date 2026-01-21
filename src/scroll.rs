@@ -31,6 +31,7 @@
 //! ```
 
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::input::touch::{TouchId, TouchInput, TouchPhase};
 use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
 use bevy::window::PrimaryWindow;
@@ -131,6 +132,7 @@ impl Plugin for ScrollPlugin {
                 assign_scrollbar_test_ids_system,
                 sync_scroll_state_system,
                 sync_scroll_content_padding_system,
+                touch_drag_scroll_system,
                 mouse_wheel_scroll_system,
                 scrollbar_thumb_drag_system,
                 sync_scroll_position_to_content_system,
@@ -138,6 +140,117 @@ impl Plugin for ScrollPlugin {
             )
                 .chain(),
         );
+    }
+}
+
+#[derive(Default)]
+struct TouchScrollState {
+    active_id: Option<TouchId>,
+    container: Option<Entity>,
+    last_pos: Option<Vec2>,
+}
+
+fn touch_drag_scroll_system(
+    mut touch_reader: EventReader<TouchInput>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    container_nodes: Query<(Entity, &ComputedNode, &UiGlobalTransform), With<ScrollContainer>>,
+    mut scrollable_query: Query<(&mut ScrollPosition, &ScrollContainer), With<ScrollContainer>>,
+    mut state: Local<TouchScrollState>,
+) {
+    let Ok(window) = windows.single() else {
+        return;
+    };
+
+    let scale = window.scale_factor();
+
+    for touch in touch_reader.read() {
+        let position = touch.position * scale;
+
+        match touch.phase {
+            TouchPhase::Started => {
+                // Pick the most specific scroll container under the touch.
+                let mut best: Option<(f32, Entity)> = None;
+                for (entity, computed, transform) in container_nodes.iter() {
+                    let size = computed.size();
+                    if size.x <= 0.0 || size.y <= 0.0 {
+                        continue;
+                    }
+
+                    let center = transform.translation.trunc();
+                    let half = size * 0.5;
+                    let min = center - half;
+                    let max = center + half;
+
+                    let inside = position.x >= min.x
+                        && position.x <= max.x
+                        && position.y >= min.y
+                        && position.y <= max.y;
+                    if !inside {
+                        continue;
+                    }
+
+                    let area = size.x * size.y;
+                    match best {
+                        Some((best_area, _)) if area >= best_area => {}
+                        _ => best = Some((area, entity)),
+                    }
+                }
+
+                if let Some((_, container)) = best {
+                    state.active_id = Some(touch.id);
+                    state.container = Some(container);
+                    state.last_pos = Some(position);
+                }
+            }
+            TouchPhase::Moved => {
+                if state.active_id != Some(touch.id) {
+                    continue;
+                }
+                let Some(container_entity) = state.container else {
+                    continue;
+                };
+                let Some(last_pos) = state.last_pos else {
+                    state.last_pos = Some(position);
+                    continue;
+                };
+
+                let delta = last_pos - position;
+                state.last_pos = Some(position);
+
+                if let Ok((mut scroll_position, container)) =
+                    scrollable_query.get_mut(container_entity)
+                {
+                    let max_offset = container.max_offset;
+
+                    if matches!(
+                        container.direction,
+                        ScrollDirection::Vertical | ScrollDirection::Both
+                    ) && max_offset.y > 0.0
+                        && delta.y != 0.0
+                    {
+                        scroll_position.y =
+                            (scroll_position.y + delta.y).clamp(0.0, max_offset.y);
+                    }
+
+                    if matches!(
+                        container.direction,
+                        ScrollDirection::Horizontal | ScrollDirection::Both
+                    ) && max_offset.x > 0.0
+                        && delta.x != 0.0
+                    {
+                        scroll_position.x =
+                            (scroll_position.x + delta.x).clamp(0.0, max_offset.x);
+                    }
+                }
+            }
+            TouchPhase::Ended | TouchPhase::Canceled => {
+                if state.active_id == Some(touch.id) {
+                    state.active_id = None;
+                    state.container = None;
+                    state.last_pos = None;
+                }
+            }
+        }
     }
 }
 

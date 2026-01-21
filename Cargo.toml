@@ -69,6 +69,9 @@ bevy_full = ["bevy/default"]
 # Use with `--no-default-features --features bevy_minimal`.
 bevy_minimal = []
 
+# Enables Bevy WebGL2 support for wasm builds.
+webgl = ["bevy/webgl2"]
+
 # Enables copy/paste support in `MaterialTextField` via the `arboard` crate.
 clipboard = ["dep:arboard"]
 

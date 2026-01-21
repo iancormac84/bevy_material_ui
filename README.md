@@ -7,6 +7,8 @@
 [![Benchmarks](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/edgarhsanchez/bevy_material_ui/v0.2.5/benchmarks/results/badge.json)](benchmarks/results/README.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+[Live WebGL Showcase](https://edgarhsanchez.github.io/bevy_material_ui/)
+
 [![Bevy Material UI demo video](https://img.youtube.com/vi/l7PdTGuuqLU/hqdefault.jpg)](https://youtu.be/l7PdTGuuqLU)
 
 A Material Design 3 UI library for Bevy.
@@ -33,6 +35,7 @@ bevy_material_ui = "0.1"
 - **Theming**: Dynamic color system with light/dark mode support
 - **Animations**: Motion system following MD3 guidelines
 - **Accessibility**: Proper touch targets and focus handling
+- **Web Showcase**: WebGL/WASM demo hosted on GitHub Pages
 
 ## Icons
 

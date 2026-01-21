@@ -40,6 +40,7 @@ pub fn spawn_toolbar_section(
                         column_gap: Val::Px(Spacing::MEDIUM),
                         ..default()
                     },
+                    TestId::new("toolbar_example"),
                     BackgroundColor(theme.surface),
                 ))
                 .with_children(|toolbar| {

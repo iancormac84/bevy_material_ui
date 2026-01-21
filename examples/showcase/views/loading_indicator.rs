@@ -52,7 +52,10 @@ pub fn spawn_loading_indicator_section(
                         TextColor(theme.on_surface_variant),
                         NeedsInternationalFont,
                     ));
-                    col.spawn_loading_indicator(theme, materials);
+                    col.spawn((Node::default(), TestId::new("loading_indicator_default")))
+                        .with_children(|node| {
+                            node.spawn_loading_indicator(theme, materials);
+                        });
 
                     // Contained (with container background)
                     col.spawn((

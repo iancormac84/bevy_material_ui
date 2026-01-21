@@ -61,6 +61,7 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                     margin: UiRect::vertical(Val::Px(8.0)),
                     ..default()
                 })
+                .insert(TestId::new("translations_language_select"))
                 .with_children(|row| {
                     row.spawn_select_with(
                         theme,

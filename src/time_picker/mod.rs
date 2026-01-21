@@ -13,6 +13,7 @@ use crate::icons::material_icon_names;
 use crate::text_field::{
     spawn_text_field_control_with, InputType, MaterialTextField, TextFieldBuilder,
 };
+use crate::telemetry::TestId;
 use crate::theme::MaterialTheme;
 use crate::tokens::{CornerRadius, Spacing};
 use bevy::ui::UiTransform;
@@ -1337,6 +1338,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                         row.spawn((
                             Button,
                             TimePickerModeToggle { picker: entity },
+                            TestId::new("time_picker_mode_toggle"),
                             Interaction::None,
                             Node {
                                 width: Val::Px(40.0),
@@ -1390,6 +1392,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     picker: entity,
                                     mode: TimeSelectionMode::Hour,
                                 },
+                                TestId::new("time_picker_chip_hour"),
                                 Interaction::None,
                                 Node {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
@@ -1428,6 +1431,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     picker: entity,
                                     mode: TimeSelectionMode::Minute,
                                 },
+                                TestId::new("time_picker_chip_minute"),
                                 Interaction::None,
                                 Node {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
@@ -1633,6 +1637,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: inner_hour,
                                                 format: Some(TimeFormat::H24),
                                             },
+                                            TestId::new(format!("time_picker_clock_hour_{}", inner_hour)),
                                             Interaction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
@@ -1674,6 +1679,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: outer_hour,
                                                 format: Some(TimeFormat::H24),
                                             },
+                                            TestId::new(format!("time_picker_clock_hour_{}", outer_hour)),
                                             Interaction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
@@ -1720,6 +1726,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: minute,
                                                 format: None,
                                             },
+                                            TestId::new(format!("time_picker_clock_minute_{}", minute)),
                                             Interaction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
@@ -1862,6 +1869,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 picker: entity,
                                 is_confirm: false,
                             },
+                            TestId::new("time_picker_cancel"),
                             Interaction::None,
                             Text::new("Cancel"),
                             TextFont {
@@ -1881,6 +1889,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 picker: entity,
                                 is_confirm: true,
                             },
+                            TestId::new("time_picker_confirm"),
                             Interaction::None,
                             Text::new("OK"),
                             TextFont {

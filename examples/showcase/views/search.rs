@@ -47,7 +47,10 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                         TextColor(theme.on_surface_variant),
                         NeedsInternationalFont,
                     ));
-                    col.spawn_search_bar(theme, "Search...");
+                    col.spawn((Node::default(), TestId::new("search_bar_default")))
+                        .with_children(|container| {
+                            container.spawn_search_bar(theme, "Search...");
+                        });
 
                     // Search bar with navigation
                     col.spawn((

@@ -18,6 +18,7 @@ use crate::text_field::{
     spawn_text_field_control_with, MaterialTextField, TextFieldBuilder, TextFieldChangeEvent,
     TextFieldFormatter,
 };
+use crate::telemetry::TestId;
 use crate::theme::MaterialTheme;
 use crate::tokens::{CornerRadius, Spacing};
 
@@ -938,6 +939,7 @@ fn date_picker_rebuild_content_system(
                                                 picker: picker_entity,
                                                 date: Some(date),
                                             },
+                                            TestId::new(format!("date_picker_day_{}", day_number)),
                                             Interaction::None,
                                             Node {
                                                 width: Val::Px(40.0),
@@ -1949,6 +1951,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             .spawn((
                                 Button,
                                 DatePickerModeToggle { picker: entity },
+                                TestId::new("date_picker_mode_toggle"),
                                 Interaction::None,
                                 Node {
                                     width: Val::Px(40.0),
@@ -1993,6 +1996,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     picker: entity,
                                     delta: -1,
                                 },
+                                TestId::new("date_picker_month_prev"),
                                 Interaction::None,
                                 Node {
                                     width: Val::Px(40.0),
@@ -2019,6 +2023,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             .spawn((
                                 Button,
                                 DatePickerYearToggle { picker: entity },
+                                TestId::new("date_picker_year_toggle"),
                                 Interaction::None,
                                 Node {
                                     padding: UiRect::all(Val::Px(Spacing::SMALL)),
@@ -2039,6 +2044,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 .with_children(|row| {
                                     row.spawn((
                                         DatePickerMonthLabel { picker: entity },
+                                        TestId::new("date_picker_month_label"),
                                         Text::new(display_month.display_name()),
                                         TextFont {
                                             font_size: 16.0,
@@ -2069,6 +2075,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     picker: entity,
                                     delta: 1,
                                 },
+                                TestId::new("date_picker_month_next"),
                                 Interaction::None,
                                 Node {
                                     width: Val::Px(40.0),
@@ -2250,6 +2257,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 picker: entity,
                                                 year,
                                             },
+                                            TestId::new(format!("date_picker_year_{}", year)),
                                             Interaction::None,
                                             Node {
                                                 width: Val::Px(90.0),
@@ -2393,6 +2401,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                     picker: entity,
                                                     date: Some(date),
                                                 },
+                                                TestId::new(format!("date_picker_day_{}", day_number)),
                                                 Interaction::None,
                                                 Node {
                                                     width: Val::Px(40.0),
@@ -2448,6 +2457,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 picker: entity,
                                 is_confirm: false,
                             },
+                            TestId::new("date_picker_cancel"),
                             Interaction::None,
                             Text::new("Cancel"),
                             TextFont {
@@ -2467,6 +2477,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 picker: entity,
                                 is_confirm: true,
                             },
+                            TestId::new("date_picker_confirm"),
                             Interaction::None,
                             Text::new("OK"),
                             TextFont {

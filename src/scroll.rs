@@ -31,7 +31,7 @@
 //! ```
 
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
-use bevy::input::touch::{TouchId, TouchInput, TouchPhase};
+use bevy::input::touch::{TouchInput, TouchPhase};
 use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
 use bevy::window::PrimaryWindow;
@@ -145,13 +145,13 @@ impl Plugin for ScrollPlugin {
 
 #[derive(Default)]
 struct TouchScrollState {
-    active_id: Option<TouchId>,
+    active_id: Option<u64>,
     container: Option<Entity>,
     last_pos: Option<Vec2>,
 }
 
 fn touch_drag_scroll_system(
-    mut touch_reader: EventReader<TouchInput>,
+    mut touch_reader: MessageReader<TouchInput>,
     windows: Query<&Window, With<PrimaryWindow>>,
     container_nodes: Query<(Entity, &ComputedNode, &UiGlobalTransform), With<ScrollContainer>>,
     mut scrollable_query: Query<(&mut ScrollPosition, &ScrollContainer), With<ScrollContainer>>,

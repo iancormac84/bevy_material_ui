@@ -7,7 +7,10 @@ use bevy_material_ui::icon_button::IconButtonClickEvent;
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::theme::ThemeMode;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+#[cfg(not(target_arch = "wasm32"))]
 use std::fs::File;
+#[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
 // ============================================================================
@@ -27,8 +30,14 @@ pub struct ComponentTelemetry {
     pub enabled: bool,
 }
 
+static EVENT_COUNTER: AtomicU64 = AtomicU64::new(0);
+
 impl ComponentTelemetry {
     pub fn log_event(&mut self, event: &str) {
+        #[cfg(target_arch = "wasm32")]
+        let timestamp = EVENT_COUNTER.fetch_add(1, Ordering::Relaxed) as u128;
+
+        #[cfg(not(target_arch = "wasm32"))]
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis())
@@ -40,6 +49,14 @@ impl ComponentTelemetry {
         }
     }
 
+    #[cfg(target_arch = "wasm32")]
+    pub fn write_to_file(&self) {
+        if !self.enabled {
+            return;
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn write_to_file(&self) {
         if !self.enabled {
             return;

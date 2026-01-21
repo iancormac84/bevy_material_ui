@@ -13,6 +13,10 @@
 
 A Material Design 3 UI library for Bevy.
 
+## Live WebGL Showcase
+
+[![WebGL showcase preview](https://img.youtube.com/vi/l7PdTGuuqLU/hqdefault.jpg)](https://edgarhsanchez.github.io/bevy_material_ui/)
+
 ## Installation
 
 ```toml
@@ -26,6 +30,23 @@ bevy_material_ui = "0.1"
 - Developer guide: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
 - Component docs: [docs/components/](docs/components/)
 - Run the interactive showcase: `cargo run --example showcase`
+- Run the WebGL showcase locally (WASM): see below
+
+## WebGL (WASM) Demo
+
+Build and run the WebGL showcase locally:
+
+1. Install the wasm target and wasm-bindgen CLI.
+2. Build the minimal showcase for WebGL.
+3. Serve the `web/` output.
+
+Example commands:
+
+- `rustup target add wasm32-unknown-unknown`
+- `cargo install wasm-bindgen-cli --version 0.2.92`
+- `cargo build --release --no-default-features --features bevy_minimal,webgl --target wasm32-unknown-unknown --example showcase_minimal`
+- `wasm-bindgen --out-dir web --target web target/wasm32-unknown-unknown/release/examples/showcase_minimal.wasm`
+- Serve the `web/` folder (any static server)
 
 ## Features
 

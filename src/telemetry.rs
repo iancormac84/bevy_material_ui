@@ -8,12 +8,18 @@
 //! - The `TelemetryConfig` resource
 //!
 //! # Example
-//! ```ignore
-//! // Enable telemetry programmatically
-//! app.insert_resource(TelemetryConfig::enabled());
+//! ```no_run
+//! use bevy::prelude::*;
+//! use bevy_material_ui::telemetry::{TelemetryConfig, TelemetryPlugin};
 //!
-//! // Or check environment variable (done automatically by TelemetryPlugin)
-//! // Set BEVY_TELEMETRY=1 before running
+//! fn configure_telemetry(app: &mut App) {
+//!     // Enable telemetry programmatically
+//!     app.insert_resource(TelemetryConfig::enabled());
+//!
+//!     // Or check environment variable (done automatically by TelemetryPlugin)
+//!     // Set BEVY_TELEMETRY=1 before running
+//!     app.add_plugins(TelemetryPlugin);
+//! }
 //! ```
 
 use bevy::prelude::*;

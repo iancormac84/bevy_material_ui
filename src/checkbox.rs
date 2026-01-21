@@ -4,8 +4,14 @@
 //! Reference: <https://m3.material.io/components/checkbox/overview>
 //!
 //! # Example
-//! ```ignore
-//! commands.spawn_checkbox(&theme, CheckboxState::Unchecked, "Option 1");
+//! ```no_run
+//! use bevy::prelude::*;
+//! use bevy_material_ui::checkbox::{CheckboxState, SpawnCheckbox};
+//! use bevy_material_ui::theme::MaterialTheme;
+//!
+//! fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+//!     commands.spawn_checkbox(&theme, CheckboxState::Unchecked, "Option 1");
+//! }
 //! ```
 
 use bevy::prelude::*;

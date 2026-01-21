@@ -2,13 +2,17 @@
 
 ## Latest Benchmark Run
 
-**Date**: 2026-01-03  
-**Branch**: v0.2.4  
-**Commit**: d4d856f
+**Date**: 2026-01-20  
+**Branch**: v0.2.5  
+**Commit**: fc7d281
 
 ## Results Summary
 
-This directory contains the baseline benchmark results for the v0.2.4 release.
+This directory contains the latest manual benchmark results for v0.2.5.
+
+Notable changes from the latest run:
+- Mostly improvements across component and system benchmarks.
+- Regressions detected in `Select Component/create_large_1000` (~+2.3%) and `Mixed Workload/query_all_interactive` (~+28%).
 
 ### Performance Metrics
 

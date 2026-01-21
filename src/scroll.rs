@@ -4,21 +4,30 @@
 //! Uses Bevy's `ScrollPosition` component and `Overflow::scroll_y()` for actual scrolling.
 //!
 //! Usage:
-//! ```ignore
-//! commands.spawn((
-//!     ScrollContainer::vertical(),
-//!     ScrollPosition::default(),
-//!     Node {
-//!         height: Val::Px(400.0),
-//!         overflow: Overflow::scroll_y(), // Use Bevy's native scroll
-//!         ..default()
-//!     },
-//! )).with_children(|parent| {
-//!     parent.spawn((ScrollContent, Node { ..default() }))
-//!         .with_children(|content| {
-//!             // Your scrollable content here
+//! ```no_run
+//! use bevy::prelude::*;
+//! use bevy::ui::{Overflow, ScrollPosition};
+//! use bevy_material_ui::scroll::{ScrollContainer, ScrollContent};
+//!
+//! fn setup(mut commands: Commands) {
+//!     commands
+//!         .spawn((
+//!             ScrollContainer::vertical(),
+//!             ScrollPosition::default(),
+//!             Node {
+//!                 height: Val::Px(400.0),
+//!                 overflow: Overflow::scroll_y(), // Use Bevy's native scroll
+//!                 ..default()
+//!             },
+//!         ))
+//!         .with_children(|parent| {
+//!             parent
+//!                 .spawn((ScrollContent, Node { ..default() }))
+//!                 .with_children(|_content| {
+//!                     // Your scrollable content here
+//!                 });
 //!         });
-//! });
+//! }
 //! ```
 
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};

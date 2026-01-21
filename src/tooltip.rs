@@ -455,12 +455,15 @@ impl TooltipTriggerBuilder {
 /// Extension trait to attach tooltips to spawned elements
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_with_tooltip(&theme, "Hover me for help", || {
-///         (Button, Text::new("?"))
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::tooltip::SpawnTooltipChild;
+///
+/// fn setup(mut commands: Commands) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_with_tooltip("Hover me for help", (Button, Text::new("?")));
 ///     });
-/// });
+/// }
 /// ```
 pub trait SpawnTooltipChild {
     /// Spawn an element with a plain tooltip attached

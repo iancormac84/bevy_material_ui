@@ -1562,11 +1562,17 @@ pub struct TextFieldSupportingFor(pub Entity);
 /// This trait provides a clean API for spawning text fields within UI hierarchies.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_filled_text_field(&theme, "Email", "user@example.com");
-///     children.spawn_outlined_text_field(&theme, "Password", "");
-/// });
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::text_field::SpawnTextFieldChild;
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_filled_text_field(&theme, "Email", "user@example.com");
+///         children.spawn_outlined_text_field(&theme, "Password", "");
+///     });
+/// }
 /// ```
 pub trait SpawnTextFieldChild {
     /// Spawn a filled text field

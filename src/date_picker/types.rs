@@ -92,7 +92,7 @@ impl Date {
     ///
     /// # Example with CurrentDate resource
     ///
-    /// ```rust,ignore
+    /// ```rust,no_run
     /// use bevy::prelude::*;
     /// use bevy_material_ui::date_picker::{Date, CurrentDate};
     ///
@@ -108,18 +108,16 @@ impl Date {
     ///
     /// # Example with chrono
     ///
-    /// ```rust,ignore
-    /// use chrono::Local;
-    /// use bevy_material_ui::date_picker::{Date, CurrentDate};
-    ///
-    /// fn update_current_date(mut current: ResMut<CurrentDate>) {
-    ///     let now = Local::now().naive_local().date();
-    ///     current.0 = Date::new(
-    ///         now.year(),
-    ///         now.month() as u8,
-    ///         now.day() as u8,
-    ///     );
-    /// }
+    /// ```text
+    /// // Example with chrono (pseudo-code)
+    /// //
+    /// // use chrono::Local;
+    /// // use bevy_material_ui::date_picker::{Date, CurrentDate};
+    /// //
+    /// // fn update_current_date(mut current: ResMut<CurrentDate>) {
+    /// //     let now = Local::now().naive_local().date();
+    /// //     current.0 = Date::new(now.year(), now.month() as u8, now.day() as u8);
+    /// // }
     /// ```
     pub fn today() -> Self {
         // PLACEHOLDER: Returns hardcoded date for development/testing
@@ -332,7 +330,7 @@ pub fn weekday_index(w: Weekday) -> i32 {
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_material_ui::date_picker::{Date, CurrentDate};
 ///
@@ -350,19 +348,21 @@ pub fn weekday_index(w: Weekday) -> i32 {
 ///
 /// # Example with chrono
 ///
-/// ```rust,ignore
-/// use chrono::Local;
-/// use bevy::prelude::*;
-/// use bevy_material_ui::date_picker::{Date, CurrentDate};
-///
-/// fn setup_with_chrono(mut commands: Commands) {
-///     let now = Local::now().naive_local().date();
-///     commands.insert_resource(CurrentDate(Date::new(
-///         now.year(),
-///         now.month() as u8,
-///         now.day() as u8,
-///     )));
-/// }
+/// ```text
+/// // Example with chrono (pseudo-code)
+/// //
+/// // use chrono::Local;
+/// // use bevy::prelude::*;
+/// // use bevy_material_ui::date_picker::{Date, CurrentDate};
+/// //
+/// // fn setup_with_chrono(mut commands: Commands) {
+/// //     let now = Local::now().naive_local().date();
+/// //     commands.insert_resource(CurrentDate(Date::new(
+/// //         now.year(),
+/// //         now.month() as u8,
+/// //         now.day() as u8,
+/// //     )));
+/// // }
 /// ```
 #[derive(Debug, Clone, Copy, Resource)]
 pub struct CurrentDate(pub Date);

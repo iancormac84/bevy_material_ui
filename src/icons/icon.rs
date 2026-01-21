@@ -15,7 +15,7 @@ use bevy::prelude::*;
 ///
 /// # Example
 ///
-/// ```rust,ignore
+/// ```rust,no_run
 /// use bevy::prelude::*;
 /// use bevy_material_ui::icons::{MaterialIcon, IconBundle};
 ///

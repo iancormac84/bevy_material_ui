@@ -552,12 +552,18 @@ pub struct ProgressIndicator;
 /// This trait provides a clean API for spawning progress indicators within UI hierarchies.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_linear_progress(&theme, 0.5);
-///     children.spawn_indeterminate_progress(&theme);
-///     children.spawn_circular_progress(&theme, 0.75);
-/// });
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::progress::SpawnProgressChild;
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_linear_progress(&theme, 0.5);
+///         children.spawn_indeterminate_progress(&theme);
+///         children.spawn_circular_progress(&theme, 0.75);
+///     });
+/// }
 /// ```
 pub trait SpawnProgressChild {
     /// Spawn a linear progress indicator with determinate progress

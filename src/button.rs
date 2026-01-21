@@ -510,13 +510,19 @@ fn button_shadow_system(
 ///
 /// ## Example with Bevy 0.17's `children!` macro:
 ///
-/// ```ignore
-/// commands.spawn((
-///     MaterialButtonBuilder::new("Click Me").filled().build(&theme),
-///     children![
-///         (Text::new("Click Me"), TextColor(theme.on_primary)),
-///     ],
-/// ));
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::button::MaterialButtonBuilder;
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn((
+///         MaterialButtonBuilder::new("Click Me").filled().build(&theme),
+///         children![
+///             (Text::new("Click Me"), TextColor(theme.on_primary)),
+///         ],
+///     ));
+/// }
 /// ```
 pub struct MaterialButtonBuilder {
     button: MaterialButton,
@@ -683,7 +689,7 @@ pub fn spawn_material_button(
 /// This is the recommended approach for Bevy 0.17+.
 ///
 /// ## Example:
-/// ```ignore
+/// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_material_ui::prelude::*;
 ///
@@ -720,13 +726,19 @@ pub struct ButtonLabel;
 /// using Bevy 0.17's ChildSpawnerCommands pattern.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_button(&theme, "Click Me", ButtonVariant::Filled);
-///     children.spawn_filled_button(&theme, "Primary Action");
-///     children.spawn_outlined_button(&theme, "Secondary");
-///     children.spawn_text_button(&theme, "Learn More");
-/// });
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::button::{ButtonVariant, SpawnButtonChild};
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_button(&theme, "Click Me", ButtonVariant::Filled);
+///         children.spawn_filled_button(&theme, "Primary Action");
+///         children.spawn_outlined_button(&theme, "Secondary");
+///         children.spawn_text_button(&theme, "Learn More");
+///     });
+/// }
 /// ```
 pub trait SpawnButtonChild {
     /// Spawn a button with specified variant

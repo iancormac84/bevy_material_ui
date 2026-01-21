@@ -4,12 +4,20 @@
 //! Reference: <https://m3.material.io/components/switch/overview>
 //!
 //! # Example
-//! ```ignore
-//! // Using the spawn extension trait (recommended)
-//! commands.spawn_switch(&theme, false, "Enable notifications");
+//! ```no_run
+//! use bevy::prelude::*;
+//! use bevy_material_ui::switch::{SpawnSwitch, SwitchBuilder, SpawnSwitchChild};
+//! use bevy_material_ui::theme::MaterialTheme;
 //!
-//! // Or using the builder for more control
-//! parent.spawn_switch_with(&theme, SwitchBuilder::new().selected(true).with_icon(), "Label");
+//! fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+//!     // Using the spawn extension trait (recommended)
+//!     commands.spawn_switch(&theme, false, "Enable notifications");
+//!
+//!     // Or using the child spawner trait for more control
+//!     commands.spawn(Node::default()).with_children(|parent| {
+//!         parent.spawn_switch_with(&theme, SwitchBuilder::new().selected(true).with_icon(), "Label");
+//!     });
+//! }
 //! ```
 
 use bevy::prelude::*;

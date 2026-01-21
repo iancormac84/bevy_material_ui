@@ -16,14 +16,14 @@
 //!
 //! # Example
 //!
-//! ```rust,ignore
+//! ```rust
 //! use bevy_material_ui::color::{Hct, TonalPalette, MaterialColorScheme};
 //!
 //! // Create an HCT color from a hex value
 //! let seed = Hct::from_argb(0xFF6750A4);
 //!
 //! // Generate a tonal palette
-//! let palette = TonalPalette::from_hct(&seed);
+//! let mut palette = TonalPalette::from_hct(&seed);
 //!
 //! // Get a specific tone
 //! let tone_40 = palette.tone(40);

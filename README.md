@@ -4,6 +4,7 @@
 [![Crates.io](https://img.shields.io/crates/v/bevy_material_ui.svg)](https://crates.io/crates/bevy_material_ui)
 [![Docs.rs](https://docs.rs/bevy_material_ui/badge.svg)](https://docs.rs/bevy_material_ui)
 [![Dependencies](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui/status.svg)](https://deps.rs/repo/github/edgarhsanchez/bevy_material_ui)
+[![Benchmarks](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/edgarhsanchez/bevy_material_ui/v0.2.5/benchmarks/results/badge.json)](benchmarks/results/README.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [![Bevy Material UI demo video](https://img.youtube.com/vi/l7PdTGuuqLU/hqdefault.jpg)](https://youtu.be/l7PdTGuuqLU)

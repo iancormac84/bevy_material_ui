@@ -1214,13 +1214,19 @@ pub fn create_list_divider(theme: &MaterialTheme, inset: bool) -> impl Bundle {
 /// This trait provides a clean API for spawning lists within UI hierarchies.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_list(&theme, |list| {
-///         list.spawn_list_item(&theme, "Item 1", None);
-///         list.spawn_list_item(&theme, "Item 2", Some("Supporting text"));
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::list::SpawnListChild;
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_list(|list| {
+///             list.spawn_list_item(&theme, "Item 1", None::<String>);
+///             list.spawn_list_item(&theme, "Item 2", Some("Supporting text"));
+///         });
 ///     });
-/// });
+/// }
 /// ```
 pub trait SpawnListChild {
     /// Spawn a list container

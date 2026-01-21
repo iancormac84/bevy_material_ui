@@ -242,13 +242,19 @@ fn card_shadow_system(mut cards: Query<(&MaterialCard, &mut BoxShadow), Changed<
 ///
 /// ## Example with Bevy 0.17's native shadows:
 ///
-/// ```ignore
-/// commands.spawn((
-///     CardBuilder::new().elevated().build(&theme),
-///     children![
-///         (Text::new("Card Title"), TextFont { font_size: 20.0, ..default() }),
-///     ],
-/// ));
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::card::CardBuilder;
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn((
+///         CardBuilder::new().elevated().build(&theme),
+///         children![
+///             (Text::new("Card Title"), TextFont { font_size: 20.0, ..default() }),
+///         ],
+///     ));
+/// }
 /// ```
 pub struct CardBuilder {
     card: MaterialCard,
@@ -404,12 +410,18 @@ impl Default for CardBuilder {
 /// This trait provides a clean API for spawning cards within UI hierarchies.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_elevated_card(&theme, |card| {
-///         card.spawn((Text::new("Card Content"), TextColor(theme.on_surface)));
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::card::SpawnCardChild;
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_elevated_card(&theme, |card| {
+///             card.spawn((Text::new("Card Content"), TextColor(theme.on_surface)));
+///         });
 ///     });
-/// });
+/// }
 /// ```
 pub trait SpawnCardChild {
     /// Spawn an elevated card

@@ -48,6 +48,10 @@ cargo bench --bench component_benchmarks
 cargo bench --bench system_benchmarks
 ```
 
+Notes:
+- The bench entrypoints are in `benches/*.rs`, and the benchmark groups are organized into per-component files under `benches/components/` and per-system files under `benches/systems/`.
+- To focus on a subset of Criterion benchmarks, you can pass a filter after `--`, e.g. `cargo bench --bench component_benchmarks -- button`.
+
 ### Including Benchmark Results
 
 When submitting PRs that may impact performance:

@@ -440,11 +440,17 @@ impl IconButtonBuilder {
 /// This trait provides a clean API for spawning icon buttons within UI hierarchies.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_icon_button(&theme, "favorite", IconButtonVariant::Standard);
-///     children.spawn_filled_icon_button(&theme, "add");
-/// });
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::icon_button::{IconButtonVariant, SpawnIconButtonChild};
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_icon_button(&theme, "favorite", IconButtonVariant::Standard);
+///         children.spawn_filled_icon_button(&theme, "add");
+///     });
+/// }
 /// ```
 pub trait SpawnIconButtonChild {
     /// Spawn an icon button with specified variant

@@ -560,12 +560,18 @@ pub fn spawn_chip(commands: &mut Commands, theme: &MaterialTheme, builder: ChipB
 /// This trait provides a clean API for spawning chips within UI hierarchies.
 ///
 /// ## Example:
-/// ```ignore
-/// parent.spawn(Node::default()).with_children(|children| {
-///     children.spawn_chip(&theme, ChipBuilder::assist("Help"));
-///     children.spawn_filter_chip(&theme, "Category", false);
-///     children.spawn_input_chip(&theme, "tag@example.com", true);
-/// });
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_material_ui::chip::{ChipBuilder, SpawnChipChild};
+/// use bevy_material_ui::theme::MaterialTheme;
+///
+/// fn setup(mut commands: Commands, theme: Res<MaterialTheme>) {
+///     commands.spawn(Node::default()).with_children(|children| {
+///         children.spawn_chip_with(&theme, ChipBuilder::assist("Help"));
+///         children.spawn_filter_chip(&theme, "Category", false);
+///         children.spawn_input_chip(&theme, "tag@example.com", true);
+///     });
+/// }
 /// ```
 pub trait SpawnChipChild {
     /// Spawn a chip using a builder

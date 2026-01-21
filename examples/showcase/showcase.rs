@@ -331,11 +331,65 @@ fn parse_translation_file_strings(path: &std::path::Path) -> Option<HashMap<Stri
     Some(out)
 }
 
+#[cfg(target_arch = "wasm32")]
+fn parse_translation_bytes(bytes: &[u8]) -> Option<(String, HashMap<String, String>)> {
+    let json: serde_json::Value = serde_json::from_slice(bytes).ok()?;
+    let language = json.get("language")?.as_str()?.to_string();
+    let strings = json.get("strings")?.as_object()?;
+    let mut out = HashMap::with_capacity(strings.len());
+    for (k, v) in strings {
+        if let Some(s) = v.as_str() {
+            out.insert(k.clone(), s.to_string());
+        }
+    }
+    Some((language, out))
+}
+
+#[cfg(target_arch = "wasm32")]
+const EMBEDDED_TRANSLATIONS: &[(&str, &[u8])] = &[
+    ("i18n/en-US.mui_lang", include_bytes!("../../assets/i18n/en-US.mui_lang")),
+    ("i18n/es-ES.mui_lang", include_bytes!("../../assets/i18n/es-ES.mui_lang")),
+    ("i18n/fr-FR.mui_lang", include_bytes!("../../assets/i18n/fr-FR.mui_lang")),
+    ("i18n/de-DE.mui_lang", include_bytes!("../../assets/i18n/de-DE.mui_lang")),
+    ("i18n/ja-JP.mui_lang", include_bytes!("../../assets/i18n/ja-JP.mui_lang")),
+    ("i18n/zh-CN.mui_lang", include_bytes!("../../assets/i18n/zh-CN.mui_lang")),
+    ("i18n/he-IL.mui_lang", include_bytes!("../../assets/i18n/he-IL.mui_lang")),
+];
+
+#[cfg(target_arch = "wasm32")]
+fn embedded_translation_entries() -> Vec<TranslationFileEntry> {
+    let mut entries = Vec::new();
+    for (asset_path, bytes) in EMBEDDED_TRANSLATIONS {
+        if let Some((language_tag, _strings)) = parse_translation_bytes(bytes) {
+            let file_name = asset_path
+                .rsplit('/')
+                .next()
+                .unwrap_or(*asset_path)
+                .to_string();
+            entries.push(TranslationFileEntry {
+                asset_path: (*asset_path).to_string(),
+                file_name,
+                language_tag,
+            });
+        }
+    }
+    entries.sort_by(|a, b| a.file_name.cmp(&b.file_name));
+    entries
+}
+
 fn translations_rescan_files_system(
     mut state: ResMut<TranslationsDemoState>,
     time: Res<Time>,
     mut timer: Local<Timer>,
 ) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        if state.entries.is_empty() {
+            state.entries = embedded_translation_entries();
+        }
+        return;
+    }
+
     if timer.duration().is_zero() {
         *timer = Timer::from_seconds(1.0, TimerMode::Repeating);
     }
@@ -394,7 +448,13 @@ fn translations_populate_select_options_system(
     )>,
     language: Res<MaterialLanguage>,
 ) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let _ = &asset_server;
+    }
+
     // Keep handles alive so the i18n ingest system sees newly created files.
+    #[cfg(not(target_arch = "wasm32"))]
     for entry in state.entries.iter() {
         if assets.handles_by_path.contains_key(&entry.asset_path) {
             continue;
@@ -564,6 +624,7 @@ fn translations_select_change_system(
     )>,
     mut state: ResMut<TranslationsDemoState>,
     mut language: ResMut<MaterialLanguage>,
+    i18n: Option<Res<MaterialI18n>>,
     mut editor_fields: ParamSet<(
         Query<&mut MaterialTextField, With<views::TranslationKeyFieldLabel>>,
         Query<&mut MaterialTextField, With<views::TranslationKeyFieldPlaceholder>>,
@@ -589,6 +650,42 @@ fn translations_select_change_system(
             language.tag = entry.language_tag.clone();
         }
 
+        #[cfg(target_arch = "wasm32")]
+        {
+            let Some(i18n) = i18n.as_deref() else {
+                continue;
+            };
+            if let Some(mut f) = editor_fields.p0().iter_mut().next() {
+                if !f.focused {
+                    f.value = i18n
+                        .translate(&language.tag, TRANSLATION_KEY_EMAIL_LABEL)
+                        .unwrap_or_default()
+                        .to_string();
+                    f.has_content = !f.value.is_empty();
+                }
+            }
+            if let Some(mut f) = editor_fields.p1().iter_mut().next() {
+                if !f.focused {
+                    f.value = i18n
+                        .translate(&language.tag, TRANSLATION_KEY_EMAIL_PLACEHOLDER)
+                        .unwrap_or_default()
+                        .to_string();
+                    f.has_content = !f.value.is_empty();
+                }
+            }
+            if let Some(mut f) = editor_fields.p2().iter_mut().next() {
+                if !f.focused {
+                    f.value = i18n
+                        .translate(&language.tag, TRANSLATION_KEY_EMAIL_SUPPORTING)
+                        .unwrap_or_default()
+                        .to_string();
+                    f.has_content = !f.value.is_empty();
+                }
+            }
+            continue;
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
         // Hydrate editor fields from disk so edits map 1:1 to file content.
         let disk_path = translations_assets_dir().join(
             asset_path
@@ -801,7 +898,54 @@ fn translations_save_file_system(
     }
 }
 
-fn load_showcase_i18n_assets_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn load_showcase_i18n_assets_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut i18n: ResMut<MaterialI18n>,
+    mut fonts: ResMut<Assets<Font>>,
+) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let _ = &asset_server;
+        for (asset_path, bytes) in EMBEDDED_TRANSLATIONS {
+            if let Some((language, strings)) = parse_translation_bytes(bytes) {
+                i18n.insert_bundle(language, strings);
+            } else {
+                warn!("Failed to parse embedded translation: {asset_path}");
+            }
+        }
+
+        commands.insert_resource(ShowcaseI18nAssets { handles: Vec::new() });
+
+        // Load embedded fonts into the asset store.
+        let latin_font = Font::try_from_bytes(
+            include_bytes!("../../assets/fonts/NotoSans-Regular.ttf").to_vec(),
+        );
+        let cjk_font = Font::try_from_bytes(
+            include_bytes!("../../assets/fonts/NotoSansSC-Regular.ttf").to_vec(),
+        );
+        let hebrew_font = Font::try_from_bytes(
+            include_bytes!("../../assets/fonts/NotoSerifHebrew-Regular.ttf").to_vec(),
+        );
+
+        let latin_handle = latin_font
+            .map(|f| fonts.add(f))
+            .unwrap_or_default();
+        let cjk_handle = cjk_font.map(|f| fonts.add(f)).unwrap_or_default();
+        let hebrew_handle = hebrew_font
+            .map(|f| fonts.add(f))
+            .unwrap_or_default();
+
+        commands.insert_resource(ShowcaseFont {
+            latin: latin_handle,
+            cjk: cjk_handle,
+            hebrew: hebrew_handle,
+        });
+        return;
+    }
+
+    let _ = &mut i18n;
+    let _ = &mut fonts;
     let handles = vec![
         asset_server.load::<MaterialTranslations>("i18n/en-US.mui_lang"),
         asset_server.load::<MaterialTranslations>("i18n/es-ES.mui_lang"),

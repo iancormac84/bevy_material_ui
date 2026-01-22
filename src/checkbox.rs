@@ -580,11 +580,11 @@ impl CheckboxBuilder {
                     height: Val::Px(CHECKBOX_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
+                ))
             .with_children(|parent| {
                 // State layer (for hover/press effects)
                 parent
@@ -595,11 +595,11 @@ impl CheckboxBuilder {
                             position_type: PositionType::Absolute,
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
+                        ))
                     .with_children(|state_layer_parent| {
                         // Checkbox box (visual element)
                         state_layer_parent
@@ -611,12 +611,12 @@ impl CheckboxBuilder {
                                     border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                            ))
+                                ))
                             .with_children(|box_parent| {
                                 // Checkmark icon
                                 box_parent.spawn((
@@ -691,11 +691,11 @@ impl SpawnCheckbox for Commands<'_, '_> {
                     height: Val::Px(CHECKBOX_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
+                ))
             .with_children(|parent| {
                 // State layer
                 parent
@@ -708,11 +708,11 @@ impl SpawnCheckbox for Commands<'_, '_> {
                             height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
+                        ))
                     .with_children(|state_layer_parent| {
                         // Checkbox box
                         state_layer_parent
@@ -724,12 +724,12 @@ impl SpawnCheckbox for Commands<'_, '_> {
                                     border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                            ))
+                                ))
                             .with_children(|box_parent| {
                                 // Checkmark
                                 box_parent.spawn((
@@ -817,11 +817,11 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                     height: Val::Px(CHECKBOX_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
+                ))
             .with_children(|parent| {
                 // State layer
                 parent
@@ -834,11 +834,11 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                             height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
+                        ))
                     .with_children(|state_layer_parent| {
                         // Checkbox box
                         state_layer_parent
@@ -850,12 +850,12 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                                     border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                            ))
+                                ))
                             .with_children(|box_parent| {
                                 // Checkmark
                                 box_parent.spawn((

@@ -983,14 +983,14 @@ impl DialogBuilder {
                 },
                 padding: UiRect::all(Val::Px(Spacing::EXTRA_LARGE)),
                 flex_direction: FlexDirection::Column,
+                border_radius: BorderRadius::all(Val::Px(if is_full_screen {
+                    0.0
+                } else {
+                    CornerRadius::EXTRA_LARGE
+                })),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(if is_full_screen {
-                0.0
-            } else {
-                CornerRadius::EXTRA_LARGE
-            })),
             // Native Bevy 0.17 shadow support (starts hidden since dialog is closed)
             BoxShadow::default(),
             // Ensure modal dialogs block pointer interactions behind the dialog surface.

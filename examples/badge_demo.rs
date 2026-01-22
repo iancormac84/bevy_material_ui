@@ -20,11 +20,11 @@ fn spawn_badge_example(
                 height: Val::Px(48.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(8.0)),
                 ..default()
             },
             BackgroundColor(theme.surface_container),
-            BorderRadius::all(Val::Px(8.0)),
-        ))
+            ))
         .insert_test_id(test_id, telemetry)
         .with_children(|container| {
             if let Some(icon) = MaterialIcon::from_name(ICON_NOTIFICATIONS) {

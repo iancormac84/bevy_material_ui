@@ -438,11 +438,11 @@ fn spawn_modal_drawer_example(parent: &mut ChildSpawnerCommands, theme: Material
                                             height: Val::Px(40.0),
                                             align_items: AlignItems::Center,
                                             padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
+                                            border_radius: BorderRadius::all(Val::Px(8.0)),
                                             ..default()
                                         },
                                         BackgroundColor(theme.surface_container_high),
-                                        BorderRadius::all(Val::Px(8.0)),
-                                    ))
+                                        ))
                                     .with_children(|item| {
                                         item.spawn((
                                             Text::new((*label).to_string()),
@@ -555,11 +555,11 @@ fn spawn_list_detail_card(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                                         Node {
                                             height: Val::Px(32.0),
                                             align_items: AlignItems::Center,
+                                            border_radius: BorderRadius::all(Val::Px(6.0)),
                                             ..default()
                                         },
                                         BackgroundColor(theme.surface_container_high),
-                                        BorderRadius::all(Val::Px(6.0)),
-                                    ))
+                                        ))
                                     .with_children(|item| {
                                         item.spawn((
                                             Text::new((*label).to_string()),
@@ -640,11 +640,11 @@ fn spawn_supporting_panes_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                                         Node {
                                             height: Val::Px(32.0),
                                             align_items: AlignItems::Center,
+                                            border_radius: BorderRadius::all(Val::Px(6.0)),
                                             ..default()
                                         },
                                         BackgroundColor(theme.surface_container_high),
-                                        BorderRadius::all(Val::Px(6.0)),
-                                    ))
+                                        ))
                                     .with_children(|item| {
                                         item.spawn((
                                             Text::new((*label).to_string()),
@@ -711,12 +711,12 @@ fn spawn_supporting_panes_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                                             padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                             align_items: AlignItems::Center,
                                             border: UiRect::all(Val::Px(1.0)),
+                                            border_radius: BorderRadius::all(Val::Px(8.0)),
                                             ..default()
                                         },
                                         BackgroundColor(theme.secondary_container),
                                         BorderColor::all(theme.secondary),
-                                        BorderRadius::all(Val::Px(8.0)),
-                                    ))
+                                        ))
                                     .with_children(|btn| {
                                         btn.spawn((
                                             Text::new("Action"),

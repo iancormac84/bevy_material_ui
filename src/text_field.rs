@@ -1474,11 +1474,11 @@ impl TextFieldBuilder {
                 },
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
         )
     }
 }
@@ -1685,12 +1685,12 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                             } else {
                                 Display::None
                             },
+                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
-                    .with_children(|btn| {
+                        .with_children(|btn| {
                         let icon_id = leading_icon_text
                             .as_deref()
                             .and_then(resolve_icon_id)
@@ -1827,12 +1827,12 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                             } else {
                                 Display::None
                             },
+                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
-                    .with_children(|btn| {
+                        .with_children(|btn| {
                         let icon_id = end_icon_text
                             .as_deref()
                             .and_then(resolve_icon_id)
@@ -1946,12 +1946,12 @@ pub fn spawn_text_field_control(
                             } else {
                                 Display::None
                             },
+                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
-                    .with_children(|btn| {
+                        .with_children(|btn| {
                         let icon_id = leading_icon_text
                             .as_deref()
                             .and_then(resolve_icon_id)
@@ -2088,12 +2088,12 @@ pub fn spawn_text_field_control(
                             } else {
                                 Display::None
                             },
+                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
-                    .with_children(|btn| {
+                        .with_children(|btn| {
                         let icon_id = end_icon_text
                             .as_deref()
                             .and_then(resolve_icon_id)
@@ -2205,12 +2205,12 @@ pub fn spawn_text_field_control_with<M: Component>(
                             } else {
                                 Display::None
                             },
+                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
-                    .with_children(|btn| {
+                        .with_children(|btn| {
                         let icon_id = leading_icon_text
                             .as_deref()
                             .and_then(resolve_icon_id)
@@ -2347,12 +2347,12 @@ pub fn spawn_text_field_control_with<M: Component>(
                             } else {
                                 Display::None
                             },
+                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ))
-                    .with_children(|btn| {
+                        .with_children(|btn| {
                         let icon_id = end_icon_text
                             .as_deref()
                             .and_then(resolve_icon_id)

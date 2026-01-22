@@ -631,7 +631,6 @@ fn slider_visual_update_system(
     sliders: Query<(&MaterialSlider, &SliderParts), Changed<MaterialSlider>>,
     mut nodes: Query<&mut Node>,
     mut bg_colors: Query<&mut BackgroundColor>,
-    mut border_radii: Query<&mut BorderRadius>,
     mut visibilities: Query<&mut Visibility>,
     ticks: Query<&SliderTick>,
 ) {
@@ -644,7 +643,6 @@ fn slider_visual_update_system(
             parts,
             &mut nodes,
             &mut bg_colors,
-            &mut border_radii,
             &mut visibilities,
             &ticks,
         );
@@ -657,7 +655,6 @@ fn slider_theme_refresh_system(
     sliders: Query<(&MaterialSlider, &SliderParts)>,
     mut nodes: Query<&mut Node>,
     mut bg_colors: Query<&mut BackgroundColor>,
-    mut border_radii: Query<&mut BorderRadius>,
     mut visibilities: Query<&mut Visibility>,
     ticks: Query<&SliderTick>,
 ) {
@@ -673,7 +670,6 @@ fn slider_theme_refresh_system(
             parts,
             &mut nodes,
             &mut bg_colors,
-            &mut border_radii,
             &mut visibilities,
             &ticks,
         );
@@ -686,7 +682,6 @@ fn update_slider_visuals(
     parts: &SliderParts,
     nodes: &mut Query<&mut Node>,
     bg_colors: &mut Query<&mut BackgroundColor>,
-    border_radii: &mut Query<&mut BorderRadius>,
     visibilities: &mut Query<&mut Visibility>,
     ticks: &Query<&SliderTick>,
 ) {
@@ -712,14 +707,13 @@ fn update_slider_visuals(
         match slider.orientation {
             SliderOrientation::Horizontal => {
                 node.height = Val::Px(track_height);
+                node.border_radius = BorderRadius::all(Val::Px(track_height / 2.0));
             }
             SliderOrientation::Vertical => {
                 node.width = Val::Px(track_height);
+                node.border_radius = BorderRadius::all(Val::Px(track_height / 2.0));
             }
         }
-    }
-    if let Ok(mut radius) = border_radii.get_mut(parts.track) {
-        *radius = BorderRadius::all(Val::Px(track_height / 2.0));
     }
 
     // Active track
@@ -733,16 +727,15 @@ fn update_slider_visuals(
         match slider.orientation {
             SliderOrientation::Horizontal => {
                 node.height = Val::Px(track_height);
+                node.border_radius = BorderRadius::all(Val::Px(track_height / 2.0));
             }
             SliderOrientation::Vertical => {
                 node.width = Val::Px(track_height);
+                node.border_radius = BorderRadius::all(Val::Px(track_height / 2.0));
             }
         }
     }
-    if let Ok(mut radius) = border_radii.get_mut(parts.active_track) {
-        *radius = BorderRadius::all(Val::Px(track_height / 2.0));
-    }
-
+    
     // Handle (thumb)
     let mut handle_radius = slider.thumb_radius;
     if slider.dragging {
@@ -766,11 +759,9 @@ fn update_slider_visuals(
         }
         node.width = Val::Px(handle_radius * 2.0);
         node.height = Val::Px(handle_radius * 2.0);
+        node.border_radius = BorderRadius::all(Val::Px(handle_radius));
     }
-    if let Ok(mut radius) = border_radii.get_mut(parts.handle) {
-        *radius = BorderRadius::all(Val::Px(handle_radius));
-    }
-
+    
     // Tick marks
     let show_ticks_now = slider.should_show_ticks();
     for &tick_entity in &parts.ticks {
@@ -1141,11 +1132,13 @@ pub fn spawn_slider_control_with<E: Bundle>(
             SliderOrientation::Horizontal => Node {
                 width: Val::Percent(100.0),
                 height: Val::Px(track_height),
+                border_radius: BorderRadius::all(Val::Px(track_height / 2.0)),
                 ..default()
             },
             SliderOrientation::Vertical => Node {
                 width: Val::Px(track_height),
                 height: Val::Percent(100.0),
+                border_radius: BorderRadius::all(Val::Px(track_height / 2.0)),
                 ..default()
             },
         };
@@ -1154,7 +1147,6 @@ pub fn spawn_slider_control_with<E: Bundle>(
                 SliderTrack,
                 track_node,
                 BackgroundColor(track_color),
-                BorderRadius::all(Val::Px(track_height / 2.0)),
             ))
             .id();
         parts_track = Some(track_entity);
@@ -1197,6 +1189,7 @@ pub fn spawn_slider_control_with<E: Bundle>(
                     top,
                     width: Val::Px(track_height),
                     height,
+                    border_radius: BorderRadius::all(Val::Px(track_height / 2.0)),
                     ..default()
                 }
             }
@@ -1208,7 +1201,6 @@ pub fn spawn_slider_control_with<E: Bundle>(
                 },
                 active_node,
                 BackgroundColor(active_color),
-                BorderRadius::all(Val::Px(track_height / 2.0)),
             ))
             .id();
         parts_active_track = Some(active_track_entity);
@@ -1221,6 +1213,7 @@ pub fn spawn_slider_control_with<E: Bundle>(
                 margin: UiRect::left(Val::Px(-thumb_radius)),
                 width: Val::Px(thumb_radius * 2.0),
                 height: Val::Px(thumb_radius * 2.0),
+                border_radius: BorderRadius::all(Val::Px(thumb_radius)),
                 ..default()
             },
             SliderOrientation::Vertical => Node {
@@ -1235,6 +1228,7 @@ pub fn spawn_slider_control_with<E: Bundle>(
                 },
                 width: Val::Px(thumb_radius * 2.0),
                 height: Val::Px(thumb_radius * 2.0),
+                border_radius: BorderRadius::all(Val::Px(thumb_radius)),
                 ..default()
             },
         };
@@ -1249,7 +1243,6 @@ pub fn spawn_slider_control_with<E: Bundle>(
                 },
                 handle_node,
                 BackgroundColor(handle_color),
-                BorderRadius::all(Val::Px(thumb_radius)),
             ))
             .id();
         parts_handle = Some(handle_entity);

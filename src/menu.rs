@@ -434,10 +434,10 @@ impl MenuBuilder {
                 max_width: Val::Px(MENU_MAX_WIDTH),
                 flex_direction: FlexDirection::Column,
                 padding: UiRect::vertical(Val::Px(Spacing::SMALL)),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             // Native Bevy 0.17 shadow support (starts hidden since menu is closed)
             BoxShadow::default(),
         )

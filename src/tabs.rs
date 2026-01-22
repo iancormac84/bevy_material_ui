@@ -581,11 +581,11 @@ pub fn create_tab_indicator(theme: &MaterialTheme, _variant: TabVariant) -> impl
             left: Val::Px(0.0),
             right: Val::Px(0.0),
             height: Val::Px(TAB_INDICATOR_HEIGHT),
+            border_radius: BorderRadius::top(Val::Px(TAB_INDICATOR_HEIGHT)),
             ..default()
         },
         BackgroundColor(theme.primary),
-        BorderRadius::top(Val::Px(TAB_INDICATOR_HEIGHT)),
-    )
+        )
 }
 
 // ============================================================================

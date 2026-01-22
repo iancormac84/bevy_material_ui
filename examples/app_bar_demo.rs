@@ -163,11 +163,11 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         height: Val::Px(56.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
+                        border_radius: BorderRadius::all(Val::Px(16.0)),
                         ..default()
                     },
                     BackgroundColor(bg_color),
-                    BorderRadius::all(Val::Px(16.0)),
-                ))
+                    ))
                 .with_children(|btn| {
                     if let Some(icon) = bevy_material_ui::icons::MaterialIcon::from_name(ICON_ADD) {
                         btn.spawn(icon.with_size(24.0).with_color(icon_color));

@@ -541,11 +541,11 @@ pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
             margin: UiRect::top(Val::Px(8.0)),
             flex_direction: FlexDirection::Column,
             row_gap: Val::Px(8.0),
+            border_radius: BorderRadius::all(Val::Px(8.0)),
             ..default()
         },
         BackgroundColor(theme.surface_container.with_alpha(0.8)),
-        BorderRadius::all(Val::Px(8.0)),
-    ));
+        ));
     let block_entity = block_commands.id();
 
     block_commands.with_children(|block| {

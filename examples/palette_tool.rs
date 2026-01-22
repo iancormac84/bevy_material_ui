@@ -189,11 +189,11 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
                             Node {
                                 width: Val::Px(36.0),
                                 height: Val::Px(36.0),
+                                border_radius: BorderRadius::all(Val::Px(8.0)),
                                 ..default()
                             },
                             BackgroundColor(Color::srgb_u8(state.r, state.g, state.b)),
-                            BorderRadius::all(Val::Px(8.0)),
-                        ));
+                            ));
 
                         row.spawn(Node {
                             flex_grow: 1.0,
@@ -422,9 +422,9 @@ fn spawn_role_row(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, role
                 Node {
                     width: Val::Px(20.0),
                     height: Val::Px(20.0),
+                    border_radius: BorderRadius::all(Val::Px(4.0)),
                     ..default()
                 },
-                BorderRadius::all(Val::Px(4.0)),
                 BackgroundColor(Color::NONE),
                 SchemeSwatch { role },
             ));
@@ -514,9 +514,9 @@ fn spawn_palette_row(
                         Node {
                             width: Val::Px(28.0),
                             height: Val::Px(28.0),
+                            border_radius: BorderRadius::all(Val::Px(6.0)),
                             ..default()
                         },
-                        BorderRadius::all(Val::Px(6.0)),
                         BackgroundColor(Color::NONE),
                         PaletteSwatch { palette, tone },
                     ));

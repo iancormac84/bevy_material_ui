@@ -663,11 +663,11 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                     height: Val::Px(48.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                            ))
+                                ))
                             .with_children(|btn| {
                                 if let Some(icon) = MaterialIcon::from_name(icon) {
                                     btn.spawn((
@@ -769,11 +769,11 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                         height: Val::Px(48.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
+                                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ..default()
                                     },
                                     BackgroundColor(Color::NONE),
-                                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                                ))
+                                    ))
                                 .with_children(|btn| {
                                     if let Some(icon) = MaterialIcon::from_name(&action.icon) {
                                         btn.spawn((
@@ -830,11 +830,11 @@ pub fn spawn_top_app_bar(
                                 height: Val::Px(48.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                 ..default()
                             },
                             BackgroundColor(Color::NONE),
-                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                        ))
+                            ))
                         .with_children(|btn| {
                             if let Some(icon) = MaterialIcon::from_name(icon) {
                                 btn.spawn((
@@ -901,11 +901,11 @@ pub fn spawn_top_app_bar(
                                     height: Val::Px(48.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                            ))
+                                ))
                             .with_children(|btn| {
                                 if let Some(icon) = MaterialIcon::from_name(&action.icon) {
                                     btn.spawn((
@@ -965,11 +965,11 @@ pub fn spawn_top_app_bar_with_right_content(
                                 align_items: AlignItems::Center,
                                 padding: UiRect::horizontal(Val::Px(8.0)),
                                 column_gap: Val::Px(Spacing::EXTRA_SMALL),
+                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                 ..default()
                             },
                             BackgroundColor(Color::NONE),
-                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                        ))
+                            ))
                         .with_children(|btn| {
                             if let Some(icon_name) = &nav_icon {
                                 if let Some(icon) = MaterialIcon::from_name(icon_name) {
@@ -1052,11 +1052,11 @@ pub fn spawn_top_app_bar_with_right_content(
                                     height: Val::Px(48.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-                            ))
+                                ))
                             .with_children(|btn| {
                                 if let Some(icon) = MaterialIcon::from_name(&action.icon) {
                                     btn.spawn((

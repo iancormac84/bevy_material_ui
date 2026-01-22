@@ -455,10 +455,10 @@ impl SnackbarBuilder {
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             // Native Bevy 0.17 shadow support (MD3 snackbars are Level 3 elevation)
             Elevation::Level3.to_box_shadow(),
         )
@@ -572,10 +572,10 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         margin: UiRect::left(Val::Px(Spacing::SMALL)),
+                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ))
                 .with_children(|btn| {
                     btn.spawn((
@@ -618,11 +618,11 @@ pub fn spawn_snackbar(
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
                 ..default()
             },
             Transform::default(), // Required for animation system
             BackgroundColor(theme.inverse_surface),
-            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             // Native Bevy 0.17 shadow support
             Elevation::Level3.to_box_shadow(),
             GlobalZIndex(1000), // Ensure snackbar is on top
@@ -683,10 +683,10 @@ pub fn spawn_snackbar(
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         margin: UiRect::left(Val::Px(Spacing::SMALL)),
+                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ))
                 .with_children(move |btn| {
                     btn.spawn((

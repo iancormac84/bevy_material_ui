@@ -424,10 +424,10 @@ impl FabBuilder {
                 } else {
                     Val::Px(0.0)
                 },
+                border_radius: BorderRadius::all(Val::Px(corner_radius)),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(corner_radius)),
             // Native Bevy 0.17 shadow support
             elevation.to_box_shadow(),
         )

@@ -176,10 +176,10 @@ pub fn create_focus_ring(target: Entity, color: Color, offset: f32, width: f32) 
             bottom: Val::Px(-offset - width),
             border: UiRect::all(Val::Px(width)),
             display: Display::None,
+            border_radius: BorderRadius::all(Val::Px(4.0 + offset)),
             ..default()
         },
         BorderColor::all(color),
-        BorderRadius::all(Val::Px(4.0 + offset)),
         BackgroundColor(Color::NONE),
     )
 }

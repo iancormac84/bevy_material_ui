@@ -97,12 +97,13 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                             padding: UiRect::all(Val::Px(12.0)),
                             flex_direction: FlexDirection::Column,
                             row_gap: Val::Px(8.0),
+                            border_radius: BorderRadius::all(Val::Px(12.0)),
+                    ))
+                   
                             ..default()
                         },
                         BackgroundColor(theme.surface_container_low),
-                        BorderRadius::all(Val::Px(12.0)),
-                    ))
-                    .insert_test_id("scroll_demo/scroll/vertical", &telemetry)
+                        .insert_test_id("scroll_demo/scroll/vertical", &telemetry)
                     .with_children(|content| {
                         for i in 1..=30 {
                             content.spawn((

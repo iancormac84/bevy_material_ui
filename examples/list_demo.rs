@@ -333,10 +333,11 @@ fn setup(
                                         Node {
                                             width: Val::Px(handle_size),
                                             height: Val::Px(handle_size),
+                                            border_radius: BorderRadius::all(Val::Px(handle_size
                                             ..default()
                                         },
                                         BackgroundColor(switch_handle_color),
-                                        BorderRadius::all(Val::Px(handle_size / 2.0)),
+                                        / 2.0)),
                                     ));
                                 });
 
@@ -401,10 +402,10 @@ fn setup(
                                     padding: UiRect::all(Val::Px(12.0)),
                                     flex_direction: FlexDirection::Row,
                                     column_gap: Val::Px(12.0),
+                                    border_radius: BorderRadius::all(Val::Px(12.0)),
                                     ..default()
                                 },
                                 BackgroundColor(theme.surface_container_low),
-                                BorderRadius::all(Val::Px(12.0)),
                                 Interaction::None,
                             ))
                             .with_children(|scroller| {
@@ -433,10 +434,10 @@ fn setup(
                                     height: Val::Px(180.0),
                                     overflow: Overflow::scroll(),
                                     padding: UiRect::all(Val::Px(12.0)),
+                                    border_radius: BorderRadius::all(Val::Px(12.0)),
                                     ..default()
                                 },
                                 BackgroundColor(theme.surface_container_low),
-                                BorderRadius::all(Val::Px(12.0)),
                                 Interaction::None,
                             ))
                             .with_children(|scroller| {

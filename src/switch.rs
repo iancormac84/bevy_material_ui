@@ -247,7 +247,7 @@ fn switch_style_system(
         Changed<MaterialSwitch>,
     >,
     mut handles: Query<
-        (&mut BackgroundColor, &mut Node, &mut BorderRadius),
+        (&mut BackgroundColor, &mut Node),
         (With<SwitchHandle>, Without<MaterialSwitch>),
     >,
 ) {
@@ -271,12 +271,12 @@ fn switch_style_system(
         let handle_size = switch.handle_size();
 
         for child in children.iter() {
-            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child)
+            if let Ok((mut handle_bg, mut handle_node)) = handles.get_mut(child)
             {
                 *handle_bg = BackgroundColor(handle_color);
                 handle_node.width = Val::Px(handle_size);
                 handle_node.height = Val::Px(handle_size);
-                *handle_radius = BorderRadius::all(Val::Px(handle_size / 2.0));
+                handle_node.border_radius = BorderRadius::all(Val::Px(handle_size / 2.0));
             }
         }
     }
@@ -293,7 +293,7 @@ fn switch_theme_refresh_system(
         &Children,
     )>,
     mut handles: Query<
-        (&mut BackgroundColor, &mut Node, &mut BorderRadius),
+        (&mut BackgroundColor, &mut Node),
         (With<SwitchHandle>, Without<MaterialSwitch>),
     >,
 ) {
@@ -317,12 +317,12 @@ fn switch_theme_refresh_system(
         let handle_size = switch.handle_size();
 
         for child in children.iter() {
-            if let Ok((mut handle_bg, mut handle_node, mut handle_radius)) = handles.get_mut(child)
+            if let Ok((mut handle_bg, mut handle_node)) = handles.get_mut(child)
             {
                 *handle_bg = BackgroundColor(handle_color);
                 handle_node.width = Val::Px(handle_size);
                 handle_node.height = Val::Px(handle_size);
-                *handle_radius = BorderRadius::all(Val::Px(handle_size / 2.0));
+                handle_node.border_radius = BorderRadius::all(Val::Px(handle_size / 2.0));
             }
         }
     }
@@ -377,11 +377,11 @@ impl SwitchBuilder {
                 align_items: AlignItems::Center,
                 padding: UiRect::horizontal(Val::Px(2.0)),
                 border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
         )
     }
 }
@@ -456,11 +456,11 @@ impl SpawnSwitch for Commands<'_, '_> {
                     align_items: AlignItems::Center,
                     padding: UiRect::horizontal(Val::Px(2.0)),
                     border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(bg_color),
                 BorderColor::all(border_color),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
             ))
             .with_children(|track| {
                 // Handle (thumb)
@@ -469,10 +469,10 @@ impl SpawnSwitch for Commands<'_, '_> {
                     Node {
                         width: Val::Px(handle_size),
                         height: Val::Px(handle_size),
+                        border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
                         ..default()
                     },
                     BackgroundColor(handle_color),
-                    BorderRadius::all(Val::Px(handle_size / 2.0)),
                 ));
             });
 
@@ -540,11 +540,11 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
                     align_items: AlignItems::Center,
                     padding: UiRect::horizontal(Val::Px(2.0)),
                     border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(bg_color),
                 BorderColor::all(border_color),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
             ))
             .with_children(|track| {
                 // Handle (thumb)
@@ -553,10 +553,10 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
                     Node {
                         width: Val::Px(handle_size),
                         height: Val::Px(handle_size),
+                        border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
                         ..default()
                     },
                     BackgroundColor(handle_color),
-                    BorderRadius::all(Val::Px(handle_size / 2.0)),
                 ));
             });
 

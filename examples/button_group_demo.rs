@@ -170,12 +170,12 @@ fn spawn_toggle_button(
                 border: UiRect::all(Val::Px(1.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
-        ))
+            ))
         .insert_test_id(test_id, telemetry)
         .with_children(|btn| {
             btn.spawn((

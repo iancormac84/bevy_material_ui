@@ -612,11 +612,11 @@ impl MaterialButtonBuilder {
                 border: UiRect::all(Val::Px(border_width)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(corner_radius)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(corner_radius)),
             // Native Bevy 0.17 shadow support
             elevation.to_box_shadow(),
         )
@@ -642,12 +642,12 @@ impl MaterialButtonBuilder {
                 border: UiRect::all(Val::Px(border_width)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(corner_radius)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(corner_radius)),
-        )
+            )
     }
 }
 

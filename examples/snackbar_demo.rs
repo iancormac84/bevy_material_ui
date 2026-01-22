@@ -211,10 +211,10 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     justify_content: JustifyContent::SpaceBetween,
                     align_items: AlignItems::Center,
                     margin: UiRect::top(Val::Px(8.0)),
+                    border_radius: BorderRadius::all(Val::Px(4.0)),
                     ..default()
                 },
                 BackgroundColor(theme.inverse_surface),
-                BorderRadius::all(Val::Px(4.0)),
                 BoxShadow::from(ShadowStyle {
                     color: Color::BLACK.with_alpha(0.2),
                     x_offset: Val::Px(0.0),
@@ -263,11 +263,11 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                             height: Val::Px(32.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(9999.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(9999.0)),
-                    ))
+                        ))
                     .with_children(|btn| {
                         if let Some(icon) = MaterialIcon::from_name(ICON_CLOSE) {
                             btn.spawn(icon.with_size(24.0).with_color(theme.inverse_on_surface));

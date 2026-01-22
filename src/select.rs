@@ -917,11 +917,11 @@ impl SelectBuilder {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::SpaceBetween,
+                border_radius: BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
         )
     }
 }
@@ -1546,11 +1546,11 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                         top: Val::Px(SELECT_HEIGHT + 4.0),
                         left: Val::Px(0.0),
                         width: Val::Percent(100.0),
+                        border_radius: BorderRadius::all(Val::Px(8.0)),
                         // The outer node draws the dropdown surface.
                         ..default()
                     },
                     BackgroundColor(theme.surface_container),
-                    BorderRadius::all(Val::Px(8.0)),
                 ))
                 .with_children(|dropdown| {
                     // Content container. Option rows are spawned under this child.

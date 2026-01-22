@@ -47,11 +47,11 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(12.0)),
                     row_gap: Val::Px(12.0),
+                    border_radius: BorderRadius::all(Val::Px(12.0)),
                     ..default()
                 },
                 BackgroundColor(theme.surface_container_lowest),
-                BorderRadius::all(Val::Px(12.0)),
-            ))
+                ))
             .insert_test_id("tooltip_demo/options", &telemetry)
             .with_children(|options| {
                 // Position options

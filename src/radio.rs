@@ -475,11 +475,11 @@ impl RadioBuilder {
                 height: Val::Px(RADIO_TOUCH_TARGET),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ..default()
             },
             BackgroundColor(Color::NONE),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
-        )
+            )
     }
 }
 
@@ -556,11 +556,11 @@ impl SpawnRadio for Commands<'_, '_> {
                     height: Val::Px(RADIO_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
+                ))
             .with_children(|touch| {
                 // State layer
                 touch
@@ -573,11 +573,11 @@ impl SpawnRadio for Commands<'_, '_> {
                             height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
+                        ))
                     .with_children(|state_layer| {
                         // Outer circle
                         state_layer
@@ -589,11 +589,11 @@ impl SpawnRadio for Commands<'_, '_> {
                                     border: UiRect::all(Val::Px(2.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
                             ))
                             .with_children(|outer| {
                                 // Inner dot
@@ -602,10 +602,10 @@ impl SpawnRadio for Commands<'_, '_> {
                                     Node {
                                         width: Val::Px(RADIO_DOT_SIZE),
                                         height: Val::Px(RADIO_DOT_SIZE),
+                                        border_radius: BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
                                         ..default()
                                     },
                                     BackgroundColor(inner_color),
-                                    BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
                                 ));
                             });
                     });
@@ -682,11 +682,11 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                     height: Val::Px(RADIO_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
+                ))
             .with_children(|touch| {
                 // State layer
                 touch
@@ -699,11 +699,11 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                             height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
+                        ))
                     .with_children(|state_layer| {
                         // Outer circle
                         state_layer
@@ -715,11 +715,11 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                                     border: UiRect::all(Val::Px(2.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
                             ))
                             .with_children(|outer| {
                                 // Inner dot
@@ -728,10 +728,10 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                                     Node {
                                         width: Val::Px(RADIO_DOT_SIZE),
                                         height: Val::Px(RADIO_DOT_SIZE),
+                                        border_radius: BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
                                         ..default()
                                     },
                                     BackgroundColor(inner_color),
-                                    BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
                                 ));
                             });
                     });

@@ -121,11 +121,11 @@ fn setup_ui(mut commands: Commands, theme: Res<MaterialTheme>) {
                     padding: UiRect::all(Val::Px(12.0)),
                     flex_direction: FlexDirection::Column,
                     row_gap: Val::Px(8.0),
+                    border_radius: BorderRadius::all(Val::Px(12.0)),
                     ..default()
                 },
                 BackgroundColor(theme.surface_container_low),
-                BorderRadius::all(Val::Px(12.0)),
-            ))
+                ))
             .with_children(|list| {
                 for i in 1..=40 {
                     list.spawn((Node {

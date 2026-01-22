@@ -560,7 +560,7 @@ fn slider_interaction_system(
             apply_slider_drag(
                 entity,
                 cursor_physical,
-                slider,
+                &mut slider,
                 parts,
                 computed_node,
                 transform,
@@ -694,10 +694,8 @@ fn touch_slider_interaction_system(
     if state.active_id.is_none() {
         if let Some(touch) = touches.iter_just_pressed().next() {
             let scaled = touch.position() * scale;
-            let mut picked = None;
             let mut use_scaled = true;
-
-            picked = pick_slider_entity(&sliders, scaled);
+            let mut picked = pick_slider_entity(&sliders, scaled);
             if picked.is_none() {
                 picked = pick_slider_entity(&sliders, touch.position());
                 use_scaled = false;

@@ -114,7 +114,6 @@ pub fn spawn_list_section(
                                 .selection_mode(ListSelectionMode::Single)
                                 .build_scrollable(),
                             BackgroundColor(theme_clone.surface),
-                            BorderRadius::all(Val::Px(12.0)),
                             Interaction::None, // Enable hover detection
                         ))
                         .with_children(|list| {
@@ -331,11 +330,11 @@ pub fn spawn_list_section(
                                     } else {
                                         2.0
                                     })),
+                                    border_radius: BorderRadius::all(Val::Px(16.0)),
                                     ..default()
                                 },
                                 BackgroundColor(switch_track_color),
                                 BorderColor::all(switch_outline_color),
-                                BorderRadius::all(Val::Px(16.0)),
                             ))
                             .with_children(|track| {
                                 let handle_size = switch_handle_size;
@@ -344,10 +343,10 @@ pub fn spawn_list_section(
                                     Node {
                                         width: Val::Px(handle_size),
                                         height: Val::Px(handle_size),
+                                        border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
                                         ..default()
                                     },
                                     BackgroundColor(switch_handle_color),
-                                    BorderRadius::all(Val::Px(handle_size / 2.0)),
                                 ));
                             });
 
@@ -416,10 +415,10 @@ pub fn spawn_list_section(
                                 padding: UiRect::all(Val::Px(12.0)),
                                 flex_direction: FlexDirection::Row,
                                 column_gap: Val::Px(12.0),
+                                border_radius: BorderRadius::all(Val::Px(12.0)),
                                 ..default()
                             },
                             BackgroundColor(theme_clone.surface_container_low),
-                            BorderRadius::all(Val::Px(12.0)),
                             Interaction::None,
                         ))
                         .with_children(|scroller| {
@@ -428,6 +427,7 @@ pub fn spawn_list_section(
                                     Node {
                                         width: Val::Px(84.0),
                                         height: Val::Px(72.0),
+                                        border_radius: BorderRadius::all(Val::Px(12.0)),
                                         ..default()
                                     },
                                     BackgroundColor(if i % 2 == 0 {
@@ -435,7 +435,6 @@ pub fn spawn_list_section(
                                     } else {
                                         theme_clone.primary_container
                                     }),
-                                    BorderRadius::all(Val::Px(12.0)),
                                 ));
                             }
                             // Scrollbars spawn automatically (show_scrollbars=true by default)
@@ -452,10 +451,10 @@ pub fn spawn_list_section(
                                 // Both axes must be Scroll
                                 overflow: Overflow::scroll(),
                                 padding: UiRect::all(Val::Px(12.0)),
+                                border_radius: BorderRadius::all(Val::Px(12.0)),
                                 ..default()
                             },
                             BackgroundColor(theme_clone.surface_container_low),
-                            BorderRadius::all(Val::Px(12.0)),
                             Interaction::None,
                         ))
                         .with_children(|scroller| {
@@ -475,6 +474,7 @@ pub fn spawn_list_section(
                                             Node {
                                                 width: Val::Px(120.0),
                                                 height: Val::Px(72.0),
+                                                border_radius: BorderRadius::all(Val::Px(12.0)),
                                                 ..default()
                                             },
                                             BackgroundColor(if i % 3 == 0 {
@@ -484,7 +484,6 @@ pub fn spawn_list_section(
                                             } else {
                                                 theme_clone.primary_container
                                             }),
-                                            BorderRadius::all(Val::Px(12.0)),
                                         ));
                                     }
                                 });
@@ -528,7 +527,6 @@ fn spawn_large_list_demo(
                 .overscan_rows(3)
                 .build_scrollable(),
             BackgroundColor(theme.surface),
-            BorderRadius::all(Val::Px(12.0)),
             Interaction::None,
         ));
         return;
@@ -543,7 +541,6 @@ fn spawn_large_list_demo(
                 .selection_mode(ListSelectionMode::Single)
                 .build_scrollable(),
             BackgroundColor(theme.surface),
-            BorderRadius::all(Val::Px(12.0)),
             Interaction::None,
         ))
         .with_children(|list| {

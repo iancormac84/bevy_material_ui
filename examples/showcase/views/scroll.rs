@@ -50,10 +50,10 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                             padding: UiRect::all(Val::Px(12.0)),
                             flex_direction: FlexDirection::Column,
                             row_gap: Val::Px(8.0),
+                            border_radius: BorderRadius::all(Val::Px(12.0)),
                             ..default()
                         },
                         BackgroundColor(theme.surface_container_low),
-                        BorderRadius::all(Val::Px(12.0)),
                     ))
                     .with_children(|content| {
                         for i in 1..=20 {
@@ -96,10 +96,10 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                             padding: UiRect::all(Val::Px(12.0)),
                             flex_direction: FlexDirection::Row,
                             column_gap: Val::Px(12.0),
+                            border_radius: BorderRadius::all(Val::Px(12.0)),
                             ..default()
                         },
                         BackgroundColor(theme.surface_container_low),
-                        BorderRadius::all(Val::Px(12.0)),
                     ))
                     .with_children(|content| {
                         for i in 1..=20 {
@@ -111,10 +111,10 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                                         align_items: AlignItems::Center,
                                         justify_content: JustifyContent::Center,
                                         flex_shrink: 0.0,
+                                        border_radius: BorderRadius::all(Val::Px(8.0)),
                                         ..default()
                                     },
                                     BackgroundColor(theme.surface_container_high),
-                                    BorderRadius::all(Val::Px(8.0)),
                                 ))
                                 .with_children(|card| {
                                     card.spawn((

@@ -69,10 +69,10 @@ fn spawn_shape_placeholder(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 row_gap: Val::Px(8.0),
+                border_radius: BorderRadius::all(Val::Px(12.0)),
                 ..default()
             },
             BackgroundColor(theme.surface_container),
-            BorderRadius::all(Val::Px(12.0)),
         ))
         .with_children(|card| {
             card.spawn((

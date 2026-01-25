@@ -511,10 +511,10 @@ fn spawn_color_swatch(
                 padding: UiRect::all(Val::Px(8.0)),
                 justify_content: JustifyContent::FlexEnd,
                 align_items: AlignItems::FlexStart,
+                border_radius: BorderRadius::all(Val::Px(8.0)),
                 ..default()
             },
             BackgroundColor(color),
-            BorderRadius::all(Val::Px(8.0)),
         ))
         .with_children(|swatch| {
             swatch.spawn((

@@ -356,9 +356,9 @@ fn ensure_linear_progress_indicator_system(
             top: Val::Px(0.0),
             bottom: Val::Px(0.0),
             width: Val::Percent(progress.progress.clamp(0.0, 1.0) * 100.0),
+            border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             ..default()
         };
-        let indicator_radius = BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL));
 
         commands.entity(entity).with_children(|container| {
             container.spawn((
@@ -366,7 +366,6 @@ fn ensure_linear_progress_indicator_system(
                 LinearProgressIndicatorFor(entity),
                 indicator_node,
                 BackgroundColor(indicator_color),
-                indicator_radius,
             ));
         });
     }
@@ -459,6 +458,7 @@ impl LinearProgressBuilder {
             min_height: Val::Px(self.height_px),
             overflow: Overflow::clip(),
             position_type: PositionType::Relative,
+            border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             ..default()
         };
 
@@ -466,7 +466,6 @@ impl LinearProgressBuilder {
             self.progress,
             node,
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
         )
     }
 }
@@ -626,6 +625,7 @@ impl SpawnProgressChild for ChildSpawnerCommands<'_> {
                 bottom: Val::Px(0.0),
                 width: Val::Percent(progress_value * 100.0),
                 height: Val::Percent(100.0),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
                 ..default()
             };
 
@@ -634,7 +634,6 @@ impl SpawnProgressChild for ChildSpawnerCommands<'_> {
                 LinearProgressIndicatorFor(bar_entity),
                 indicator_node,
                 BackgroundColor(indicator_color),
-                BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             ));
         });
     }

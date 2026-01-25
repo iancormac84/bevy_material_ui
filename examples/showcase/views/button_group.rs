@@ -155,11 +155,11 @@ fn spawn_toggle_button(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 border: UiRect::all(Val::Px(1.0)),
+                border_radius: BorderRadius::all(Val::Px(20.0)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(20.0)),
         ))
         .with_children(|btn| {
             btn.spawn((

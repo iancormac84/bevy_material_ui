@@ -610,13 +610,13 @@ impl MaterialButtonBuilder {
             Node {
                 padding: UiRect::axes(Val::Px(Spacing::EXTRA_LARGE), Val::Px(Spacing::MEDIUM)),
                 border: UiRect::all(Val::Px(border_width)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(corner_radius)),
             // Native Bevy 0.17 shadow support
             elevation.to_box_shadow(),
         )
@@ -640,13 +640,13 @@ impl MaterialButtonBuilder {
             Node {
                 padding: UiRect::axes(Val::Px(Spacing::EXTRA_LARGE), Val::Px(Spacing::MEDIUM)),
                 border: UiRect::all(Val::Px(border_width)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(corner_radius)),
         )
     }
 }

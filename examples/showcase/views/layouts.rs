@@ -402,10 +402,10 @@ fn spawn_standard_drawer_card(parent: &mut ChildSpawnerCommands, theme: &Materia
                                         height: Val::Px(36.0),
                                         align_items: AlignItems::Center,
                                         padding: UiRect::axes(Val::Px(12.0), Val::Px(6.0)),
+                                        border_radius: BorderRadius::all(Val::Px(6.0)),
                                         ..default()
                                     },
                                     BackgroundColor(theme.surface_container_high),
-                                    BorderRadius::all(Val::Px(6.0)),
                                 ))
                                 .with_children(|item| {
                                     item.spawn((
@@ -470,10 +470,10 @@ fn spawn_permanent_drawer_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                                         height: Val::Px(36.0),
                                         align_items: AlignItems::Center,
                                         padding: UiRect::axes(Val::Px(12.0), Val::Px(6.0)),
+                                        border_radius: BorderRadius::all(Val::Px(6.0)),
                                         ..default()
                                     },
                                     BackgroundColor(theme.surface_container_high),
-                                    BorderRadius::all(Val::Px(6.0)),
                                 ))
                                 .with_children(|item| {
                                     item.spawn((
@@ -535,10 +535,10 @@ fn spawn_modal_drawer_example(parent: &mut ChildSpawnerCommands, theme: Material
                                 height: Val::Px(40.0),
                                 align_items: AlignItems::Center,
                                 padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
+                                border_radius: BorderRadius::all(Val::Px(8.0)),
                                 ..default()
                             },
                             BackgroundColor(theme.surface_container_high),
-                            BorderRadius::all(Val::Px(8.0)),
                         ))
                         .with_children(|item| {
                             item.spawn((
@@ -610,10 +610,10 @@ fn spawn_list_detail_card(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                             Node {
                                 height: Val::Px(32.0),
                                 align_items: AlignItems::Center,
+                                border_radius: BorderRadius::all(Val::Px(6.0)),
                                 ..default()
                             },
                             BackgroundColor(theme.surface_container_high),
-                            BorderRadius::all(Val::Px(6.0)),
                         ))
                         .with_children(|item| {
                             item.spawn((
@@ -671,10 +671,10 @@ fn spawn_supporting_panes_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                             Node {
                                 height: Val::Px(32.0),
                                 align_items: AlignItems::Center,
+                                border_radius: BorderRadius::all(Val::Px(6.0)),
                                 ..default()
                             },
                             BackgroundColor(theme.surface_container_high),
-                            BorderRadius::all(Val::Px(6.0)),
                         ))
                         .with_children(|item| {
                             item.spawn((

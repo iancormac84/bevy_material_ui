@@ -71,10 +71,10 @@ fn spawn_elevation_card(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 row_gap: Val::Px(6.0),
+                border_radius: BorderRadius::all(Val::Px(12.0)),
                 ..default()
             },
             BackgroundColor(theme.surface_container),
-            BorderRadius::all(Val::Px(12.0)),
             elevation.to_box_shadow(),
         ))
         .with_children(|card| {

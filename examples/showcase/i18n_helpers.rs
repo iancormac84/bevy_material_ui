@@ -67,10 +67,10 @@ pub fn spawn_checkbox_i18n(
                     height: Val::Px(CHECKBOX_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(20.0)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(20.0)),
             ))
             .with_children(|parent| {
                 // State layer
@@ -84,10 +84,10 @@ pub fn spawn_checkbox_i18n(
                             height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
                     ))
                     .with_children(|state_layer_parent| {
                         // Checkbox box
@@ -100,11 +100,11 @@ pub fn spawn_checkbox_i18n(
                                     border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
                             ))
                             .with_children(|box_parent| {
                                 // Checkmark
@@ -175,11 +175,11 @@ pub fn spawn_switch_i18n(
                     align_items: AlignItems::Center,
                     padding: UiRect::horizontal(Val::Px(2.0)),
                     border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
+                    border_radius: BorderRadius::all(Val::Px(16.0)),
                     ..default()
                 },
                 BackgroundColor(bg_color),
                 BorderColor::all(border_color),
-                BorderRadius::all(Val::Px(16.0)),
             ))
             .with_children(|track| {
                 // Handle (thumb)
@@ -188,10 +188,10 @@ pub fn spawn_switch_i18n(
                     Node {
                         width: Val::Px(handle_size),
                         height: Val::Px(handle_size),
+                        border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
                         ..default()
                     },
                     BackgroundColor(handle_color),
-                    BorderRadius::all(Val::Px(handle_size / 2.0)),
                 ));
             });
 
@@ -243,10 +243,10 @@ pub fn spawn_radio_i18n(
                     height: Val::Px(RADIO_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(20.0)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(20.0)),
             ))
             .with_children(|touch| {
                 // State layer
@@ -260,10 +260,10 @@ pub fn spawn_radio_i18n(
                             height: Val::Px(40.0),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
+                            border_radius: BorderRadius::all(Val::Px(20.0)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
                     ))
                     .with_children(|state_layer| {
                         // Outer circle
@@ -276,11 +276,11 @@ pub fn spawn_radio_i18n(
                                     border: UiRect::all(Val::Px(2.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
                                 BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(RADIO_SIZE / 2.0)),
                             ))
                             .with_children(|outer| {
                                 // Inner dot
@@ -289,10 +289,10 @@ pub fn spawn_radio_i18n(
                                     Node {
                                         width: Val::Px(RADIO_DOT_SIZE),
                                         height: Val::Px(RADIO_DOT_SIZE),
+                                        border_radius: BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
                                         ..default()
                                     },
                                     BackgroundColor(inner_color),
-                                    BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
                                 ));
                             });
                     });
@@ -337,6 +337,7 @@ pub fn spawn_chip_i18n(
                 align_items: AlignItems::Center,
                 padding: UiRect::horizontal(Val::Px(16.0)),
                 column_gap: Val::Px(8.0),
+                border_radius: BorderRadius::all(Val::Px(8.0)),
                 ..default()
             },
             BackgroundColor(if selected {
@@ -344,7 +345,6 @@ pub fn spawn_chip_i18n(
             } else {
                 Color::NONE
             }),
-            BorderRadius::all(Val::Px(8.0)),
         ))
         .with_children(|chip_parent| {
             // Leading checkmark for selected chips
@@ -403,10 +403,10 @@ pub fn spawn_extended_fab_i18n(
                 padding: UiRect::horizontal(Val::Px(16.0)),
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(12.0),
+                border_radius: BorderRadius::all(Val::Px(16.0)),
                 ..default()
             },
             BackgroundColor(theme.primary_container),
-            BorderRadius::all(Val::Px(16.0)),
         ))
         .with_children(|fab_parent| {
             if let Some(icon) = MaterialIcon::from_name(&icon_name) {

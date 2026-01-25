@@ -2380,11 +2380,11 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                         } else {
                             1.0
                         })),
+                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ..default()
                     },
                     BackgroundColor(bg_color),
                     BorderColor::all(border_color),
-                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ))
                 .with_children(|btn| {
                     if let Some(icon) = MaterialIcon::from_name(icon_name)
@@ -2483,11 +2483,11 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                         } else {
                                             0.0
                                         })),
+                                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),
                                     BorderColor::all(border_color),
-                                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                 ))
                                 .with_children(|track| {
                                     track.spawn((
@@ -2495,10 +2495,10 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                         Node {
                                             width: Val::Px(handle_size),
                                             height: Val::Px(handle_size),
+                                            border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
                                             ..default()
                                         },
                                         BackgroundColor(handle_color),
-                                        BorderRadius::all(Val::Px(handle_size / 2.0)),
                                     ));
                                 })
                                 .id();
@@ -2765,10 +2765,10 @@ fn spawn_detail_scroller(
                         padding: UiRect::all(Val::Px(16.0)),
                         flex_direction: FlexDirection::Column,
                         align_items: AlignItems::Stretch,
+                        border_radius: BorderRadius::all(Val::Px(16.0)),
                         ..default()
                     },
                     BackgroundColor(theme.surface_container_low),
-                    BorderRadius::all(Val::Px(16.0)),
                 ))
                 .with_children(|surface| {
                     spawn_selected_section(surface, materials, ctx);

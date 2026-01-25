@@ -45,10 +45,10 @@ pub fn spawn_icons_section(
                                 height: Val::Px(48.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                border_radius: BorderRadius::all(Val::Px(8.0)),
                                 ..default()
                             },
                             BackgroundColor(theme.surface_container),
-                            BorderRadius::all(Val::Px(8.0)),
                         ))
                         .with_children(|cell| {
                             if let Some(icon) = MaterialIcon::from_name(icon_name) {

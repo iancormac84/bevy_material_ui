@@ -249,10 +249,10 @@ impl BadgeBuilder {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 padding: UiRect::axes(Val::Px(BADGE_PADDING), Val::Px(0.0)),
+                border_radius: BorderRadius::all(Val::Px(height / 2.0)),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(height / 2.0)),
         )
     }
 }
@@ -337,6 +337,7 @@ pub fn spawn_badge(commands: &mut Commands, theme: &MaterialTheme, badge: Materi
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             padding: UiRect::axes(Val::Px(BADGE_PADDING), Val::Px(0.0)),
+            border_radius: BorderRadius::all(Val::Px(height / 2.0)),
             display: if visible {
                 Display::Flex
             } else {
@@ -345,7 +346,6 @@ pub fn spawn_badge(commands: &mut Commands, theme: &MaterialTheme, badge: Materi
             ..default()
         },
         BackgroundColor(bg_color),
-        BorderRadius::all(Val::Px(height / 2.0)),
     ));
 
     // Add text content for large badges
@@ -390,7 +390,6 @@ fn badge_style_system(
             &MaterialBadge,
             &mut Node,
             &mut BackgroundColor,
-            &mut BorderRadius,
         ),
         Changed<MaterialBadge>,
     >,
@@ -398,7 +397,7 @@ fn badge_style_system(
 ) {
     let Some(theme) = theme else { return };
 
-    for (badge, mut node, mut bg_color, mut border_radius) in badges.iter_mut() {
+    for (badge, mut node, mut bg_color) in badges.iter_mut() {
         let width = badge.width();
         let height = badge.height();
 
@@ -413,12 +412,12 @@ fn badge_style_system(
         };
 
         *bg_color = BackgroundColor(badge.background_color(&theme));
-        *border_radius = BorderRadius::all(Val::Px(height / 2.0));
+        node.border_radius = BorderRadius::all(Val::Px(height / 2.0));
     }
 
     // Update text content
     for (parent, mut text, mut color) in badge_texts.iter_mut() {
-        if let Ok((badge, _, _, _)) = badges.get(parent.parent()) {
+        if let Ok((badge, _, _)) = badges.get(parent.parent()) {
             if let Some(content) = &badge.content {
                 **text = content.clone();
             }
@@ -434,7 +433,6 @@ fn badge_theme_refresh_system(
         &MaterialBadge,
         &mut Node,
         &mut BackgroundColor,
-        &mut BorderRadius,
     )>,
     mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
 ) {
@@ -443,7 +441,7 @@ fn badge_theme_refresh_system(
         return;
     }
 
-    for (badge, mut node, mut bg_color, mut border_radius) in badges.iter_mut() {
+    for (badge, mut node, mut bg_color) in badges.iter_mut() {
         let width = badge.width();
         let height = badge.height();
 
@@ -458,11 +456,11 @@ fn badge_theme_refresh_system(
         };
 
         *bg_color = BackgroundColor(badge.background_color(&theme));
-        *border_radius = BorderRadius::all(Val::Px(height / 2.0));
+        node.border_radius = BorderRadius::all(Val::Px(height / 2.0));
     }
 
     for (parent, mut text, mut color) in badge_texts.iter_mut() {
-        if let Ok(badge) = badges.get(parent.parent()).map(|(b, _, _, _)| b) {
+        if let Ok(badge) = badges.get(parent.parent()).map(|(b, _, _)| b) {
             if let Some(content) = &badge.content {
                 **text = content.clone();
             }

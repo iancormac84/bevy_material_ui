@@ -46,10 +46,10 @@ pub fn spawn_nav_item(
                 height: Val::Px(48.0), // Slightly smaller for navigation
                 padding: UiRect::axes(Val::Px(16.0), Val::Px(12.0)),
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(8.0)),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(8.0)),
         ))
         .with_children(|item_container| {
             // Item content - headline text with ListItemHeadline marker for automatic color updates

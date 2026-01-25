@@ -457,11 +457,11 @@ impl ChipBuilder {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
+                border_radius: BorderRadius::all(Val::Px(CHIP_HEIGHT / 2.0)), // Pill shape
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(outline_color),
-            BorderRadius::all(Val::Px(CHIP_HEIGHT / 2.0)), // Pill shape
             // Native Bevy 0.17 shadow support
             elevation.to_box_shadow(),
         )

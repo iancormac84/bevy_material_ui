@@ -128,10 +128,10 @@ fn spawn_ripple_system(
                         top: Val::Px(event.position.y),
                         width: Val::Px(0.0),
                         height: Val::Px(0.0),
+                        border_radius: BorderRadius::all(Val::Percent(50.0)),
                         ..default()
                     },
                     BackgroundColor(color),
-                    BorderRadius::all(Val::Percent(50.0)),
                 ));
             });
         }

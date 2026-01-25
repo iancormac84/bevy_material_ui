@@ -521,13 +521,13 @@ fn spawn_tooltip_on_overlay(
                 padding: UiRect::axes(Val::Px(TOOLTIP_PADDING_PLAIN), Val::Px(4.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
                 // Start offscreen - position system will update
                 top: Val::Px(-1000.0),
                 left: Val::Px(-1000.0),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             Pickable::IGNORE, // Don't block clicks
         ))
         .with_children(|parent| {
@@ -565,13 +565,13 @@ pub fn spawn_tooltip(commands: &mut Commands, theme: &MaterialTheme, tooltip: To
                 padding: UiRect::axes(Val::Px(TOOLTIP_PADDING_PLAIN), Val::Px(4.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
                 // Start offscreen - position system will update
                 top: Val::Px(-1000.0),
                 left: Val::Px(-1000.0),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
             GlobalZIndex(1000), // Ensure tooltips are on top
         ))
         .with_children(|parent| {
@@ -609,10 +609,10 @@ pub fn spawn_rich_tooltip(
                 padding: UiRect::all(Val::Px(TOOLTIP_PADDING_RICH)),
                 flex_direction: FlexDirection::Column,
                 row_gap: Val::Px(Spacing::EXTRA_SMALL),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
             GlobalZIndex(1000),
         ))
         .with_children(|parent| {

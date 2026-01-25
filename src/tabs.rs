@@ -24,11 +24,10 @@ impl Plugin for TabsPlugin {
             .add_systems(Update, tab_interaction_system)
             .add_systems(Update, tab_style_system)
             .add_systems(Update, sync_tabs_selection_system)
-            .add_systems(Update, tab_label_and_indicator_system)
             .add_systems(Update, tab_content_visibility_system)
             .add_systems(
                 Update,
-                tabs_telemetry_system.after(tab_label_and_indicator_system),
+                (tab_label_and_indicator_system, tabs_telemetry_system).chain(),
             );
     }
 }
@@ -581,10 +580,10 @@ pub fn create_tab_indicator(theme: &MaterialTheme, _variant: TabVariant) -> impl
             left: Val::Px(0.0),
             right: Val::Px(0.0),
             height: Val::Px(TAB_INDICATOR_HEIGHT),
+            border_radius: BorderRadius::top(Val::Px(TAB_INDICATOR_HEIGHT)),
             ..default()
         },
         BackgroundColor(theme.primary),
-        BorderRadius::top(Val::Px(TAB_INDICATOR_HEIGHT)),
     )
 }
 

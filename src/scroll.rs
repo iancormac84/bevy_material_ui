@@ -847,9 +847,8 @@ const SCROLLBAR_THICKNESS: f32 = 10.0;
 
 /// System to handle mouse wheel scrolling
 /// This follows Bevy's pattern: read mouse wheel, find hovered entities, update their ScrollPosition
-#[allow(deprecated)] // EventReader renamed to MessageReader in Bevy 0.17
 fn mouse_wheel_scroll_system(
-    mut mouse_wheel_reader: EventReader<MouseWheel>,
+    mut mouse_wheel_reader: MessageReader<MouseWheel>,
     windows: Query<&Window, With<PrimaryWindow>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     parents: Query<&ChildOf>,
@@ -1591,10 +1590,10 @@ fn spawn_scrollbar_vertical(
                     0.0
                 }),
                 width: Val::Px(scrollbar_width),
+                border_radius: BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
                 ..default()
             },
             BackgroundColor(track_color),
-            BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
         ))
         .with_children(|track| {
             track.spawn((
@@ -1607,10 +1606,10 @@ fn spawn_scrollbar_vertical(
                     width: Val::Px(scrollbar_width),
                     height: Val::Px(50.0), // Will be updated by system
                     top: Val::Px(0.0),
+                    border_radius: BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
                     ..default()
                 },
                 BackgroundColor(thumb_color),
-                BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
             ));
         });
 }
@@ -1638,10 +1637,10 @@ fn spawn_scrollbar_horizontal(
                     0.0
                 }),
                 height: Val::Px(scrollbar_width),
+                border_radius: BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
                 ..default()
             },
             BackgroundColor(track_color),
-            BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
         ))
         .with_children(|track| {
             track.spawn((
@@ -1654,10 +1653,10 @@ fn spawn_scrollbar_horizontal(
                     height: Val::Px(scrollbar_width),
                     width: Val::Px(50.0), // Will be updated by system
                     left: Val::Px(0.0),
+                    border_radius: BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
                     ..default()
                 },
                 BackgroundColor(thumb_color),
-                BorderRadius::all(Val::Px(scrollbar_width / 2.0)),
             ));
         });
 }

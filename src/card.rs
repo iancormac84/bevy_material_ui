@@ -340,6 +340,7 @@ impl CardBuilder {
             padding: UiRect::all(Val::Px(self.padding)),
             border: UiRect::all(Val::Px(border_width)),
             flex_direction: FlexDirection::Column,
+            border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
             ..default()
         };
 
@@ -355,7 +356,6 @@ impl CardBuilder {
             node,
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
             // Native Bevy 0.17 shadow support
             elevation.to_box_shadow(),
         )
@@ -375,6 +375,7 @@ impl CardBuilder {
             padding: UiRect::all(Val::Px(self.padding)),
             border: UiRect::all(Val::Px(border_width)),
             flex_direction: FlexDirection::Column,
+            border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
             ..default()
         };
 
@@ -390,7 +391,6 @@ impl CardBuilder {
             node,
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
         )
     }
 }

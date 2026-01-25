@@ -100,6 +100,7 @@ fn spawn_icon_button_demo(
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     border: UiRect::all(Val::Px(if has_border { 1.0 } else { 0.0 })),
+                    border_radius: BorderRadius::all(Val::Px(20.0)),
                     ..default()
                 },
                 BackgroundColor(bg_color),
@@ -108,7 +109,6 @@ fn spawn_icon_button_demo(
                 } else {
                     Color::NONE
                 }),
-                BorderRadius::all(Val::Px(20.0)),
             ))
             .with_children(|btn| {
                 if let Some(icon) =

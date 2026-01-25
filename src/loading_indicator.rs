@@ -376,10 +376,10 @@ impl LoadingIndicatorBuilder {
                 height,
                 position_type: PositionType::Relative,
                 overflow: Overflow::visible(),
+                border_radius: BorderRadius::all(Val::Px(size / 2.0)),
                 ..default()
             },
             BackgroundColor(bg),
-            BorderRadius::all(Val::Px(size / 2.0)),
         )
     }
 }

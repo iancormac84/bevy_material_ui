@@ -190,11 +190,11 @@ fn spawn_toggle_button(
                 border: UiRect::all(Val::Px(1.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
         ))
         .with_children(|btn| {
             btn.spawn((
@@ -235,11 +235,11 @@ fn spawn_interactive_button(
                 border: UiRect::all(Val::Px(if has_border { 1.0 } else { 0.0 })),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
             elevation.to_box_shadow(), // Add shadow for elevated buttons
         ))
         .with_children(|btn| {

@@ -1302,6 +1302,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(Spacing::LARGE)),
                     row_gap: Val::Px(Spacing::MEDIUM),
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                     ..default()
                 },
                 Transform::default(),
@@ -1312,7 +1313,6 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                     should_block_lower: true,
                     is_hoverable: false,
                 },
-                BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                 BoxShadow::default(),
                 ZIndex(1),
             ))
@@ -1345,10 +1345,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 height: Val::Px(40.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                 ..default()
                             },
                             BackgroundColor(Color::NONE),
-                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ))
                         .with_children(|btn| {
                             btn.spawn((
@@ -1398,10 +1398,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                                     ..default()
                                 },
                                 BackgroundColor(theme.primary_container),
-                                BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                             ))
                             .with_children(|chip| {
                                 chip.spawn((
@@ -1437,10 +1437,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                             ))
                             .with_children(|chip| {
                                 chip.spawn((
@@ -1489,10 +1489,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                                     ..default()
                                 },
                                 BackgroundColor(bg),
-                                BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                             ))
                             .with_children(|btn| {
                                 btn.spawn((
@@ -1544,12 +1544,12 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
                                     margin: UiRect::all(Val::Px(Spacing::MEDIUM)),
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 Transform::default(),
                                 GlobalTransform::default(),
                                 BackgroundColor(theme.surface_container),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ))
                             .with_children(|clock| {
                                 let layout = crate::time_picker::clock::ClockFaceLayout::new(120.0);
@@ -1595,10 +1595,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(bg),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ))
                                         .with_children(|n| {
                                             n.spawn((
@@ -1652,10 +1652,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_INNER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(Color::NONE),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ))
                                         .with_children(|n| {
                                             n.spawn((
@@ -1694,10 +1694,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(Color::NONE),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ))
                                         .with_children(|n| {
                                             n.spawn((
@@ -1741,10 +1741,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(Color::NONE),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ))
                                         .with_children(|n| {
                                             n.spawn((
@@ -1793,10 +1793,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 top: Val::Px(-6.0),
                                                 width: Val::Px(12.0),
                                                 height: Val::Px(12.0),
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(primary),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ));
                                     });
                             });

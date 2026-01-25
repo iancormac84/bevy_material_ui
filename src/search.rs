@@ -183,10 +183,10 @@ impl SearchBarBuilder {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
+                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ..default()
             },
             BackgroundColor(theme.surface_container_high),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
             RippleHost::new(),
             Button,
             Interaction::None,
@@ -230,10 +230,10 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
                         height: Val::Px(48.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
+                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
-                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
                 ))
                 .with_children(|btn| {
                     btn.spawn((
@@ -285,10 +285,10 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
                     height: Val::Px(48.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
             ))
             .with_children(|btn| {
                 if let Some(icon) = MaterialIcon::from_name("search") {

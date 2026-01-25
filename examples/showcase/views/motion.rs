@@ -79,10 +79,10 @@ pub fn spawn_motion_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                         border: UiRect::all(Val::Px(1.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
+                        border_radius: BorderRadius::all(Val::Px(20.0)),
                         ..default()
                     },
                     BackgroundColor(theme.primary),
-                    BorderRadius::all(Val::Px(20.0)),
                 ))
                 .with_children(|btn| {
                     btn.spawn((
@@ -158,10 +158,10 @@ fn spawn_motion_track(
                         width: Val::Px(TRACK_WIDTH),
                         height: Val::Px(TRACK_HEIGHT),
                         position_type: PositionType::Relative,
+                        border_radius: BorderRadius::all(Val::Px(12.0)),
                         ..default()
                     },
                     BackgroundColor(theme.surface_container),
-                    BorderRadius::all(Val::Px(12.0)),
                 ))
                 .with_children(|track| {
                     track.spawn((
@@ -171,10 +171,10 @@ fn spawn_motion_track(
                             position_type: PositionType::Absolute,
                             left: Val::Px(start),
                             top: Val::Px((TRACK_HEIGHT - BOX_SIZE) / 2.0),
+                            border_radius: BorderRadius::all(Val::Px(12.0)),
                             ..default()
                         },
                         BackgroundColor(theme.primary),
-                        BorderRadius::all(Val::Px(12.0)),
                         animation,
                         marker,
                         MotionDemoRange { start, end },
@@ -215,10 +215,10 @@ fn spawn_spring_track(
                         width: Val::Px(TRACK_WIDTH),
                         height: Val::Px(TRACK_HEIGHT),
                         position_type: PositionType::Relative,
+                        border_radius: BorderRadius::all(Val::Px(12.0)),
                         ..default()
                     },
                     BackgroundColor(theme.surface_container),
-                    BorderRadius::all(Val::Px(12.0)),
                 ))
                 .with_children(|track| {
                     track.spawn((
@@ -228,10 +228,10 @@ fn spawn_spring_track(
                             position_type: PositionType::Absolute,
                             left: Val::Px(start),
                             top: Val::Px((TRACK_HEIGHT - BOX_SIZE) / 2.0),
+                            border_radius: BorderRadius::all(Val::Px(12.0)),
                             ..default()
                         },
                         BackgroundColor(theme.tertiary),
-                        BorderRadius::all(Val::Px(12.0)),
                         animation,
                         marker,
                         MotionDemoRange { start, end },

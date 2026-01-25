@@ -154,10 +154,10 @@ pub fn spawn_app_bar_section(
                                     height: Val::Px(56.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(16.0)),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
-                                BorderRadius::all(Val::Px(16.0)),
                             ))
                             .with_children(|btn| {
                                 if let Some(icon) =

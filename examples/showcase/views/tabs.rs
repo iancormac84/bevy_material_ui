@@ -77,10 +77,10 @@ pub fn spawn_tabs_section(
                             width: Val::Percent(100.0),
                             min_height: Val::Px(140.0),
                             padding: UiRect::all(Val::Px(16.0)),
+                            border_radius: BorderRadius::bottom(Val::Px(12.0)),
                             ..default()
                         },
                         BackgroundColor(theme.surface_container_low),
-                        BorderRadius::bottom(Val::Px(12.0)),
                     ))
                     .with_children(|content| {
                         spawn_tab_panel(

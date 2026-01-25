@@ -946,10 +946,10 @@ fn date_picker_rebuild_content_system(
                                                 height: Val::Px(40.0),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(bg_color),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ))
                                         .with_children(
                                             |cell| {
@@ -1082,10 +1082,10 @@ fn date_picker_rebuild_content_system(
                                         height: Val::Px(40.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
+                                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),
-                                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                 ))
                                 .with_children(|btn| {
                                     btn.spawn((
@@ -1886,6 +1886,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(Spacing::LARGE)),
                     row_gap: Val::Px(Spacing::MEDIUM),
+                    border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                     ..default()
                 },
                 BackgroundColor(bg_color),
@@ -1894,7 +1895,6 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     should_block_lower: true,
                     is_hoverable: false,
                 },
-                BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
                 BoxShadow::default(),
                 ZIndex(1),
             ))
@@ -1958,10 +1958,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     height: Val::Px(40.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ))
                             .with_children(|btn| {
                                 let mode_toggle_icon_name = if input_mode == DateInputMode::Calendar
@@ -2003,10 +2003,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     height: Val::Px(40.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ))
                             .with_children(|btn| {
                                 btn.spawn((
@@ -2029,10 +2029,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::all(Val::Px(Spacing::SMALL)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
                             ))
                             .with_children(|btn| {
                                 btn.spawn(Node {
@@ -2082,10 +2082,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     height: Val::Px(40.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
+                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
-                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
                             ))
                             .with_children(|btn| {
                                 btn.spawn((crate::icons::svg::SvgIcon::new(
@@ -2264,10 +2264,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(40.0),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
+                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                 ..default()
                                             },
                                             BackgroundColor(bg_color),
-                                            BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                         ))
                                         .with_children(
                                             |btn| {
@@ -2408,10 +2408,10 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                     height: Val::Px(40.0),
                                                     justify_content: JustifyContent::Center,
                                                     align_items: AlignItems::Center,
+                                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                                     ..default()
                                                 },
                                                 BackgroundColor(bg_color),
-                                                BorderRadius::all(Val::Px(CornerRadius::FULL)),
                                             ));
 
                                             // Only enable interaction if date is valid

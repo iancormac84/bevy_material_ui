@@ -98,10 +98,10 @@ fn spawn_ripple_surface(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 overflow: Overflow::clip(),
+                border_radius: BorderRadius::all(Val::Px(16.0)),
                 ..default()
             },
             BackgroundColor(surface_color),
-            BorderRadius::all(Val::Px(16.0)),
         ))
         .with_children(|btn| {
             btn.spawn((

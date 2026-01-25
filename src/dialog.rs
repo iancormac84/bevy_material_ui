@@ -37,10 +37,13 @@ impl Plugin for DialogPlugin {
                 Update,
                 (
                     dialog_promote_to_overlay_system,
+                    dialog_bring_to_front_on_open_system,
                     dialog_layer_z_index_system,
                     dialog_layer_visibility_system,
                     dialog_position_system,
+                    dialog_mark_just_opened_system,
                     dialog_dismiss_on_scrim_click_system,
+                    dialog_clear_just_opened_system,
                     dialog_dismiss_on_escape_system,
                     dialog_visibility_system,
                     dialog_scrim_visibility_system,
@@ -140,6 +143,10 @@ struct DialogSpawnCounter(u64);
 /// Stable spawn order for dialogs.
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct DialogSpawnOrder(u64);
+
+/// Marker for dialogs that opened this frame.
+#[derive(Component)]
+struct DialogJustOpened;
 
 /// Cached open stack ordered from bottom -> top.
 #[derive(Resource, Default)]
@@ -327,6 +334,7 @@ fn dialog_layer_z_index_system(
     mut commands: Commands,
     dialogs: Query<(Entity, &MaterialDialog, &DialogSpawnOrder)>,
     mut roots: Query<(Entity, &DialogLayerRootFor)>,
+    scrims: Query<(Entity, &DialogScrimFor), With<DialogScrim>>,
     mut open_stack: ResMut<DialogOpenStack>,
 ) {
     // Collect all open dialogs sorted by spawn order.
@@ -350,8 +358,41 @@ fn dialog_layer_z_index_system(
         };
 
         // Base above other modal UIs (date/time pickers use 9999).
-        let z = 10000 + (idx as i32);
+        let z = 10000 + (idx as i32 * 2);
         commands.entity(root_entity).insert(GlobalZIndex(z));
+
+        // Ensure scrim and dialog surface render above other UI as well.
+        if let Some((scrim_entity, _)) = scrims
+            .iter()
+            .find(|(_, scrim_for)| scrim_for.0 == for_dialog.0)
+        {
+            commands.entity(scrim_entity).insert(GlobalZIndex(z));
+        }
+
+        commands.entity(for_dialog.0).insert(GlobalZIndex(z + 1));
+    }
+}
+
+/// Bring newly opened dialogs to the top of the stack.
+fn dialog_bring_to_front_on_open_system(
+    mut commands: Commands,
+    mut spawn_counter: ResMut<DialogSpawnCounter>,
+    dialogs: Query<(Entity, &MaterialDialog), Changed<MaterialDialog>>,
+    mut orders: Query<&mut DialogSpawnOrder>,
+) {
+    for (entity, dialog) in dialogs.iter() {
+        if !dialog.open {
+            continue;
+        }
+
+        spawn_counter.0 += 1;
+        let new_order = DialogSpawnOrder(spawn_counter.0);
+
+        if let Ok(mut order) = orders.get_mut(entity) {
+            *order = new_order;
+        } else {
+            commands.entity(entity).insert(new_order);
+        }
     }
 }
 
@@ -362,7 +403,7 @@ fn dialog_layer_z_index_system(
 fn dialog_position_system(
     mut dialogs: Query<(
         &MaterialDialog,
-        &MaterialDialogAnchor,
+        Option<&MaterialDialogAnchor>,
         Option<&MaterialDialogPlacement>,
         &mut Node,
         &ComputedNode,
@@ -372,17 +413,37 @@ fn dialog_position_system(
     overlay_query: Query<(&UiGlobalTransform, &ComputedNode), With<DialogOverlay>>,
     windows: Query<&Window>,
 ) {
-    let scale_factor = windows
-        .iter()
-        .next()
-        .map(|w| w.scale_factor())
-        .unwrap_or(1.0);
+    let window = windows.iter().next();
+    let scale_factor = window.map(|w| w.scale_factor()).unwrap_or(1.0);
+    let window_physical_size = window.map(|w| {
+        let mut size = w.physical_size().as_vec2();
+        if size.x <= 0.0 || size.y <= 0.0 {
+            size = Vec2::new(w.resolution.width(), w.resolution.height()) * w.scale_factor() as f32;
+        }
+        size
+    });
 
-    let (overlay_center, overlay_size) = overlay_query
+    let (mut overlay_center, mut overlay_size) = overlay_query
         .iter()
         .next()
         .map(|(t, c)| (t.translation, c.size()))
         .unwrap_or((Vec2::ZERO, Vec2::ZERO));
+
+    // If the overlay hasn't been laid out yet, fall back to the primary window size.
+    if overlay_size.x <= 0.0 || overlay_size.y <= 0.0 {
+        if let Some(window) = windows.iter().next() {
+            let mut window_size = window.physical_size().as_vec2();
+
+            if window_size.x <= 0.0 || window_size.y <= 0.0 {
+                let logical = Vec2::new(window.resolution.width(), window.resolution.height());
+                window_size = logical * window.scale_factor() as f32;
+            }
+
+            overlay_size = window_size;
+            overlay_center = window_size / 2.0;
+        }
+    }
+
     let overlay_top_left = overlay_center - overlay_size / 2.0;
 
     for for_dialog in roots.iter() {
@@ -413,84 +474,106 @@ fn dialog_position_system(
 
         let placement = placement.copied().unwrap_or_default();
 
-        let center_in_viewport = || (
-            // Center within the overlay (physical pixels).
-            overlay_top_left.x + (overlay_size.x - dialog_size_physical.x) / 2.0,
-            overlay_top_left.y + (overlay_size.y - dialog_size_physical.y) / 2.0,
-        );
+        let center_in_viewport = || {
+            if let Some(window_size_physical) = window_physical_size {
+                // Center within the window (physical pixels).
+                (
+                    (window_size_physical.x - dialog_size_physical.x) / 2.0,
+                    (window_size_physical.y - dialog_size_physical.y) / 2.0,
+                )
+            } else {
+                // Fallback to overlay size if window isn't available.
+                (
+                    overlay_top_left.x + (overlay_size.x - dialog_size_physical.x) / 2.0,
+                    overlay_top_left.y + (overlay_size.y - dialog_size_physical.y) / 2.0,
+                )
+            }
+        };
 
         let (screen_left_physical, screen_top_physical) = match placement {
             MaterialDialogPlacement::CenterInViewport => center_in_viewport(),
             other => {
                 // All other placements require an anchor rect; fall back to viewport
                 // if the anchor is unavailable or not yet laid out.
-                match anchors.get(anchor.0) {
-                    Ok((anchor_transform, anchor_computed)) => {
-                        // UiGlobalTransform and ComputedNode sizes are physical pixels.
-                        let anchor_center_physical = anchor_transform.translation;
-                        let anchor_size_physical = anchor_computed.size();
-                        if anchor_size_physical.x <= 0.0 || anchor_size_physical.y <= 0.0 {
-                            center_in_viewport()
-                        } else {
-                            let anchor_top_left_physical =
-                                anchor_center_physical - anchor_size_physical / 2.0;
+                if let Some(anchor) = anchor {
+                    match anchors.get(anchor.0) {
+                        Ok((anchor_transform, anchor_computed)) => {
+                            // UiGlobalTransform and ComputedNode sizes are physical pixels.
+                            let anchor_center_physical = anchor_transform.translation;
+                            let anchor_size_physical = anchor_computed.size();
+                            if anchor_size_physical.x <= 0.0 || anchor_size_physical.y <= 0.0 {
+                                center_in_viewport()
+                            } else {
+                                let anchor_top_left_physical =
+                                    anchor_center_physical - anchor_size_physical / 2.0;
 
-                            match other {
-                                MaterialDialogPlacement::CenterInViewport => center_in_viewport(),
-                                MaterialDialogPlacement::CenterInAnchor => (
-                                    anchor_top_left_physical.x
-                                        + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
-                                    anchor_top_left_physical.y
-                                        + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
-                                ),
-                                MaterialDialogPlacement::BelowAnchor { gap_px } => {
-                                    let gap_physical = gap_px * scale;
-                                    (
+                                match other {
+                                    MaterialDialogPlacement::CenterInViewport => {
+                                        center_in_viewport()
+                                    }
+                                    MaterialDialogPlacement::CenterInAnchor => (
                                         anchor_top_left_physical.x
                                             + (anchor_size_physical.x - dialog_size_physical.x)
                                                 / 2.0,
                                         anchor_top_left_physical.y
-                                            + anchor_size_physical.y
-                                            + gap_physical,
-                                    )
-                                }
-                                MaterialDialogPlacement::AboveAnchor { gap_px } => {
-                                    let gap_physical = gap_px * scale;
-                                    (
-                                        anchor_top_left_physical.x
-                                            + (anchor_size_physical.x - dialog_size_physical.x)
-                                                / 2.0,
-                                        anchor_top_left_physical.y
-                                            - dialog_size_physical.y
-                                            - gap_physical,
-                                    )
-                                }
-                                MaterialDialogPlacement::RightOfAnchor { gap_px } => {
-                                    let gap_physical = gap_px * scale;
-                                    (
-                                        anchor_top_left_physical.x
-                                            + anchor_size_physical.x
-                                            + gap_physical,
-                                        anchor_top_left_physical.y
                                             + (anchor_size_physical.y - dialog_size_physical.y)
                                                 / 2.0,
-                                    )
-                                }
-                                MaterialDialogPlacement::LeftOfAnchor { gap_px } => {
-                                    let gap_physical = gap_px * scale;
-                                    (
-                                        anchor_top_left_physical.x
-                                            - dialog_size_physical.x
-                                            - gap_physical,
-                                        anchor_top_left_physical.y
-                                            + (anchor_size_physical.y - dialog_size_physical.y)
-                                                / 2.0,
-                                    )
+                                    ),
+                                    MaterialDialogPlacement::BelowAnchor { gap_px } => {
+                                        let gap_physical = gap_px * scale;
+                                        (
+                                            anchor_top_left_physical.x
+                                                + (anchor_size_physical.x
+                                                    - dialog_size_physical.x)
+                                                    / 2.0,
+                                            anchor_top_left_physical.y
+                                                + anchor_size_physical.y
+                                                + gap_physical,
+                                        )
+                                    }
+                                    MaterialDialogPlacement::AboveAnchor { gap_px } => {
+                                        let gap_physical = gap_px * scale;
+                                        (
+                                            anchor_top_left_physical.x
+                                                + (anchor_size_physical.x
+                                                    - dialog_size_physical.x)
+                                                    / 2.0,
+                                            anchor_top_left_physical.y
+                                                - dialog_size_physical.y
+                                                - gap_physical,
+                                        )
+                                    }
+                                    MaterialDialogPlacement::RightOfAnchor { gap_px } => {
+                                        let gap_physical = gap_px * scale;
+                                        (
+                                            anchor_top_left_physical.x
+                                                + anchor_size_physical.x
+                                                + gap_physical,
+                                            anchor_top_left_physical.y
+                                                + (anchor_size_physical.y
+                                                    - dialog_size_physical.y)
+                                                    / 2.0,
+                                        )
+                                    }
+                                    MaterialDialogPlacement::LeftOfAnchor { gap_px } => {
+                                        let gap_physical = gap_px * scale;
+                                        (
+                                            anchor_top_left_physical.x
+                                                - dialog_size_physical.x
+                                                - gap_physical,
+                                            anchor_top_left_physical.y
+                                                + (anchor_size_physical.y
+                                                    - dialog_size_physical.y)
+                                                    / 2.0,
+                                        )
+                                    }
                                 }
                             }
                         }
+                        Err(_) => center_in_viewport(),
                     }
-                    Err(_) => center_in_viewport(),
+                } else {
+                    center_in_viewport()
                 }
             }
         };
@@ -508,10 +591,16 @@ fn dialog_dismiss_on_scrim_click_system(
     mouse: Res<ButtonInput<MouseButton>>,
     mut close_events: MessageWriter<DialogCloseEvent>,
     mut dialogs: Query<&mut MaterialDialog>,
+    just_opened: Query<(), With<DialogJustOpened>>,
     mut scrims: Query<(&DialogScrimFor, &Interaction), (With<DialogScrim>, Changed<Interaction>)>,
 ) {
     for (for_dialog, interaction) in scrims.iter_mut() {
         if *interaction != Interaction::Pressed {
+            continue;
+        }
+
+        // Ignore scrim presses on the same frame the dialog was opened.
+        if just_opened.get(for_dialog.0).is_ok() {
             continue;
         }
 
@@ -533,6 +622,28 @@ fn dialog_dismiss_on_scrim_click_system(
             entity: for_dialog.0,
             dismissed: true,
         });
+    }
+}
+
+/// Mark dialogs that opened this frame so scrim clicks can be ignored.
+fn dialog_mark_just_opened_system(
+    mut commands: Commands,
+    dialogs: Query<(Entity, &MaterialDialog), Changed<MaterialDialog>>,
+) {
+    for (entity, dialog) in dialogs.iter() {
+        if dialog.open {
+            commands.entity(entity).insert(DialogJustOpened);
+        }
+    }
+}
+
+/// Clear the just-opened marker after scrim handling.
+fn dialog_clear_just_opened_system(
+    mut commands: Commands,
+    dialogs: Query<Entity, With<DialogJustOpened>>,
+) {
+    for entity in dialogs.iter() {
+        commands.entity(entity).remove::<DialogJustOpened>();
     }
 }
 
@@ -1000,14 +1111,14 @@ impl DialogBuilder {
                 },
                 padding: UiRect::all(Val::Px(Spacing::EXTRA_LARGE)),
                 flex_direction: FlexDirection::Column,
+                border_radius: BorderRadius::all(Val::Px(if is_full_screen {
+                    0.0
+                } else {
+                    CornerRadius::EXTRA_LARGE
+                })),
                 ..default()
             },
             BackgroundColor(bg_color),
-            BorderRadius::all(Val::Px(if is_full_screen {
-                0.0
-            } else {
-                CornerRadius::EXTRA_LARGE
-            })),
             // Native Bevy 0.17 shadow support (starts hidden since dialog is closed)
             BoxShadow::default(),
             // Ensure modal dialogs block pointer interactions behind the dialog surface.

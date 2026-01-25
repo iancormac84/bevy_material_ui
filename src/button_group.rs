@@ -348,7 +348,6 @@ fn button_group_toggle_system(
 }
 
 fn button_group_corner_radius_system(
-    mut commands: Commands,
     groups: Query<
         (&MaterialButtonGroup, &Children),
         Or<(
@@ -358,7 +357,7 @@ fn button_group_corner_radius_system(
         )>,
     >,
     buttons: Query<&MaterialButton>,
-    mut radii: Query<&mut BorderRadius>,
+    mut nodes: Query<&mut Node>,
 ) {
     for (group, children) in groups.iter() {
         let mut button_children: Vec<(Entity, f32)> = Vec::new();
@@ -378,13 +377,8 @@ fn button_group_corner_radius_system(
 
         for (index, (entity, radius)) in button_children.iter().enumerate() {
             let border_radius = segment_border_radius(group.orientation, index, count, *radius);
-            match radii.get_mut(*entity) {
-                Ok(mut existing) => {
-                    *existing = border_radius;
-                }
-                Err(_) => {
-                    commands.entity(*entity).insert(border_radius);
-                }
+            if let Ok(mut node) = nodes.get_mut(*entity) {
+                node.border_radius = border_radius;
             }
         }
     }

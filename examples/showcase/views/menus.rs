@@ -56,11 +56,11 @@ pub fn spawn_menus_section(
                                 flex_direction: FlexDirection::Row,
                                 column_gap: Val::Px(8.0),
                                 align_items: AlignItems::Center,
+                                border_radius: BorderRadius::all(Val::Px(8.0)),
                                 ..default()
                             },
                             BackgroundColor(trigger_bg),
                             BorderColor::all(trigger_border),
-                            BorderRadius::all(Val::Px(8.0)),
                         ))
                         .with_children(|btn| {
                             if let Some(icon) = MaterialIcon::from_name(ICON_MORE_VERT) {
@@ -90,10 +90,10 @@ pub fn spawn_menus_section(
                                 flex_direction: FlexDirection::Column,
                                 padding: UiRect::vertical(Val::Px(8.0)),
                                 margin: UiRect::top(Val::Px(4.0)),
+                                border_radius: BorderRadius::all(Val::Px(4.0)),
                                 ..default()
                             },
                             BackgroundColor(theme.surface_container),
-                            BorderRadius::all(Val::Px(4.0)),
                             BoxShadow::from(ShadowStyle {
                                 color: Color::BLACK.with_alpha(0.2),
                                 x_offset: Val::Px(0.0),

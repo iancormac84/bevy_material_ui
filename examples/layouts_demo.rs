@@ -6,6 +6,10 @@ use bevy::prelude::*;
 use bevy_material_ui::icons::icon_by_name;
 use bevy_material_ui::layout::{self, PaneEntities};
 use bevy_material_ui::prelude::*;
+use bevy_material_ui::select::{SelectBuilder, SelectOption, SpawnSelectChild};
+
+const PREVIEW_WIDTH: f32 = 900.0;
+const PREVIEW_HEIGHT: f32 = 240.0;
 
 fn main() {
     App::new()
@@ -40,37 +44,91 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::FlexStart,
                 padding: UiRect::all(Val::Px(24.0)),
-                row_gap: Val::Px(20.0),
+                row_gap: Val::Px(24.0),
                 ..default()
             })
             .with_children(|page| {
-                page.spawn(Node {
-                    width: Val::Percent(100.0),
-                    max_width: Val::Px(980.0),
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(20.0),
-                    ..default()
-                })
-                .with_children(|section| {
-                    spawn_navigation_examples(section, theme.clone());
-                    spawn_adaptive_examples(section, theme.clone());
-                    spawn_modal_drawer_example(section, theme.clone());
-                    spawn_panes_examples(section, theme.clone());
+                spawn_layout_section(page, &theme, "Navigation scaffolds", |section| {
+                    spawn_layout_entry(section, &theme, "Navigation Bar (Bottom)", |root| {
+                        spawn_bottom_navigation_scaffold(root, &theme)
+                    });
+                    spawn_layout_entry(section, &theme, "Navigation Rail", |root| {
+                        spawn_navigation_rail_scaffold(root, &theme)
+                    });
+                    spawn_layout_entry(section, &theme, "Standard Drawer", |root| {
+                        spawn_standard_drawer_scaffold(root, &theme)
+                    });
+                    spawn_layout_entry(section, &theme, "Permanent Drawer", |root| {
+                        spawn_permanent_drawer_scaffold(root, &theme)
+                    });
+                    spawn_layout_entry(section, &theme, "Modal Drawer", |root| {
+                        spawn_modal_drawer_scaffold(root, &theme)
+                    });
+                });
+
+                spawn_layout_section(page, &theme, "Adaptive navigation (by window class)", |section| {
+                    let phone = WindowSizeClass::new(480.0, 800.0);
+                    let tablet = WindowSizeClass::new(900.0, 900.0);
+                    let desktop = WindowSizeClass::new(1400.0, 900.0);
+
+                    spawn_layout_entry(section, &theme, "Adaptive: Phone (Compact)", |root| {
+                        spawn_navigation_suite_scaffold(
+                            root,
+                            &theme,
+                            &phone,
+                            "layout_adaptive_phone",
+                            spawn_primary_actions,
+                        )
+                    });
+                    spawn_layout_entry(section, &theme, "Adaptive: Tablet (Rail)", |root| {
+                        spawn_navigation_suite_scaffold(
+                            root,
+                            &theme,
+                            &tablet,
+                            "layout_adaptive_tablet",
+                            spawn_toggle_stack,
+                        )
+                    });
+                    spawn_layout_entry(section, &theme, "Adaptive: Desktop (Drawer)", |root| {
+                        spawn_navigation_suite_scaffold(
+                            root,
+                            &theme,
+                            &desktop,
+                            "layout_adaptive_desktop",
+                            spawn_navigation_stack,
+                        )
+                    });
+                });
+
+                spawn_layout_section(page, &theme, "Pane scaffolds", |section| {
+                    spawn_layout_entry(section, &theme, "List Detail (2 panes)", |root| {
+                        spawn_list_detail_scaffold(root, &theme)
+                    });
+                    spawn_layout_entry(section, &theme, "Supporting Panes (3 panes)", |root| {
+                        spawn_supporting_panes_scaffold(root, &theme)
+                    });
                 });
             });
         });
 }
 
-fn spawn_navigation_examples(parent: &mut ChildSpawnerCommands, theme: MaterialTheme) {
+fn spawn_layout_section(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    title: &str,
+    build: impl FnOnce(&mut ChildSpawnerCommands),
+) {
     parent
         .spawn(Node {
+            width: Val::Percent(100.0),
+            max_width: Val::Px(980.0),
             flex_direction: FlexDirection::Column,
             row_gap: Val::Px(12.0),
             ..default()
         })
-        .with_children(|col| {
-            col.spawn((
-                Text::new("Navigation scaffolds"),
+        .with_children(|section| {
+            section.spawn((
+                Text::new(title),
                 TextFont {
                     font_size: 16.0,
                     ..default()
@@ -78,90 +136,24 @@ fn spawn_navigation_examples(parent: &mut ChildSpawnerCommands, theme: MaterialT
                 TextColor(theme.on_surface),
             ));
 
-            col.spawn(Node {
-                flex_direction: FlexDirection::Row,
-                column_gap: Val::Px(12.0),
-                flex_wrap: FlexWrap::Wrap,
-                ..default()
-            })
-            .with_children(|row| {
-                spawn_bottom_nav_card(row, &theme);
-                spawn_nav_rail_card(row, &theme);
-            });
+            build(section);
         });
 }
 
-fn spawn_adaptive_examples(parent: &mut ChildSpawnerCommands, theme: MaterialTheme) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(12.0),
-            ..default()
-        })
-        .with_children(|col| {
-            col.spawn((
-                Text::new("Adaptive navigation (by window class)"),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-
-            let phone = WindowSizeClass::new(480.0, 800.0);
-            let tablet = WindowSizeClass::new(900.0, 900.0);
-            let desktop = WindowSizeClass::new(1400.0, 900.0);
-
-            col.spawn(Node {
-                flex_direction: FlexDirection::Row,
-                column_gap: Val::Px(12.0),
-                flex_wrap: FlexWrap::Wrap,
-                ..default()
-            })
-            .with_children(|row| {
-                spawn_adaptive_card(
-                    row,
-                    &theme,
-                    "Phone (Compact)",
-                    phone,
-                    "layout_adaptive_phone",
-                );
-                spawn_adaptive_card(
-                    row,
-                    &theme,
-                    "Tablet (Rail)",
-                    tablet,
-                    "layout_adaptive_tablet",
-                );
-                spawn_adaptive_card(
-                    row,
-                    &theme,
-                    "Desktop (Drawer)",
-                    desktop,
-                    "layout_adaptive_desktop",
-                );
-            });
-        });
-}
-
-fn spawn_adaptive_card(
+fn spawn_layout_entry(
     parent: &mut ChildSpawnerCommands,
     theme: &MaterialTheme,
     label: &str,
-    size_class: WindowSizeClass,
-    test_prefix: &str,
+    build_scaffold: impl FnOnce(&mut ChildSpawnerCommands),
 ) {
-    let config = layout::NavigationSuiteScaffold::default();
     parent
         .spawn(Node {
-            width: Val::Px(320.0),
-            height: Val::Px(220.0),
             flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(6.0),
+            row_gap: Val::Px(8.0),
             ..default()
         })
-        .with_children(|card| {
-            card.spawn((
+        .with_children(|entry| {
+            entry.spawn((
                 Text::new(label),
                 TextFont {
                     font_size: 13.0,
@@ -170,573 +162,516 @@ fn spawn_adaptive_card(
                 TextColor(theme.on_surface_variant),
             ));
 
-            card.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(1.0)),
-                ..default()
-            })
-            .with_children(|root| {
-                let _entities = layout::spawn_navigation_suite_scaffold(
-                    root,
-                    theme,
-                    &size_class,
-                    &config,
-                    |nav| {
-                        for (i, icon_name) in ["home", "search", "person"].iter().enumerate() {
-                            nav.spawn((
-                                TestId::new(format!("{}_nav_{}", test_prefix, i)),
-                                Button,
-                                Interaction::None,
-                                RippleHost::new(),
-                                Node {
-                                    flex_grow: 1.0,
-                                    height: Val::Percent(100.0),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|btn| {
-                                if let Some(id) = icon_by_name(icon_name) {
-                                    btn.spawn(
-                                        bevy_material_ui::icons::MaterialIcon::new(id)
-                                            .with_size(18.0)
-                                            .with_color(theme.on_surface),
-                                    );
-                                }
-                            });
-                        }
+            entry
+                .spawn((
+                    Node {
+                        width: Val::Px(PREVIEW_WIDTH),
+                        height: Val::Px(PREVIEW_HEIGHT),
+                        border: UiRect::all(Val::Px(1.0)),
+                        overflow: Overflow::clip(),
+                        ..default()
                     },
-                    |content| {
-                        content
-                            .spawn((
-                                TestId::new(format!("{}_content", test_prefix)),
-                                Node {
-                                    flex_grow: 1.0,
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|c| {
-                                c.spawn((
-                                    Text::new("Content"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface_variant),
-                                ));
-                            });
-                    },
-                );
-
-                let _ = _entities;
-            });
+                    BackgroundColor(theme.surface_container_low),
+                    BorderColor::all(theme.outline_variant),
+                ))
+                .with_children(|root| {
+                    build_scaffold(root);
+                });
         });
 }
 
-fn spawn_bottom_nav_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+fn spawn_primary_actions(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(6.0),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn_button(theme, "Primary", ButtonVariant::Filled);
+            col.spawn_checkbox(theme, CheckboxState::Checked, "Remember");
+        });
+}
+
+fn spawn_toggle_stack(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(6.0),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn_switch(theme, true, "Notifications");
+            col.spawn_checkbox(theme, CheckboxState::Unchecked, "Use cellular");
+        });
+}
+
+fn spawn_input_stack(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    let options = vec![
+        SelectOption::new("Option A"),
+        SelectOption::new("Option B"),
+        SelectOption::new("Option C"),
+    ];
+
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(6.0),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn_select_with(
+                theme,
+                SelectBuilder::new(options)
+                    .label("Mode")
+                    .filled()
+                    .selected(0)
+                    .width(Val::Px(200.0)),
+            );
+            col.spawn_button(theme, "Submit", ButtonVariant::Tonal);
+        });
+}
+
+fn spawn_filter_stack(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(6.0),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn_chip_with(theme, ChipBuilder::filter("Filter A").selected(true));
+            col.spawn_chip_with(theme, ChipBuilder::filter("Filter B"));
+        });
+}
+
+fn spawn_status_stack(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(6.0),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn_button(theme, "Refresh", ButtonVariant::Outlined);
+            col.spawn_switch(theme, false, "Sync");
+        });
+}
+
+fn spawn_navigation_stack(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(6.0),
+            ..default()
+        })
+        .with_children(|col| {
+            col.spawn_button(theme, "Open", ButtonVariant::Text);
+            col.spawn_checkbox(theme, CheckboxState::Indeterminate, "Select all");
+        });
+}
+
+trait LayoutDemoButtonExt {
+    fn spawn_button(&mut self, theme: &MaterialTheme, label: &str, variant: ButtonVariant);
+}
+
+impl LayoutDemoButtonExt for ChildSpawnerCommands<'_> {
+    fn spawn_button(&mut self, theme: &MaterialTheme, label: &str, variant: ButtonVariant) {
+        let button = MaterialButton::new(label).with_variant(variant);
+        let text_color = button.text_color(theme);
+
+        self.spawn(MaterialButtonBuilder::new(label).with_variant(variant).build(theme))
+            .with_children(|btn| {
+                btn.spawn((
+                    ButtonLabel,
+                    Text::new(label),
+                    TextFont {
+                        font_size: 13.0,
+                        ..default()
+                    },
+                    TextColor(text_color),
+                ));
+            });
+    }
+}
+
+fn spawn_bottom_navigation_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     let config = layout::NavigationBarScaffold::default();
-    parent
-        .spawn(Node {
-            width: Val::Px(320.0),
-            height: Val::Px(220.0),
-            flex_direction: FlexDirection::Column,
-            ..default()
-        })
-        .with_children(|card| {
-            card.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(1.0)),
-                overflow: Overflow::clip(),
-                ..default()
-            })
-            .with_children(|root| {
-                let _entities = layout::spawn_navigation_bar_scaffold(
-                    root,
-                    theme,
-                    &config,
-                    |content| {
-                        content
-                            .spawn((
-                                TestId::new("layout_bottom_content"),
-                                Node {
-                                    flex_grow: 1.0,
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|c| {
-                                c.spawn((
-                                    Text::new("Content"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface_variant),
-                                ));
-                            });
+    let _ = layout::spawn_navigation_bar_scaffold(
+        parent,
+        theme,
+        &config,
+        |content| {
+            content
+                .spawn(Node {
+                    flex_grow: 1.0,
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::Stretch,
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|c| {
+                    spawn_primary_actions(c, theme);
+                });
+        },
+        |nav| {
+            for (i, icon_name) in ["home", "search", "person"].iter().enumerate() {
+                nav.spawn((
+                    TestId::new(format!("layout_bottom_nav_{}", i)),
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        flex_grow: 1.0,
+                        height: Val::Percent(100.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
                     },
-                    |nav| {
-                        for (i, icon_name) in ["home", "search", "person"].iter().enumerate() {
-                            nav.spawn((
-                                TestId::new(format!("layout_bottom_nav_{}", i)),
-                                Button,
-                                Interaction::None,
-                                RippleHost::new(),
-                                Node {
-                                    flex_grow: 1.0,
-                                    height: Val::Percent(100.0),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|btn| {
-                                if let Some(id) = icon_by_name(icon_name) {
-                                    btn.spawn(
-                                        bevy_material_ui::icons::MaterialIcon::new(id)
-                                            .with_size(18.0)
-                                            .with_color(theme.on_surface),
-                                    );
-                                }
-                            });
-                        }
-                    },
-                );
-                let _ = _entities;
-            });
-        });
+                ))
+                .with_children(|btn| {
+                    if let Some(id) = icon_by_name(icon_name) {
+                        btn.spawn(
+                            bevy_material_ui::icons::MaterialIcon::new(id)
+                                .with_size(18.0)
+                                .with_color(theme.on_surface),
+                        );
+                    }
+                });
+            }
+        },
+    );
 }
 
-fn spawn_nav_rail_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+fn spawn_navigation_rail_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     let config = layout::NavigationRailScaffold::default();
-    parent
-        .spawn(Node {
-            width: Val::Px(360.0),
-            height: Val::Px(220.0),
-            flex_direction: FlexDirection::Column,
-            ..default()
-        })
-        .with_children(|card| {
-            card.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(1.0)),
-                overflow: Overflow::clip(),
-                ..default()
-            })
-            .with_children(|root| {
-                let _entities = layout::spawn_navigation_rail_scaffold(
-                    root,
-                    theme,
-                    &config,
-                    |nav| {
-                        for (i, icon_name) in ["menu", "favorite", "more_vert"].iter().enumerate() {
-                            nav.spawn((
-                                TestId::new(format!("layout_rail_nav_{}", i)),
-                                Button,
-                                Interaction::None,
-                                RippleHost::new(),
-                                Node {
-                                    width: Val::Percent(100.0),
-                                    height: Val::Px(56.0),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|btn| {
-                                if let Some(id) = icon_by_name(icon_name) {
-                                    btn.spawn(
-                                        bevy_material_ui::icons::MaterialIcon::new(id)
-                                            .with_size(20.0)
-                                            .with_color(theme.on_surface),
-                                    );
-                                }
-                            });
-                        }
+    let _ = layout::spawn_navigation_rail_scaffold(
+        parent,
+        theme,
+        &config,
+        |nav| {
+            for (i, icon_name) in ["menu", "favorite", "more_vert"].iter().enumerate() {
+                nav.spawn((
+                    TestId::new(format!("layout_rail_nav_{}", i)),
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(56.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
                     },
-                    |content| {
-                        content
-                            .spawn((
-                                TestId::new("layout_rail_content"),
-                                Node {
-                                    flex_grow: 1.0,
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|c| {
-                                c.spawn((
-                                    Text::new("Content"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface_variant),
-                                ));
-                            });
-                    },
-                );
-                let _ = _entities;
-            });
-        });
+                ))
+                .with_children(|btn| {
+                    if let Some(id) = icon_by_name(icon_name) {
+                        btn.spawn(
+                            bevy_material_ui::icons::MaterialIcon::new(id)
+                                .with_size(20.0)
+                                .with_color(theme.on_surface),
+                        );
+                    }
+                });
+            }
+        },
+        |content| {
+            content
+                .spawn(Node {
+                    flex_grow: 1.0,
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::Stretch,
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|c| {
+                    spawn_toggle_stack(c, theme);
+                });
+        },
+    );
 }
 
-fn spawn_modal_drawer_example(parent: &mut ChildSpawnerCommands, theme: MaterialTheme) {
+fn spawn_standard_drawer_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    let config = layout::StandardDrawerScaffold::default();
+    let _ = layout::spawn_standard_drawer_scaffold(
+        parent,
+        theme,
+        &config,
+        |drawer| {
+            spawn_drawer_list(drawer, theme, "layout_standard_drawer");
+        },
+        |content| {
+            content
+                .spawn(Node {
+                    flex_grow: 1.0,
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::Stretch,
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|c| {
+                    spawn_input_stack(c, theme);
+                });
+        },
+    );
+}
+
+fn spawn_permanent_drawer_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+    let config = layout::PermanentDrawerScaffold::default();
+    let _ = layout::spawn_permanent_drawer_scaffold(
+        parent,
+        theme,
+        &config,
+        |drawer| {
+            spawn_drawer_list(drawer, theme, "layout_permanent_drawer");
+        },
+        |content| {
+            content
+                .spawn(Node {
+                    flex_grow: 1.0,
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::Stretch,
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|c| {
+                    spawn_filter_stack(c, theme);
+                });
+        },
+    );
+}
+
+fn spawn_modal_drawer_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     let config = layout::ModalDrawerScaffold::default();
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(12.0),
-            ..default()
-        })
-        .with_children(|col| {
-            col.spawn((
-                Text::new("Modal drawer scaffold"),
-                TextFont {
-                    font_size: 16.0,
+    let _ = layout::spawn_modal_drawer_scaffold(
+        parent,
+        theme,
+        &config,
+        |drawer| {
+            spawn_drawer_list(drawer, theme, "layout_modal_drawer");
+        },
+        |content| {
+            content
+                .spawn(Node {
+                    flex_grow: 1.0,
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::Stretch,
+                    padding: UiRect::all(Val::Px(12.0)),
                     ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-
-            col.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Px(240.0),
-                border: UiRect::all(Val::Px(1.0)),
-                ..default()
-            })
-            .with_children(|root| {
-                let _entities = layout::spawn_modal_drawer_scaffold(
-                    root,
-                    &theme,
-                    &config,
-                    |drawer| {
-                        drawer
-                            .spawn((
-                                TestId::new("layout_drawer_list"),
-                                Node {
-                                    flex_direction: FlexDirection::Column,
-                                    row_gap: Val::Px(8.0),
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|list| {
-                                for (i, label) in ["Inbox", "Starred", "Archive"].iter().enumerate()
-                                {
-                                    list.spawn((
-                                        TestId::new(format!("layout_drawer_item_{}", i)),
-                                        Button,
-                                        Interaction::None,
-                                        RippleHost::new(),
-                                        Node {
-                                            height: Val::Px(40.0),
-                                            align_items: AlignItems::Center,
-                                            padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
-                                            ..default()
-                                        },
-                                        BackgroundColor(theme.surface_container_high),
-                                        BorderRadius::all(Val::Px(8.0)),
-                                    ))
-                                    .with_children(|item| {
-                                        item.spawn((
-                                            Text::new((*label).to_string()),
-                                            TextFont {
-                                                font_size: 14.0,
-                                                ..default()
-                                            },
-                                            TextColor(theme.on_surface),
-                                        ));
-                                    });
-                                }
-                            });
-                    },
-                    |content| {
-                        content
-                            .spawn((
-                                TestId::new("layout_drawer_content"),
-                                Node {
-                                    flex_grow: 1.0,
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|c| {
-                                c.spawn((
-                                    Text::new("Main content"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface_variant),
-                                ));
-                            });
-                    },
-                );
-                let _ = _entities;
-            });
-        });
+                })
+                .with_children(|c| {
+                    spawn_status_stack(c, theme);
+                });
+        },
+    );
 }
 
-fn spawn_panes_examples(parent: &mut ChildSpawnerCommands, theme: MaterialTheme) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(12.0),
-            ..default()
-        })
-        .with_children(|col| {
-            col.spawn((
-                Text::new("Pane scaffolds"),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(theme.on_surface),
-            ));
-
-            col.spawn(Node {
-                flex_direction: FlexDirection::Row,
-                column_gap: Val::Px(12.0),
-                flex_wrap: FlexWrap::Wrap,
-                ..default()
-            })
-            .with_children(|row| {
-                spawn_list_detail_card(row, &theme);
-                spawn_supporting_panes_card(row, &theme);
-            });
-        });
+fn spawn_navigation_suite_scaffold(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    size_class: &WindowSizeClass,
+    test_prefix: &str,
+    content_builder: fn(&mut ChildSpawnerCommands, &MaterialTheme),
+) {
+    let config = layout::NavigationSuiteScaffold::default();
+    let _ = layout::spawn_navigation_suite_scaffold(
+        parent,
+        theme,
+        size_class,
+        &config,
+        |nav| {
+            for (i, icon_name) in ["home", "search", "person"].iter().enumerate() {
+                nav.spawn((
+                    TestId::new(format!("{}_nav_{}", test_prefix, i)),
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        flex_grow: 1.0,
+                        height: Val::Percent(100.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                ))
+                .with_children(|btn| {
+                    if let Some(id) = icon_by_name(icon_name) {
+                        btn.spawn(
+                            bevy_material_ui::icons::MaterialIcon::new(id)
+                                .with_size(18.0)
+                                .with_color(theme.on_surface),
+                        );
+                    }
+                });
+            }
+        },
+        |content| {
+            content
+                .spawn((
+                    TestId::new(format!("{}_content", test_prefix)),
+                    Node {
+                        flex_grow: 1.0,
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::FlexStart,
+                        align_items: AlignItems::Stretch,
+                        padding: UiRect::all(Val::Px(12.0)),
+                        ..default()
+                    },
+                ))
+                .with_children(|c| {
+                    content_builder(c, theme);
+                });
+        },
+    );
 }
 
-fn spawn_list_detail_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+fn spawn_list_detail_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     let config = layout::ListDetailScaffold::default();
-    parent
-        .spawn(Node {
-            width: Val::Px(360.0),
-            height: Val::Px(220.0),
-            flex_direction: FlexDirection::Column,
-            ..default()
-        })
-        .with_children(|card| {
-            card.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(1.0)),
-                overflow: Overflow::clip(),
-                ..default()
-            })
-            .with_children(|root| {
-                let _entities: PaneEntities = layout::spawn_list_detail_scaffold(
-                    root,
-                    theme,
-                    &config,
-                    |primary| {
-                        primary
-                            .spawn((
-                                TestId::new("layout_list_primary"),
-                                Node {
-                                    flex_direction: FlexDirection::Column,
-                                    row_gap: Val::Px(8.0),
-                                    padding: UiRect::all(Val::Px(12.0)),
+    let _panes: PaneEntities = layout::spawn_list_detail_scaffold(
+        parent,
+        theme,
+        &config,
+        |primary| {
+            primary
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(6.0),
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|col| {
+                    for label in ["Drafts", "Sent", "Archive"].iter() {
+                        col.spawn((
+                            Button,
+                            Interaction::None,
+                            RippleHost::new(),
+                            Node {
+                                height: Val::Px(36.0),
+                                align_items: AlignItems::Center,
+                                padding: UiRect::axes(Val::Px(10.0), Val::Px(6.0)),
+                                ..default()
+                            },
+                            BackgroundColor(theme.surface_container_high),
+                            BorderRadius::all(Val::Px(6.0)),
+                        ))
+                        .with_children(|item| {
+                            item.spawn((
+                                Text::new((*label).to_string()),
+                                TextFont {
+                                    font_size: 12.0,
                                     ..default()
                                 },
-                            ))
-                            .with_children(|list| {
-                                for (i, label) in
-                                    ["Email A", "Email B", "Email C"].iter().enumerate()
-                                {
-                                    list.spawn((
-                                        TestId::new(format!("layout_list_item_{}", i)),
-                                        Node {
-                                            height: Val::Px(32.0),
-                                            align_items: AlignItems::Center,
-                                            ..default()
-                                        },
-                                        BackgroundColor(theme.surface_container_high),
-                                        BorderRadius::all(Val::Px(6.0)),
-                                    ))
-                                    .with_children(|item| {
-                                        item.spawn((
-                                            Text::new((*label).to_string()),
-                                            TextFont {
-                                                font_size: 13.0,
-                                                ..default()
-                                            },
-                                            TextColor(theme.on_surface),
-                                        ));
-                                    });
-                                }
-                            });
-                    },
-                    |secondary| {
-                        secondary
-                            .spawn((
-                                TestId::new("layout_list_detail"),
-                                Node {
-                                    flex_grow: 1.0,
-                                    padding: UiRect::all(Val::Px(16.0)),
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|detail| {
-                                detail.spawn((
-                                    Text::new("Detail content"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface_variant),
-                                ));
-                            });
-                    },
-                );
-
-                let _ = _entities;
-            });
-        });
+                                TextColor(theme.on_surface),
+                            ));
+                        });
+                    }
+                });
+        },
+        |secondary| {
+            secondary
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(6.0),
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|col| {
+                    spawn_navigation_stack(col, theme);
+                });
+        },
+    );
 }
 
-fn spawn_supporting_panes_card(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
+fn spawn_supporting_panes_scaffold(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) {
     let config = layout::SupportingPanesScaffold::default();
+    let _panes: PaneEntities = layout::spawn_supporting_panes_scaffold(
+        parent,
+        theme,
+        &config,
+        |primary| {
+            primary
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(6.0),
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|col| {
+                    spawn_input_stack(col, theme);
+                });
+        },
+        |secondary| {
+            secondary
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(6.0),
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|col| {
+                    spawn_status_stack(col, theme);
+                });
+        },
+        |supporting| {
+            supporting
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(6.0),
+                    padding: UiRect::all(Val::Px(12.0)),
+                    ..default()
+                })
+                .with_children(|col| {
+                    spawn_filter_stack(col, theme);
+                });
+        },
+    );
+}
+
+fn spawn_drawer_list(
+    parent: &mut ChildSpawnerCommands,
+    theme: &MaterialTheme,
+    test_prefix: &str,
+) {
     parent
-        .spawn(Node {
-            width: Val::Px(440.0),
-            height: Val::Px(220.0),
-            flex_direction: FlexDirection::Column,
-            ..default()
-        })
-        .with_children(|card| {
-            card.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                border: UiRect::all(Val::Px(1.0)),
+        .spawn((
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(8.0),
                 ..default()
-            })
-            .with_children(|root| {
-                let _entities: PaneEntities = layout::spawn_supporting_panes_scaffold(
-                    root,
-                    theme,
-                    &config,
-                    |primary| {
-                        primary
-                            .spawn((
-                                TestId::new("layout_support_primary"),
-                                Node {
-                                    flex_direction: FlexDirection::Column,
-                                    row_gap: Val::Px(8.0),
-                                    padding: UiRect::all(Val::Px(12.0)),
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|list| {
-                                for (i, label) in
-                                    ["Thread A", "Thread B", "Thread C"].iter().enumerate()
-                                {
-                                    list.spawn((
-                                        TestId::new(format!("layout_support_item_{}", i)),
-                                        Node {
-                                            height: Val::Px(32.0),
-                                            align_items: AlignItems::Center,
-                                            ..default()
-                                        },
-                                        BackgroundColor(theme.surface_container_high),
-                                        BorderRadius::all(Val::Px(6.0)),
-                                    ))
-                                    .with_children(|item| {
-                                        item.spawn((
-                                            Text::new((*label).to_string()),
-                                            TextFont {
-                                                font_size: 13.0,
-                                                ..default()
-                                            },
-                                            TextColor(theme.on_surface),
-                                        ));
-                                    });
-                                }
-                            });
+            },
+            TestId::new(format!("{}_list", test_prefix)),
+        ))
+        .with_children(|list| {
+            for (i, label) in ["Inbox", "Starred", "Archive"].iter().enumerate() {
+                list.spawn((
+                    TestId::new(format!("{}_item_{}", test_prefix, i)),
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        height: Val::Px(36.0),
+                        align_items: AlignItems::Center,
+                        padding: UiRect::axes(Val::Px(12.0), Val::Px(6.0)),
+                        ..default()
                     },
-                    |secondary| {
-                        secondary
-                            .spawn((
-                                TestId::new("layout_support_secondary"),
-                                Node {
-                                    flex_grow: 1.0,
-                                    padding: UiRect::all(Val::Px(14.0)),
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|detail| {
-                                detail.spawn((
-                                    Text::new("Secondary content"),
-                                    TextFont {
-                                        font_size: 14.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface_variant),
-                                ));
-                            });
-                    },
-                    |supporting| {
-                        supporting
-                            .spawn((
-                                TestId::new("layout_supporting"),
-                                Node {
-                                    width: Val::Percent(100.0),
-                                    padding: UiRect::all(Val::Px(12.0)),
-                                    row_gap: Val::Px(8.0),
-                                    ..default()
-                                },
-                            ))
-                            .with_children(|support| {
-                                support.spawn((
-                                    Text::new("Supporting actions"),
-                                    TextFont {
-                                        font_size: 13.0,
-                                        ..default()
-                                    },
-                                    TextColor(theme.on_surface),
-                                ));
-
-                                support
-                                    .spawn((
-                                        Button,
-                                        Interaction::None,
-                                        RippleHost::new(),
-                                        TestId::new("layout_supporting_action"),
-                                        Node {
-                                            height: Val::Px(36.0),
-                                            padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
-                                            align_items: AlignItems::Center,
-                                            border: UiRect::all(Val::Px(1.0)),
-                                            ..default()
-                                        },
-                                        BackgroundColor(theme.secondary_container),
-                                        BorderColor::all(theme.secondary),
-                                        BorderRadius::all(Val::Px(8.0)),
-                                    ))
-                                    .with_children(|btn| {
-                                        btn.spawn((
-                                            Text::new("Action"),
-                                            TextFont {
-                                                font_size: 13.0,
-                                                ..default()
-                                            },
-                                            TextColor(theme.on_secondary_container),
-                                        ));
-                                    });
-                            });
-                    },
-                );
-
-                let _ = _entities;
-            });
+                    BackgroundColor(theme.surface_container_high),
+                    BorderRadius::all(Val::Px(6.0)),
+                ))
+                .with_children(|item| {
+                    item.spawn((
+                        Text::new((*label).to_string()),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(theme.on_surface),
+                    ));
+                });
+            }
         });
 }

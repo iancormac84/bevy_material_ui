@@ -359,7 +359,15 @@ pub mod prelude {
 
     // Layout
     pub use crate::layout::{
-        spawn_permanent_drawer_scaffold, PermanentDrawerScaffold, ScaffoldEntities, ScaffoldTestIds,
+        spawn_adaptive_navigation_scaffold, spawn_bottom_navigation_scaffold,
+        spawn_list_detail_scaffold, spawn_modal_drawer_scaffold,
+        spawn_navigation_bar_scaffold, spawn_navigation_rail_scaffold,
+        spawn_navigation_suite_scaffold, spawn_permanent_drawer_scaffold,
+        spawn_standard_drawer_scaffold, spawn_supporting_panes_scaffold,
+        AdaptiveNavigationScaffold, BottomNavigationScaffold, ListDetailScaffold,
+        ModalDrawerScaffold, NavigationBarScaffold, NavigationRailScaffold,
+        NavigationSuiteScaffold, PaneEntities, PaneTestIds, PermanentDrawerScaffold,
+        ScaffoldEntities, ScaffoldTestIds, StandardDrawerScaffold, SupportingPanesScaffold,
     };
 
     // Search

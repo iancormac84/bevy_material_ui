@@ -34,6 +34,7 @@ impl Plugin for CheckboxPlugin {
             Update,
             (
                 checkbox_interaction_system,
+                checkbox_label_interaction_system,
                 checkbox_visual_update_system,
                 checkbox_theme_refresh_system,
                 checkbox_animation_system,
@@ -47,6 +48,43 @@ impl Plugin for CheckboxPlugin {
     }
 }
 
+/// System to handle interactions on checkbox labels
+fn checkbox_label_interaction_system(
+    mut label_query: Query<(&Interaction, &CheckboxLabelFor), Changed<Interaction>>,
+    mut checkboxes: Query<&mut MaterialCheckbox>,
+    mut change_events: MessageWriter<CheckboxChangeEvent>,
+) {
+    for (interaction, label_for) in label_query.iter_mut() {
+        let Ok(mut checkbox) = checkboxes.get_mut(label_for.0) else {
+            continue;
+        };
+
+        if checkbox.disabled {
+            continue;
+        }
+
+        match *interaction {
+            Interaction::Pressed => {
+                checkbox.pressed = false;
+                checkbox.hovered = false;
+                let new_state = checkbox.state.toggle();
+                checkbox.start_animation(new_state);
+                change_events.write(CheckboxChangeEvent {
+                    entity: label_for.0,
+                    state: checkbox.state,
+                });
+            }
+            Interaction::Hovered => {
+                checkbox.pressed = false;
+                checkbox.hovered = true;
+            }
+            Interaction::None => {
+                checkbox.pressed = false;
+                checkbox.hovered = false;
+            }
+        }
+    }
+}
 fn checkbox_telemetry_system(
     mut commands: Commands,
     telemetry: Option<Res<TelemetryConfig>>,
@@ -311,6 +349,10 @@ pub struct CheckboxIcon;
 /// Marker for the state layer (hover/press overlay)
 #[derive(Component)]
 pub struct CheckboxStateLayer;
+
+/// Marker for checkbox label interactions (clicking label toggles checkbox)
+#[derive(Component, Copy, Clone)]
+pub struct CheckboxLabelFor(pub Entity);
 
 /// Checkbox container size
 pub const CHECKBOX_SIZE: f32 = 18.0;
@@ -595,6 +637,8 @@ impl CheckboxBuilder {
                             position_type: PositionType::Absolute,
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
@@ -682,69 +726,75 @@ impl SpawnCheckbox for Commands<'_, '_> {
         })
         .with_children(|row| {
             // Checkbox
-            row.spawn((
-                checkbox,
-                Button,
-                RippleHost::new(),
-                Node {
-                    width: Val::Px(CHECKBOX_TOUCH_TARGET),
-                    height: Val::Px(CHECKBOX_TOUCH_TARGET),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
-            .with_children(|parent| {
-                // State layer
-                parent
-                    .spawn((
-                        CheckboxStateLayer,
-                        StateLayer::new(state_layer_color),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
-                    .with_children(|state_layer_parent| {
-                        // Checkbox box
-                        state_layer_parent
-                            .spawn((
-                                CheckboxBox,
-                                Node {
-                                    width: Val::Px(CHECKBOX_SIZE),
-                                    height: Val::Px(CHECKBOX_SIZE),
-                                    border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                                BackgroundColor(bg_color),
-                                BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                            ))
-                            .with_children(|box_parent| {
-                                // Checkmark
-                                box_parent.spawn((
-                                    CheckboxIcon,
-                                    MaterialIcon::new(icon_id)
-                                        .with_size(14.0)
-                                        .with_color(icon_color),
-                                    icon_visibility,
-                                ));
-                            });
-                    });
-            });
+            let checkbox_entity = row
+                .spawn((
+                    checkbox,
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        width: Val::Px(CHECKBOX_TOUCH_TARGET),
+                        height: Val::Px(CHECKBOX_TOUCH_TARGET),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(|parent| {
+                    // State layer
+                    parent
+                        .spawn((
+                            CheckboxStateLayer,
+                            StateLayer::new(state_layer_color),
+                            Node {
+                                position_type: PositionType::Absolute,
+                                width: Val::Px(40.0),
+                                height: Val::Px(40.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            BackgroundColor(Color::NONE),
+                            BorderRadius::all(Val::Px(20.0)),
+                        ))
+                        .with_children(|state_layer_parent| {
+                            // Checkbox box
+                            state_layer_parent
+                                .spawn((
+                                    CheckboxBox,
+                                    Node {
+                                        width: Val::Px(CHECKBOX_SIZE),
+                                        height: Val::Px(CHECKBOX_SIZE),
+                                        border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(bg_color),
+                                    BorderColor::all(border_color),
+                                    BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                                ))
+                                .with_children(|box_parent| {
+                                    // Checkmark
+                                    box_parent.spawn((
+                                        CheckboxIcon,
+                                        MaterialIcon::new(icon_id)
+                                            .with_size(14.0)
+                                            .with_color(icon_color),
+                                        icon_visibility,
+                                    ));
+                                });
+                        });
+                })
+                .id();
 
             // Label
             row.spawn((
+                CheckboxLabelFor(checkbox_entity),
+                Button,
+                Interaction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: 14.0,
@@ -807,70 +857,75 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
         })
         .with_children(|row| {
             // Checkbox
-            row.spawn((
-                checkbox,
-                Button,
-                Interaction::None,
-                RippleHost::new(),
-                Node {
-                    width: Val::Px(CHECKBOX_TOUCH_TARGET),
-                    height: Val::Px(CHECKBOX_TOUCH_TARGET),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::NONE),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
-            .with_children(|parent| {
-                // State layer
-                parent
-                    .spawn((
-                        CheckboxStateLayer,
-                        StateLayer::new(state_layer_color),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            width: Val::Px(40.0),
-                            height: Val::Px(40.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::NONE),
-                        BorderRadius::all(Val::Px(20.0)),
-                    ))
-                    .with_children(|state_layer_parent| {
-                        // Checkbox box
-                        state_layer_parent
-                            .spawn((
-                                CheckboxBox,
-                                Node {
-                                    width: Val::Px(CHECKBOX_SIZE),
-                                    height: Val::Px(CHECKBOX_SIZE),
-                                    border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    ..default()
-                                },
-                                BackgroundColor(bg_color),
-                                BorderColor::all(border_color),
-                                BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
-                            ))
-                            .with_children(|box_parent| {
-                                // Checkmark
-                                box_parent.spawn((
-                                    CheckboxIcon,
-                                    MaterialIcon::new(icon_id)
-                                        .with_size(14.0)
-                                        .with_color(icon_color),
-                                    icon_visibility,
-                                ));
-                            });
-                    });
-            });
+            let checkbox_entity = row
+                .spawn((
+                    checkbox,
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
+                    Node {
+                        width: Val::Px(CHECKBOX_TOUCH_TARGET),
+                        height: Val::Px(CHECKBOX_TOUCH_TARGET),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::NONE),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(|parent| {
+                    // State layer
+                    parent
+                        .spawn((
+                            CheckboxStateLayer,
+                            StateLayer::new(state_layer_color),
+                            Node {
+                                position_type: PositionType::Absolute,
+                                width: Val::Px(40.0),
+                                height: Val::Px(40.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            BackgroundColor(Color::NONE),
+                            BorderRadius::all(Val::Px(20.0)),
+                        ))
+                        .with_children(|state_layer_parent| {
+                            // Checkbox box
+                            state_layer_parent
+                                .spawn((
+                                    CheckboxBox,
+                                    Node {
+                                        width: Val::Px(CHECKBOX_SIZE),
+                                        height: Val::Px(CHECKBOX_SIZE),
+                                        border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(bg_color),
+                                    BorderColor::all(border_color),
+                                    BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                                ))
+                                .with_children(|box_parent| {
+                                    // Checkmark
+                                    box_parent.spawn((
+                                        CheckboxIcon,
+                                        MaterialIcon::new(icon_id)
+                                            .with_size(14.0)
+                                            .with_color(icon_color),
+                                        icon_visibility,
+                                    ));
+                                });
+                        });
+                })
+                .id();
 
             // Label
             row.spawn((
+                CheckboxLabelFor(checkbox_entity),
+                Button,
+                Interaction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: 14.0,
@@ -885,6 +940,7 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bevy::ecs::world::CommandQueue;
 
     // ============================================================================
     // CheckboxState Tests
@@ -1094,6 +1150,31 @@ mod tests {
         assert_eq!(checkbox.state, CheckboxState::Checked);
         assert!(checkbox.disabled);
         assert!(checkbox.error);
+    }
+
+    #[test]
+    fn test_checkbox_builder_state_layer_centers_child() {
+        let theme = MaterialTheme::default();
+        let mut world = World::new();
+        let mut command_queue = CommandQueue::default();
+
+        {
+            let mut commands = Commands::new(&mut command_queue, &world);
+            CheckboxBuilder::new().spawn(&mut commands, &theme);
+        }
+
+        command_queue.apply(&mut world);
+
+        let mut query = world.query::<(&Node, &CheckboxStateLayer)>();
+        let mut found = false;
+
+        for (node, _) in query.iter(&world) {
+            found = true;
+            assert_eq!(node.justify_content, JustifyContent::Center);
+            assert_eq!(node.align_items, AlignItems::Center);
+        }
+
+        assert!(found, "Checkbox state layer not found");
     }
 
     // ============================================================================

@@ -28,6 +28,10 @@ use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::CornerRadius};
 #[derive(Component)]
 pub struct SwitchStateLayer;
 
+/// Marker for switch label interactions (clicking label toggles switch)
+#[derive(Component, Copy, Clone)]
+pub struct SwitchLabelFor(pub Entity);
+
 /// Plugin for the switch component
 pub struct SwitchPlugin;
 
@@ -37,6 +41,7 @@ impl Plugin for SwitchPlugin {
             Update,
             (
                 switch_interaction_system,
+                switch_label_interaction_system,
                 switch_style_system,
                 switch_theme_refresh_system,
             ),
@@ -218,6 +223,44 @@ fn switch_interaction_system(
                 switch.selected = !switch.selected;
                 change_events.write(SwitchChangeEvent {
                     entity,
+                    selected: switch.selected,
+                });
+            }
+            Interaction::Hovered => {
+                switch.pressed = false;
+                switch.hovered = true;
+            }
+            Interaction::None => {
+                switch.pressed = false;
+                switch.hovered = false;
+            }
+        }
+    }
+}
+
+/// System to handle interactions on switch labels
+fn switch_label_interaction_system(
+    mut label_query: Query<(&Interaction, &SwitchLabelFor), Changed<Interaction>>,
+    mut switches: Query<&mut MaterialSwitch>,
+    mut change_events: MessageWriter<SwitchChangeEvent>,
+) {
+    for (interaction, label_for) in label_query.iter_mut() {
+        let Ok(mut switch) = switches.get_mut(label_for.0) else {
+            continue;
+        };
+
+        if switch.disabled {
+            continue;
+        }
+
+        match *interaction {
+            Interaction::Pressed => {
+                switch.pressed = false;
+                switch.hovered = false;
+                switch.selected = !switch.selected;
+                switch.animation_progress = if switch.selected { 1.0 } else { 0.0 };
+                change_events.write(SwitchChangeEvent {
+                    entity: label_for.0,
                     selected: switch.selected,
                 });
             }
@@ -444,40 +487,45 @@ impl SpawnSwitch for Commands<'_, '_> {
         })
         .with_children(|row| {
             // Switch track (the main touch target)
-            row.spawn((
-                switch,
-                Button,
-                Interaction::None,
-                RippleHost::new(),
-                Node {
-                    width: Val::Px(SWITCH_TRACK_WIDTH),
-                    height: Val::Px(SWITCH_TRACK_HEIGHT),
-                    justify_content: justify,
-                    align_items: AlignItems::Center,
-                    padding: UiRect::horizontal(Val::Px(2.0)),
-                    border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
-                    ..default()
-                },
-                BackgroundColor(bg_color),
-                BorderColor::all(border_color),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
-            .with_children(|track| {
-                // Handle (thumb)
-                track.spawn((
-                    SwitchHandle,
+            let switch_entity = row
+                .spawn((
+                    switch,
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
                     Node {
-                        width: Val::Px(handle_size),
-                        height: Val::Px(handle_size),
+                        width: Val::Px(SWITCH_TRACK_WIDTH),
+                        height: Val::Px(SWITCH_TRACK_HEIGHT),
+                        justify_content: justify,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::horizontal(Val::Px(2.0)),
+                        border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
                         ..default()
                     },
-                    BackgroundColor(handle_color),
-                    BorderRadius::all(Val::Px(handle_size / 2.0)),
-                ));
-            });
+                    BackgroundColor(bg_color),
+                    BorderColor::all(border_color),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(|track| {
+                    // Handle (thumb)
+                    track.spawn((
+                        SwitchHandle,
+                        Node {
+                            width: Val::Px(handle_size),
+                            height: Val::Px(handle_size),
+                            ..default()
+                        },
+                        BackgroundColor(handle_color),
+                        BorderRadius::all(Val::Px(handle_size / 2.0)),
+                    ));
+                })
+                .id();
 
             // Label
             row.spawn((
+                SwitchLabelFor(switch_entity),
+                Button,
+                Interaction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: 14.0,
@@ -528,40 +576,45 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
         })
         .with_children(|row| {
             // Switch track
-            row.spawn((
-                switch,
-                Button,
-                Interaction::None,
-                RippleHost::new(),
-                Node {
-                    width: Val::Px(SWITCH_TRACK_WIDTH),
-                    height: Val::Px(SWITCH_TRACK_HEIGHT),
-                    justify_content: justify,
-                    align_items: AlignItems::Center,
-                    padding: UiRect::horizontal(Val::Px(2.0)),
-                    border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
-                    ..default()
-                },
-                BackgroundColor(bg_color),
-                BorderColor::all(border_color),
-                BorderRadius::all(Val::Px(CornerRadius::FULL)),
-            ))
-            .with_children(|track| {
-                // Handle (thumb)
-                track.spawn((
-                    SwitchHandle,
+            let switch_entity = row
+                .spawn((
+                    switch,
+                    Button,
+                    Interaction::None,
+                    RippleHost::new(),
                     Node {
-                        width: Val::Px(handle_size),
-                        height: Val::Px(handle_size),
+                        width: Val::Px(SWITCH_TRACK_WIDTH),
+                        height: Val::Px(SWITCH_TRACK_HEIGHT),
+                        justify_content: justify,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::horizontal(Val::Px(2.0)),
+                        border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
                         ..default()
                     },
-                    BackgroundColor(handle_color),
-                    BorderRadius::all(Val::Px(handle_size / 2.0)),
-                ));
-            });
+                    BackgroundColor(bg_color),
+                    BorderColor::all(border_color),
+                    BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                ))
+                .with_children(|track| {
+                    // Handle (thumb)
+                    track.spawn((
+                        SwitchHandle,
+                        Node {
+                            width: Val::Px(handle_size),
+                            height: Val::Px(handle_size),
+                            ..default()
+                        },
+                        BackgroundColor(handle_color),
+                        BorderRadius::all(Val::Px(handle_size / 2.0)),
+                    ));
+                })
+                .id();
 
             // Label
             row.spawn((
+                SwitchLabelFor(switch_entity),
+                Button,
+                Interaction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: 14.0,

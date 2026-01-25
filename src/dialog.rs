@@ -413,67 +413,84 @@ fn dialog_position_system(
 
         let placement = placement.copied().unwrap_or_default();
 
+        let center_in_viewport = || (
+            // Center within the overlay (physical pixels).
+            overlay_top_left.x + (overlay_size.x - dialog_size_physical.x) / 2.0,
+            overlay_top_left.y + (overlay_size.y - dialog_size_physical.y) / 2.0,
+        );
+
         let (screen_left_physical, screen_top_physical) = match placement {
-            MaterialDialogPlacement::CenterInViewport => (
-                // Center within the overlay (physical pixels).
-                overlay_top_left.x + (overlay_size.x - dialog_size_physical.x) / 2.0,
-                overlay_top_left.y + (overlay_size.y - dialog_size_physical.y) / 2.0,
-            ),
+            MaterialDialogPlacement::CenterInViewport => center_in_viewport(),
             other => {
-                // All other placements require an anchor rect.
-                let Ok((anchor_transform, anchor_computed)) = anchors.get(anchor.0) else {
-                    continue;
-                };
+                // All other placements require an anchor rect; fall back to viewport
+                // if the anchor is unavailable or not yet laid out.
+                match anchors.get(anchor.0) {
+                    Ok((anchor_transform, anchor_computed)) => {
+                        // UiGlobalTransform and ComputedNode sizes are physical pixels.
+                        let anchor_center_physical = anchor_transform.translation;
+                        let anchor_size_physical = anchor_computed.size();
+                        if anchor_size_physical.x <= 0.0 || anchor_size_physical.y <= 0.0 {
+                            center_in_viewport()
+                        } else {
+                            let anchor_top_left_physical =
+                                anchor_center_physical - anchor_size_physical / 2.0;
 
-                // UiGlobalTransform and ComputedNode sizes are physical pixels.
-                let anchor_center_physical = anchor_transform.translation;
-                let anchor_size_physical = anchor_computed.size();
-                if anchor_size_physical.x <= 0.0 || anchor_size_physical.y <= 0.0 {
-                    continue;
-                }
-
-                let anchor_top_left_physical = anchor_center_physical - anchor_size_physical / 2.0;
-
-                match other {
-                    MaterialDialogPlacement::CenterInViewport => unreachable!(),
-                    MaterialDialogPlacement::CenterInAnchor => (
-                        anchor_top_left_physical.x
-                            + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
-                        anchor_top_left_physical.y
-                            + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
-                    ),
-                    MaterialDialogPlacement::BelowAnchor { gap_px } => {
-                        let gap_physical = gap_px * scale;
-                        (
-                            anchor_top_left_physical.x
-                                + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
-                            anchor_top_left_physical.y + anchor_size_physical.y + gap_physical,
-                        )
+                            match other {
+                                MaterialDialogPlacement::CenterInViewport => center_in_viewport(),
+                                MaterialDialogPlacement::CenterInAnchor => (
+                                    anchor_top_left_physical.x
+                                        + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
+                                    anchor_top_left_physical.y
+                                        + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
+                                ),
+                                MaterialDialogPlacement::BelowAnchor { gap_px } => {
+                                    let gap_physical = gap_px * scale;
+                                    (
+                                        anchor_top_left_physical.x
+                                            + (anchor_size_physical.x - dialog_size_physical.x)
+                                                / 2.0,
+                                        anchor_top_left_physical.y
+                                            + anchor_size_physical.y
+                                            + gap_physical,
+                                    )
+                                }
+                                MaterialDialogPlacement::AboveAnchor { gap_px } => {
+                                    let gap_physical = gap_px * scale;
+                                    (
+                                        anchor_top_left_physical.x
+                                            + (anchor_size_physical.x - dialog_size_physical.x)
+                                                / 2.0,
+                                        anchor_top_left_physical.y
+                                            - dialog_size_physical.y
+                                            - gap_physical,
+                                    )
+                                }
+                                MaterialDialogPlacement::RightOfAnchor { gap_px } => {
+                                    let gap_physical = gap_px * scale;
+                                    (
+                                        anchor_top_left_physical.x
+                                            + anchor_size_physical.x
+                                            + gap_physical,
+                                        anchor_top_left_physical.y
+                                            + (anchor_size_physical.y - dialog_size_physical.y)
+                                                / 2.0,
+                                    )
+                                }
+                                MaterialDialogPlacement::LeftOfAnchor { gap_px } => {
+                                    let gap_physical = gap_px * scale;
+                                    (
+                                        anchor_top_left_physical.x
+                                            - dialog_size_physical.x
+                                            - gap_physical,
+                                        anchor_top_left_physical.y
+                                            + (anchor_size_physical.y - dialog_size_physical.y)
+                                                / 2.0,
+                                    )
+                                }
+                            }
+                        }
                     }
-                    MaterialDialogPlacement::AboveAnchor { gap_px } => {
-                        let gap_physical = gap_px * scale;
-                        (
-                            anchor_top_left_physical.x
-                                + (anchor_size_physical.x - dialog_size_physical.x) / 2.0,
-                            anchor_top_left_physical.y - dialog_size_physical.y - gap_physical,
-                        )
-                    }
-                    MaterialDialogPlacement::RightOfAnchor { gap_px } => {
-                        let gap_physical = gap_px * scale;
-                        (
-                            anchor_top_left_physical.x + anchor_size_physical.x + gap_physical,
-                            anchor_top_left_physical.y
-                                + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
-                        )
-                    }
-                    MaterialDialogPlacement::LeftOfAnchor { gap_px } => {
-                        let gap_physical = gap_px * scale;
-                        (
-                            anchor_top_left_physical.x - dialog_size_physical.x - gap_physical,
-                            anchor_top_left_physical.y
-                                + (anchor_size_physical.y - dialog_size_physical.y) / 2.0,
-                        )
-                    }
+                    Err(_) => center_in_viewport(),
                 }
             }
         };

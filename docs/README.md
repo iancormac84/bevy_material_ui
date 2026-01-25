@@ -89,4 +89,38 @@ The showcase provides a comprehensive demo of every component with:
 
 Navigate through the sidebar to explore each component category.
 
+## Running Examples
+
+Run the dedicated layout demo:
+
+```bash
+cargo run --example layouts_demo
+```
+
+Other examples are available in the `examples/` folder:
+
+```bash
+cargo run --example button_demo
+cargo run --example select_demo
+```
+
+## Running Tests
+
+Run the full test suite:
+
+```bash
+cargo test
+```
+
+## UI Automated Tests (Telemetry)
+
+The showcase can emit a `telemetry.json` file with element bounds and recent UI events
+for automation tooling. Enable it via an environment variable:
+
+```bash
+BEVY_TELEMETRY=1 cargo run --example showcase
+```
+
+The file is written to the project root as `telemetry.json`.
+
 > 📺 **Video Demo**: For a walkthrough of the UI components, see the [demo video](https://github.com/user/repo/releases) (coming soon).

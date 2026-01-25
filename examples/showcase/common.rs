@@ -7,6 +7,7 @@ use bevy_material_ui::icon_button::IconButtonClickEvent;
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::theme::ThemeMode;
 use std::collections::HashMap;
+#[cfg(target_arch = "wasm32")]
 use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::File;
@@ -30,6 +31,7 @@ pub struct ComponentTelemetry {
     pub enabled: bool,
 }
 
+#[cfg(target_arch = "wasm32")]
 static EVENT_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 impl ComponentTelemetry {
@@ -101,6 +103,7 @@ impl ComponentTelemetry {
 pub enum ComponentSection {
     #[default]
     Buttons,
+    ButtonGroup,
     Checkboxes,
     Switches,
     RadioButtons,
@@ -128,6 +131,12 @@ pub enum ComponentSection {
     Layouts,
     LoadingIndicator,
     Search,
+    Elevation,
+    Motion,
+    Ripple,
+    Scroll,
+    Typography,
+    UiShapes,
     ThemeColors,
     Translations,
 }
@@ -137,6 +146,7 @@ impl ComponentSection {
     pub fn i18n_key(&self) -> &'static str {
         match self {
             Self::Buttons => "showcase.nav.buttons",
+            Self::ButtonGroup => "showcase.nav.button_group",
             Self::Checkboxes => "showcase.nav.checkboxes",
             Self::Switches => "showcase.nav.switches",
             Self::RadioButtons => "showcase.nav.radio_buttons",
@@ -164,6 +174,12 @@ impl ComponentSection {
             Self::Layouts => "showcase.nav.layouts",
             Self::LoadingIndicator => "showcase.nav.loading_indicator",
             Self::Search => "showcase.nav.search",
+            Self::Elevation => "showcase.nav.elevation",
+            Self::Motion => "showcase.nav.motion",
+            Self::Ripple => "showcase.nav.ripple",
+            Self::Scroll => "showcase.nav.scroll",
+            Self::Typography => "showcase.nav.typography",
+            Self::UiShapes => "showcase.nav.ui_shapes",
             Self::ThemeColors => "showcase.nav.theme_colors",
             Self::Translations => "showcase.nav.translations",
         }
@@ -173,6 +189,7 @@ impl ComponentSection {
     pub fn display_name(&self) -> &'static str {
         match self {
             Self::Buttons => "Buttons",
+            Self::ButtonGroup => "Button Groups",
             Self::Checkboxes => "Checkboxes",
             Self::Switches => "Switches",
             Self::RadioButtons => "Radio Buttons",
@@ -200,6 +217,12 @@ impl ComponentSection {
             Self::Layouts => "Layouts",
             Self::LoadingIndicator => "Loading Indicator",
             Self::Search => "Search",
+            Self::Elevation => "Elevation",
+            Self::Motion => "Motion",
+            Self::Ripple => "Ripple",
+            Self::Scroll => "Scroll",
+            Self::Typography => "Typography",
+            Self::UiShapes => "UI Shapes",
             Self::ThemeColors => "Theme Colors",
             Self::Translations => "Translations",
         }
@@ -211,6 +234,7 @@ impl ComponentSection {
     pub fn telemetry_name(&self) -> &'static str {
         match self {
             Self::Buttons => "Buttons",
+            Self::ButtonGroup => "ButtonGroup",
             Self::Checkboxes => "Checkboxes",
             Self::Switches => "Switches",
             Self::RadioButtons => "RadioButtons",
@@ -238,6 +262,12 @@ impl ComponentSection {
             Self::Layouts => "Layouts",
             Self::LoadingIndicator => "LoadingIndicator",
             Self::Search => "Search",
+            Self::Elevation => "Elevation",
+            Self::Motion => "Motion",
+            Self::Ripple => "Ripple",
+            Self::Scroll => "Scroll",
+            Self::Typography => "Typography",
+            Self::UiShapes => "UiShapes",
             Self::ThemeColors => "ThemeColors",
             Self::Translations => "Translations",
         }
@@ -247,6 +277,7 @@ impl ComponentSection {
     pub fn all() -> &'static [ComponentSection] {
         &[
             Self::Buttons,
+            Self::ButtonGroup,
             Self::Checkboxes,
             Self::Switches,
             Self::RadioButtons,
@@ -274,6 +305,12 @@ impl ComponentSection {
             Self::Layouts,
             Self::LoadingIndicator,
             Self::Search,
+            Self::Elevation,
+            Self::Motion,
+            Self::Ripple,
+            Self::Scroll,
+            Self::Typography,
+            Self::UiShapes,
             Self::ThemeColors,
             Self::Translations,
         ]

@@ -153,9 +153,19 @@ impl Default for ListDemoOptions {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 struct DialogDemoOptions {
     position: DialogPosition,
+    modal: bool,
+}
+
+impl Default for DialogDemoOptions {
+    fn default() -> Self {
+        Self {
+            position: DialogPosition::CenterWindow,
+            modal: true,
+        }
+    }
 }
 
 pub fn run() {
@@ -183,6 +193,7 @@ pub fn run() {
         .init_resource::<DialogDemoOptions>()
         .init_resource::<views::lists::ListsViewState>()
         .init_resource::<PresentModeSettings>()
+        .init_resource::<views::motion::MotionDemoState>()
         .add_systems(Startup, load_showcase_i18n_assets_system)
         .init_resource::<TranslationsDemoState>()
         .init_resource::<TranslationsDemoAssets>()
@@ -212,6 +223,17 @@ pub fn run() {
         .add_systems(
             Update,
             (
+                dialog_demo_position_options_system,
+                dialog_demo_modal_options_system,
+                dialog_demo_position_style_system,
+                dialog_demo_modal_style_system,
+                dialog_demo_apply_position_system,
+                dialog_demo_open_close_system,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
                 tooltip_demo_options_system,
                 tooltip_demo_apply_system,
                 tooltip_demo_style_system,
@@ -222,6 +244,9 @@ pub fn run() {
                 settings_button_click_system,
                 settings_vsync_toggle_system,
                 settings_dialog_ok_close_system,
+                views::ripple::ripple_demo_interaction_system,
+                views::motion::motion_demo_animate_system,
+                views::motion::motion_demo_toggle_system,
             ),
         )
         .add_systems(
@@ -246,10 +271,6 @@ pub fn run() {
         .add_systems(
             Update,
             (
-                dialog_demo_position_options_system,
-                dialog_demo_position_style_system,
-                dialog_demo_apply_position_system,
-                dialog_demo_open_close_system,
                 list_demo_mode_options_system,
                 list_demo_mode_style_system,
                 list_demo_apply_selection_mode_system,
@@ -3257,6 +3278,17 @@ fn dialog_demo_position_options_system(
     }
 }
 
+fn dialog_demo_modal_options_system(
+    mut options: ResMut<DialogDemoOptions>,
+    mut modal_buttons: Query<(&DialogModalOption, &Interaction), Changed<Interaction>>,
+) {
+    for (opt, interaction) in modal_buttons.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            options.modal = opt.0;
+        }
+    }
+}
+
 fn dialog_demo_position_style_system(
     theme: Res<MaterialTheme>,
     options: Res<DialogDemoOptions>,
@@ -3271,27 +3303,42 @@ fn dialog_demo_position_style_system(
     }
 }
 
+fn dialog_demo_modal_style_system(
+    theme: Res<MaterialTheme>,
+    options: Res<DialogDemoOptions>,
+    mut modal_chips: Query<(&DialogModalOption, &mut MaterialChip)>,
+) {
+    if !theme.is_changed() && !options.is_changed() {
+        return;
+    }
+
+    for (opt, mut chip) in modal_chips.iter_mut() {
+        chip.selected = opt.0 == options.modal;
+    }
+}
+
 fn dialog_demo_apply_position_system(
     mut commands: Commands,
     options: Res<DialogDemoOptions>,
     dialogs_added: Query<(), Added<DialogContainer>>,
     dialogs: Query<Entity, With<DialogContainer>>,
-    ui_roots: Query<Entity, With<UiRoot>>,
+    detail_contents: Query<Entity, With<DetailContent>>,
     dialogs_section_roots: Query<Entity, With<DialogsSectionRoot>>,
     show_buttons: Query<Entity, With<ShowDialogButton>>,
+    mut dialog_state: Query<&mut MaterialDialog>,
 ) {
     if !options.is_changed() && dialogs_added.is_empty() {
         return;
     }
 
-    let ui_root = ui_roots.iter().next();
+    let detail_content = detail_contents.iter().next();
     let dialogs_section_root = dialogs_section_roots.iter().next();
     let show_button = show_buttons.iter().next();
 
     let (anchor, placement) = match options.position {
-        DialogPosition::CenterWindow => (ui_root, MaterialDialogPlacement::CenterInAnchor),
+        DialogPosition::CenterWindow => (None, MaterialDialogPlacement::center_in_viewport()),
         DialogPosition::CenterParent => (
-            dialogs_section_root,
+            detail_content.or(dialogs_section_root),
             MaterialDialogPlacement::CenterInAnchor,
         ),
         DialogPosition::BelowTrigger => (show_button, MaterialDialogPlacement::below_anchor(12.0)),
@@ -3309,6 +3356,9 @@ fn dialog_demo_apply_position_system(
             commands.entity(dialog).insert(MaterialDialogAnchor(anchor));
         }
         commands.entity(dialog).insert(placement);
+        if let Ok(mut state) = dialog_state.get_mut(dialog) {
+            state.modal = options.modal;
+        }
     }
 }
 
@@ -3321,22 +3371,27 @@ fn dialog_demo_open_close_system(
     i18n: Option<Res<MaterialI18n>>,
     language: Option<Res<MaterialLanguage>>,
 ) {
-    let (Some(i18n), Some(language)) = (i18n, language) else {
-        return;
+    let (prefix, cancelled, confirmed) = match (i18n, language) {
+        (Some(i18n), Some(language)) => (
+            i18n
+                .translate(&language.tag, "showcase.common.result_prefix")
+                .unwrap_or("Result:")
+                .to_string(),
+            i18n
+                .translate(&language.tag, "showcase.dialogs.result.cancelled")
+                .unwrap_or("Cancelled")
+                .to_string(),
+            i18n
+                .translate(&language.tag, "showcase.dialogs.result.confirmed")
+                .unwrap_or("Confirmed")
+                .to_string(),
+        ),
+        _ => (
+            "Result:".to_string(),
+            "Cancelled".to_string(),
+            "Confirmed".to_string(),
+        ),
     };
-
-    let prefix = i18n
-        .translate(&language.tag, "showcase.common.result_prefix")
-        .unwrap_or("Result:")
-        .to_string();
-    let cancelled = i18n
-        .translate(&language.tag, "showcase.dialogs.result.cancelled")
-        .unwrap_or("Cancelled")
-        .to_string();
-    let confirmed = i18n
-        .translate(&language.tag, "showcase.dialogs.result.confirmed")
-        .unwrap_or("Confirmed")
-        .to_string();
 
     let mut open = false;
     let mut close_reason: Option<String> = None;
@@ -3426,6 +3481,7 @@ fn spawn_selected_section(
     let theme = ctx.theme;
     match ctx.selected {
         ComponentSection::Buttons => spawn_buttons_section(parent, theme),
+        ComponentSection::ButtonGroup => spawn_button_group_section(parent, theme),
         ComponentSection::Checkboxes => {
             spawn_checkboxes_section(parent, theme, Some(ctx.icon_font.clone()))
         }
@@ -3461,6 +3517,12 @@ fn spawn_selected_section(
             spawn_loading_indicator_section(parent, theme, materials)
         }
         ComponentSection::Search => spawn_search_section(parent, theme),
+        ComponentSection::Elevation => spawn_elevation_section(parent, theme),
+        ComponentSection::Motion => spawn_motion_section(parent, theme),
+        ComponentSection::Ripple => spawn_ripple_section(parent, theme),
+        ComponentSection::Scroll => spawn_scroll_section(parent, theme),
+        ComponentSection::Typography => spawn_typography_section(parent, theme),
+        ComponentSection::UiShapes => spawn_ui_shapes_section(parent, theme),
         ComponentSection::ThemeColors => spawn_theme_section(parent, theme, ctx.seed_argb),
         ComponentSection::Translations => spawn_translations_section(parent, theme),
     }

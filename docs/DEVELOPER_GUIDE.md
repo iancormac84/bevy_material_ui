@@ -82,6 +82,31 @@ cd bevy_material_ui
 cargo run --example showcase
 ```
 
+---
+
+## Running Tests
+
+Run the full test suite:
+
+```bash
+cargo test
+```
+
+---
+
+## UI Automated Tests (Telemetry)
+
+The showcase can emit `telemetry.json` for UI automation tooling. Enable it with an
+environment variable:
+
+```bash
+BEVY_TELEMETRY=1 cargo run --example showcase
+```
+
+The file is written to the project root as `telemetry.json` and includes:
+- Element bounds keyed by `TestId`
+- Recent component events
+
 This opens an interactive window displaying:
 - All button variants (Elevated, Filled, Tonal, Outlined, Text)
 - Icon buttons and FABs

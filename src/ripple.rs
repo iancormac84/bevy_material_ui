@@ -4,6 +4,7 @@
 //! Reference: <https://m3.material.io/foundations/interaction/states/overview>
 
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use crate::tokens::Duration;
 
@@ -104,10 +105,16 @@ fn spawn_ripple_system(
     mut commands: Commands,
     mut events: MessageReader<SpawnRipple>,
     hosts: Query<(&RippleHost, &ComputedNode, &GlobalTransform)>,
+    windows: Query<&Window, With<PrimaryWindow>>,
 ) {
+    let scale = windows
+        .single()
+        .map(|window| window.scale_factor())
+        .unwrap_or(1.0);
+
     for event in events.read() {
         if let Ok((host, computed_node, _transform)) = hosts.get(event.host) {
-            let size = computed_node.size();
+            let size = computed_node.size() / scale;
             let max_radius = (size.x.powi(2) + size.y.powi(2)).sqrt();
 
             let color = host.color.unwrap_or(Color::srgba(1.0, 1.0, 1.0, 0.12));

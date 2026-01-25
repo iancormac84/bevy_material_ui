@@ -958,9 +958,11 @@ def get_element_bounds(test_id: str) -> dict:
     if not telemetry:
         return None
     elements = telemetry.get("elements", [])
+
     for elem in elements:
         if elem.get("test_id") == test_id:
-            return elem
+            # Copy so downstream callers can safely mutate.
+            return dict(elem)
     return None
 
 

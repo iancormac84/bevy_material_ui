@@ -301,7 +301,7 @@ impl SpawnBadgeChild for ChildSpawnerCommands<'_> {
                     BadgeContent,
                     Text::new(text),
                     TextFont {
-                        font_size: 11.0,
+                        font_size: FontSize::Px(11.0),
                         ..default()
                     },
                     TextColor(content_color),
@@ -355,7 +355,7 @@ pub fn spawn_badge(commands: &mut Commands, theme: &MaterialTheme, badge: Materi
                 BadgeContent,
                 Text::new(text),
                 TextFont {
-                    font_size: 11.0,
+                    font_size: FontSize::Px(11.0),
                     ..default()
                 },
                 TextColor(content_color),

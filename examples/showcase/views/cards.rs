@@ -69,7 +69,7 @@ fn spawn_card(
                 Text::new(""),
                 LocalizedText::new(title).with_default(title),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -80,7 +80,7 @@ fn spawn_card(
                 LocalizedText::new("showcase.cards.content")
                     .with_default("Card content goes here with supporting text."),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

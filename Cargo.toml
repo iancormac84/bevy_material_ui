@@ -31,7 +31,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 # Bevy Game Engine - Latest version
-bevy = { version = "0.18.0", default-features = false, features = [
+bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = [
 	"bevy_asset",
 	"bevy_log",
 	"bevy_picking",

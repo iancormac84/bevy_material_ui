@@ -81,7 +81,7 @@ fn spawn_elevation_card(
             card.spawn((
                 Text::new(dp_label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),

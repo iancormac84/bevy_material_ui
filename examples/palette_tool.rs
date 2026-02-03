@@ -169,7 +169,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
                 panel.spawn((
                     Text::new("MD3 Palette Tool"),
                     TextFont {
-                        font_size: 18.0,
+                        font_size: FontSize::Px(18.0),
                         ..default()
                     },
                     TextColor(theme.on_surface),
@@ -236,7 +236,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
                 panel.spawn((
                     Text::new("Mode"),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(theme.on_surface_variant),
@@ -257,7 +257,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, state: Res<PaletteTo
                 panel.spawn((
                     Text::new("Palette preview updates live as you adjust the seed."),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(theme.on_surface_variant),
@@ -302,7 +302,7 @@ fn spawn_rgb_slider(
                 ChannelValueText { channel },
                 Text::new(format!("{label}: {initial}")),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -356,7 +356,7 @@ fn spawn_mode_button(
                 ButtonLabel,
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(label_color),
@@ -378,7 +378,7 @@ fn spawn_scheme_section(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
             col.spawn((
                 Text::new("Scheme (roles)"),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -432,7 +432,7 @@ fn spawn_role_row(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, role
             row.spawn((
                 Text::new(role_name(role)),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -442,7 +442,7 @@ fn spawn_role_row(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, role
                 SchemeHexText { role },
                 Text::new("#------"),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -461,7 +461,7 @@ fn spawn_palettes_section(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
             col.spawn((
                 Text::new("Tonal palettes"),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -495,7 +495,7 @@ fn spawn_palette_row(
             col.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -687,7 +687,7 @@ fn spawn_copy_seed_button(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                 ButtonLabel,
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(label_color),

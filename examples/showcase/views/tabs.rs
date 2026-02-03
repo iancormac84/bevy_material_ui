@@ -144,7 +144,7 @@ fn spawn_tab_button(
                 TabLabelText,
                 Text::new(label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(if selected {
@@ -185,7 +185,7 @@ fn spawn_tab_panel(
             panel.spawn((
                 Text::new(title),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -193,7 +193,7 @@ fn spawn_tab_panel(
             panel.spawn((
                 Text::new(description),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

@@ -868,7 +868,7 @@ fn date_picker_rebuild_content_system(
                             header.spawn((
                                 Text::new(day),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface_variant),
@@ -956,7 +956,7 @@ fn date_picker_rebuild_content_system(
                                                 cell.spawn((
                                                     Text::new(day_number.to_string()),
                                                     TextFont {
-                                                        font_size: 14.0,
+                                                        font_size: FontSize::Px(14.0),
                                                         ..default()
                                                     },
                                                     TextColor(text_color),
@@ -979,7 +979,7 @@ fn date_picker_rebuild_content_system(
                                                 cell.spawn((
                                                     Text::new(day_number.to_string()),
                                                     TextFont {
-                                                        font_size: 14.0,
+                                                        font_size: FontSize::Px(14.0),
                                                         ..default()
                                                     },
                                                     TextColor(base_text_color),
@@ -1091,7 +1091,7 @@ fn date_picker_rebuild_content_system(
                                     btn.spawn((
                                         Text::new(year.to_string()),
                                         TextFont {
-                                            font_size: 14.0,
+                                            font_size: FontSize::Px(14.0),
                                             ..default()
                                         },
                                         TextColor(text_color),
@@ -1918,7 +1918,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     DatePickerLabel { picker: entity },
                     Text::new(selection_text),
                     TextFont {
-                        font_size: 18.0,
+                        font_size: FontSize::Px(18.0),
                         ..default()
                     },
                     TextColor(theme.primary),
@@ -1940,7 +1940,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                         title_row.spawn((
                             Text::new("Select Date"),
                             TextFont {
-                                font_size: 24.0,
+                                font_size: FontSize::Px(24.0),
                                 ..default()
                             },
                             TextColor(on_surface),
@@ -2047,7 +2047,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                         TestId::new("date_picker_month_label"),
                                         Text::new(display_month.display_name()),
                                         TextFont {
-                                            font_size: 16.0,
+                                            font_size: FontSize::Px(16.0),
                                             ..default()
                                         },
                                         TextColor(on_surface),
@@ -2274,7 +2274,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 btn.spawn((
                                                     Text::new(year.to_string()),
                                                     TextFont {
-                                                        font_size: 14.0,
+                                                        font_size: FontSize::Px(14.0),
                                                         ..default()
                                                     },
                                                     TextColor(text_color),
@@ -2320,7 +2320,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     header.spawn((
                                         Text::new(day),
                                         TextFont {
-                                            font_size: 12.0,
+                                            font_size: FontSize::Px(12.0),
                                             ..default()
                                         },
                                         TextColor(theme.on_surface_variant),
@@ -2423,7 +2423,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 cell.spawn((
                                                     Text::new(day_number.to_string()),
                                                     TextFont {
-                                                        font_size: 14.0,
+                                                        font_size: FontSize::Px(14.0),
                                                         ..default()
                                                     },
                                                     TextColor(text_color),
@@ -2461,7 +2461,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             Interaction::None,
                             Text::new("Cancel"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(theme.primary),
@@ -2481,7 +2481,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                             Interaction::None,
                             Text::new("OK"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(theme.primary),

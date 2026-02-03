@@ -57,7 +57,7 @@ pub fn spawn_date_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
                             LocalizedText::new("showcase.date_picker.open_button")
                                 .with_default("Open Date Picker"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(text_color),
@@ -68,7 +68,7 @@ pub fn spawn_date_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
                         DatePickerResultDisplay(picker_entity),
                         Text::new(""),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),

@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 root.spawn((
                     Text::new(label),
                     TextFont {
-                        font_size: size,
+                        font_size: FontSize::Px(size),
                         ..default()
                     },
                     TextColor(theme.on_surface),

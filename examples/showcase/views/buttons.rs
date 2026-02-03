@@ -73,7 +73,7 @@ pub fn spawn_buttons_section(parent: &mut ChildSpawnerCommands, theme: &Material
                 Text::new(""),
                 LocalizedText::new("showcase.buttons.group_title").with_default("Button Groups"),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -201,7 +201,7 @@ fn spawn_toggle_button(
                 Text::new(""),
                 LocalizedText::new(label_key).with_default(label_default),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),
@@ -247,7 +247,7 @@ fn spawn_interactive_button(
                 Text::new(""),
                 LocalizedText::new(label_key).with_default(label_default),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),

@@ -40,7 +40,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             root.spawn((
                 Text::new("Click a surface to spawn a ripple"),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -98,17 +98,17 @@ fn spawn_ripple_surface(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 overflow: Overflow::clip(),
+                border_radius: BorderRadius::all(Val::Px(16.0)),
                 ..default()
             },
             BackgroundColor(surface_color),
-            BorderRadius::all(Val::Px(16.0)),
         ))
         .insert_test_id(test_id, telemetry)
         .with_children(|btn| {
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),

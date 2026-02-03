@@ -535,7 +535,7 @@ fn spawn_tooltip_on_overlay(
                 TooltipText,
                 Text::new(text),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(text_color),
@@ -579,7 +579,7 @@ pub fn spawn_tooltip(commands: &mut Commands, theme: &MaterialTheme, tooltip: To
                 TooltipText,
                 Text::new(text),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(text_color),
@@ -622,7 +622,7 @@ pub fn spawn_rich_tooltip(
                 TooltipText,
                 Text::new(""), // Rich tooltip content handled separately
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(text_color),

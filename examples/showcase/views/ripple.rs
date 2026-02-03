@@ -31,7 +31,7 @@ pub fn spawn_ripple_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
             section.spawn((
                 Text::new("Click a surface to spawn a ripple"),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -107,7 +107,7 @@ fn spawn_ripple_surface(
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),

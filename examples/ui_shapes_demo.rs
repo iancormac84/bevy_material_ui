@@ -43,7 +43,7 @@ fn setup(
             root.spawn((
                 Text::new("UI Shapes"),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -130,10 +130,10 @@ fn spawn_shape_card(
                 justify_content: JustifyContent::FlexEnd,
                 padding: UiRect::all(Val::Px(16.0)),
                 row_gap: Val::Px(8.0),
+                border_radius: BorderRadius::all(Val::Px(12.0)),
                 ..default()
             },
             BackgroundColor(theme.surface_container),
-            BorderRadius::all(Val::Px(12.0)),
         ))
         .insert_test_id(test_id, telemetry)
         .with_children(|card| {
@@ -145,7 +145,7 @@ fn spawn_shape_card(
             card.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

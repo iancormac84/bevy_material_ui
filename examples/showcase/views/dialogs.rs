@@ -40,7 +40,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     col.spawn((
                         Text::new("Dialog Position:"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -110,7 +110,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                     col.spawn((
                         Text::new("Dialog Modality:"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -154,7 +154,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             ButtonLabel,
                             Text::new(show_label),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(show_text_color),
@@ -166,7 +166,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                         DialogResultDisplay,
                         Text::new("Result: None"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -189,7 +189,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             "Are you sure you want to proceed? This action cannot be undone.",
                         ),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -221,7 +221,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                                         ButtonLabel,
                                         Text::new(cancel_label),
                                         TextFont {
-                                            font_size: 14.0,
+                                            font_size: FontSize::Px(14.0),
                                             ..default()
                                         },
                                         TextColor(theme.primary),
@@ -247,7 +247,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                                         ButtonLabel,
                                         Text::new(confirm_label),
                                         TextFont {
-                                            font_size: 14.0,
+                                            font_size: FontSize::Px(14.0),
                                             ..default()
                                         },
                                         TextColor(confirm_text_color),
@@ -287,7 +287,7 @@ fn spawn_dialog_position_option(
                 ChipLabel,
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(label_color),
@@ -318,7 +318,7 @@ fn spawn_dialog_modal_option(
                 ChipLabel,
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(label_color),

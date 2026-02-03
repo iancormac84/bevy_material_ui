@@ -59,7 +59,7 @@ fn setup(
                 // `LocalizedText` uses keys from the loaded .mui_lang file.
                 LocalizedText::new("showcase.translations.greeting").with_default("Hello!"),
                 TextFont {
-                    font_size: 18.0,
+                    font_size: FontSize::Px(18.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -70,7 +70,7 @@ fn setup(
                 LocalizedText::new("showcase.translations.instructions")
                     .with_default("Load assets/i18n/*.mui_lang and attach LocalizedText"),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

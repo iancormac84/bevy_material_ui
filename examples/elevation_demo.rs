@@ -38,7 +38,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             root.spawn((
                 Text::new("Elevation levels"),
                 TextFont {
-                    font_size: 20.0,
+                    font_size: FontSize::Px(20.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -95,10 +95,10 @@ fn spawn_elevation_card(
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 row_gap: Val::Px(6.0),
+                border_radius: BorderRadius::all(Val::Px(12.0)),
                 ..default()
             },
             BackgroundColor(theme.surface_container),
-            BorderRadius::all(Val::Px(12.0)),
             elevation.to_box_shadow(),
         ))
         .insert_test_id(test_id, telemetry)
@@ -106,7 +106,7 @@ fn spawn_elevation_card(
             card.spawn((
                 Text::new(dp_label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),

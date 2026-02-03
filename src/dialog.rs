@@ -1293,7 +1293,7 @@ impl SpawnDialogChild for ChildSpawnerCommands<'_> {
                         Text::new(""),
                         LocalizedText::new(key),
                         TextFont {
-                            font_size: 24.0,
+                            font_size: FontSize::Px(24.0),
                             ..default()
                         },
                         TextColor(headline_color),
@@ -1307,7 +1307,7 @@ impl SpawnDialogChild for ChildSpawnerCommands<'_> {
                         DialogHeadline,
                         Text::new(title.as_str()),
                         TextFont {
-                            font_size: 24.0,
+                            font_size: FontSize::Px(24.0),
                             ..default()
                         },
                         TextColor(headline_color),

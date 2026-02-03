@@ -60,7 +60,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
             root.spawn((
                 Text::new("Press Space to toggle motion"),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -115,7 +115,7 @@ fn spawn_motion_track<T: Component>(
             column.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -127,10 +127,10 @@ fn spawn_motion_track<T: Component>(
                         width: Val::Px(TRACK_WIDTH),
                         height: Val::Px(TRACK_HEIGHT),
                         position_type: PositionType::Relative,
+                        border_radius: BorderRadius::all(Val::Px(12.0)),
                         ..default()
                     },
                     BackgroundColor(theme.surface_container),
-                    BorderRadius::all(Val::Px(12.0)),
                 ))
                 .insert_test_id(test_id, telemetry)
                 .with_children(|track| {
@@ -141,10 +141,10 @@ fn spawn_motion_track<T: Component>(
                             position_type: PositionType::Absolute,
                             left: Val::Px(start),
                             top: Val::Px((TRACK_HEIGHT - BOX_SIZE) / 2.0),
+                            border_radius: BorderRadius::all(Val::Px(12.0)),
                             ..default()
                         },
                         BackgroundColor(theme.primary),
-                        BorderRadius::all(Val::Px(12.0)),
                         animation,
                         marker,
                         MotionRange { start, end },

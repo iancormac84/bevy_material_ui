@@ -1186,7 +1186,7 @@ fn select_dropdown_rebuild_options_system(
                                 SelectOptionLabelText,
                                 Text::new(label),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(if is_disabled {
@@ -1324,7 +1324,7 @@ fn select_dropdown_rebuild_options_system(
                             SelectOptionLabelText,
                             Text::new(option.label.clone()),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(if is_disabled {
@@ -1512,7 +1512,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                 SelectDisplayText,
                 Text::new(display_label),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(text_color),
@@ -1706,7 +1706,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                         SelectOptionLabelText,
                                         Text::new(label),
                                         TextFont {
-                                            font_size: 14.0,
+                                            font_size: FontSize::Px(14.0),
                                             ..default()
                                         },
                                         TextColor(if is_disabled {
@@ -1781,7 +1781,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                             SelectOptionLabelText,
                                             Text::new(option.label.clone()),
                                             TextFont {
-                                                font_size: 14.0,
+                                                font_size: FontSize::Px(14.0),
                                                 ..default()
                                             },
                                             TextColor(if is_disabled {

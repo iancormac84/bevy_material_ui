@@ -67,7 +67,7 @@ pub fn spawn_list_section(
                         LocalizedText::new("showcase.lists.selection_mode")
                             .with_default("Selection Mode:"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme_clone.on_surface),
@@ -240,7 +240,7 @@ pub fn spawn_list_section(
                                             LocalizedText::new(*headline_key)
                                                 .with_default(*headline_default),
                                             TextFont {
-                                                font_size: 16.0,
+                                                font_size: FontSize::Px(16.0),
                                                 ..default()
                                             },
                                             TextColor(theme_clone.on_surface),
@@ -252,7 +252,7 @@ pub fn spawn_list_section(
                                             LocalizedText::new(*supporting_key)
                                                 .with_default(*supporting_default),
                                             TextFont {
-                                                font_size: 14.0,
+                                                font_size: FontSize::Px(14.0),
                                                 ..default()
                                             },
                                             TextColor(theme_clone.on_surface_variant),
@@ -276,7 +276,7 @@ pub fn spawn_list_section(
                         LocalizedText::new("showcase.lists.virtualized_demo")
                             .with_default("Virtualized list (500 items)"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme_clone.on_surface),
@@ -353,7 +353,7 @@ pub fn spawn_list_section(
                             row.spawn((
                                 Text::new(switch_label),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(label_color),
@@ -389,7 +389,7 @@ pub fn spawn_list_section(
                     demo.spawn((
                         Text::new("Scrollbar orientations"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme_clone.on_surface),
@@ -627,7 +627,7 @@ fn spawn_list_mode_option(
                 })
                 .with_default(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(label_color),

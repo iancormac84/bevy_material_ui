@@ -66,7 +66,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         row.spawn((
                             Text::new("Position:"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -102,7 +102,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                                     ButtonLabel,
                                     Text::new(label),
                                     TextFont {
-                                        font_size: 12.0,
+                                        font_size: FontSize::Px(12.0),
                                         ..default()
                                     },
                                     TextColor(label_color),
@@ -123,7 +123,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         row.spawn((
                             Text::new("Delay:"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -156,7 +156,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                                     ButtonLabel,
                                     Text::new(label),
                                     TextFont {
-                                        font_size: 12.0,
+                                        font_size: FontSize::Px(12.0),
                                         ..default()
                                     },
                                     TextColor(label_color),
@@ -194,7 +194,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         ButtonLabel,
                         Text::new(demo_label),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(demo_text_color),
@@ -204,7 +204,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 row.spawn((
                     Text::new("← Hover to test tooltip with selected options"),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(theme.on_surface_variant),

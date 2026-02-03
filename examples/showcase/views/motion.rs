@@ -61,7 +61,7 @@ pub fn spawn_motion_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
             section.spawn((
                 Text::new("Click the toggle button to animate"),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -88,7 +88,7 @@ pub fn spawn_motion_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     btn.spawn((
                         Text::new("Toggle Animation"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_primary),
@@ -146,7 +146,7 @@ fn spawn_motion_track(
             column.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -203,7 +203,7 @@ fn spawn_spring_track(
             column.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

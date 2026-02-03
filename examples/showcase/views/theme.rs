@@ -41,7 +41,7 @@ pub fn spawn_theme_section(
                     row.spawn((
                         Text::new("Mode:"),
                         TextFont {
-                            font_size: 12.0,
+                            font_size: FontSize::Px(12.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -75,7 +75,7 @@ pub fn spawn_theme_section(
                                 ButtonLabel,
                                 Text::new(label),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(label_color),
@@ -96,7 +96,7 @@ pub fn spawn_theme_section(
                     row.spawn((
                         Text::new("Theme:"),
                         TextFont {
-                            font_size: 12.0,
+                            font_size: FontSize::Px(12.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -128,7 +128,7 @@ pub fn spawn_theme_section(
                                 ButtonLabel,
                                 Text::new(label),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(label_color),
@@ -149,7 +149,7 @@ pub fn spawn_theme_section(
                     row.spawn((
                         Text::new("Seed:"),
                         TextFont {
-                            font_size: 12.0,
+                            font_size: FontSize::Px(12.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -198,7 +198,7 @@ pub fn spawn_theme_section(
                             group.spawn((
                                 Text::new("Primary"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -248,7 +248,7 @@ pub fn spawn_theme_section(
                             group.spawn((
                                 Text::new("Secondary"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -298,7 +298,7 @@ pub fn spawn_theme_section(
                             group.spawn((
                                 Text::new("Tertiary"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -348,7 +348,7 @@ pub fn spawn_theme_section(
                             group.spawn((
                                 Text::new("Error"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -393,7 +393,7 @@ pub fn spawn_theme_section(
                             group.spawn((
                                 Text::new("Surface"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -457,7 +457,7 @@ pub fn spawn_theme_section(
                             group.spawn((
                                 Text::new("Outline"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -520,7 +520,7 @@ fn spawn_color_swatch(
             swatch.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 10.0,
+                    font_size: FontSize::Px(10.0),
                     ..default()
                 },
                 TextColor(text_color),

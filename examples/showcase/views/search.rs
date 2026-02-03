@@ -41,7 +41,7 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                         LocalizedText::new("showcase.search.default")
                             .with_default("Default search bar"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -58,7 +58,7 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                         LocalizedText::new("showcase.search.with_navigation")
                             .with_default("With navigation icon"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -81,7 +81,7 @@ pub fn spawn_search_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                         LocalizedText::new("showcase.search.with_text")
                             .with_default("With search text"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),

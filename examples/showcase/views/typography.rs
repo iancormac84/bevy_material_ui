@@ -55,7 +55,7 @@ pub fn spawn_typography_section(parent: &mut ChildSpawnerCommands, theme: &Mater
                         col.spawn((
                             Text::new(label),
                             TextFont {
-                                font_size: size,
+                                font_size: FontSize::Px(size),
                                 ..default()
                             },
                             TextColor(theme.on_surface),

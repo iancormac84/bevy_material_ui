@@ -43,7 +43,7 @@ fn setup(
                     col.spawn((
                         Text::new("Loading indicator"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -54,7 +54,7 @@ fn setup(
                     col.spawn((
                         Text::new("Loading indicator with container"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -69,7 +69,7 @@ fn setup(
                     col.spawn((
                         Text::new("Loading indicator with multiple colors"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -84,7 +84,7 @@ fn setup(
                     col.spawn((
                         Text::new("Small loading indicator"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -99,7 +99,7 @@ fn setup(
                     col.spawn((
                         Text::new("Large loading indicator (fast)"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),

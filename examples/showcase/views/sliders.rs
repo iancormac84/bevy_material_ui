@@ -45,7 +45,7 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             LocalizedText::new("showcase.sliders.continuous")
                                 .with_default("Continuous"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -70,7 +70,7 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             LocalizedText::new("showcase.sliders.discrete")
                                 .with_default("Discrete"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -92,7 +92,7 @@ pub fn spawn_sliders_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             LocalizedText::new("showcase.sliders.vertical")
                                 .with_default("Vertical"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),

@@ -79,7 +79,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     row.spawn((
                         Text::new("Indeterminate"),
                         TextFont {
-                            font_size: 12.0,
+                            font_size: FontSize::Px(12.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -125,7 +125,7 @@ fn spawn_animated_linear_progress(
                         (initial.clamp(0.0, 1.0) * 100.0).round() as i32
                     )),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(theme.on_surface_variant),

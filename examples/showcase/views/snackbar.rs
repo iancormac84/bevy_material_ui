@@ -50,7 +50,7 @@ pub fn spawn_snackbar_section(
                             row.spawn((
                                 Text::new("Duration:"),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface_variant),
@@ -74,7 +74,7 @@ pub fn spawn_snackbar_section(
                                         ChipLabel,
                                         Text::new(label),
                                         TextFont {
-                                            font_size: 12.0,
+                                            font_size: FontSize::Px(12.0),
                                             ..default()
                                         },
                                         TextColor(label_color),
@@ -95,7 +95,7 @@ pub fn spawn_snackbar_section(
                             row.spawn((
                                 Text::new("Show action:"),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface_variant),
@@ -118,7 +118,7 @@ pub fn spawn_snackbar_section(
                                     ChipLabel,
                                     Text::new(toggle_label),
                                     TextFont {
-                                        font_size: 12.0,
+                                        font_size: FontSize::Px(12.0),
                                         ..default()
                                     },
                                     TextColor(label_color),
@@ -151,7 +151,7 @@ pub fn spawn_snackbar_section(
                             ButtonLabel,
                             Text::new(trigger_label),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(trigger_text_color),
@@ -185,7 +185,7 @@ pub fn spawn_snackbar_section(
                     snackbar.spawn((
                         Text::new("Item deleted"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.inverse_on_surface),
@@ -205,7 +205,7 @@ pub fn spawn_snackbar_section(
                                 ButtonLabel,
                                 Text::new("UNDO"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.inverse_primary),

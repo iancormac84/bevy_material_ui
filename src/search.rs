@@ -268,7 +268,7 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
                     SearchBarDisplayTextFor(bar_entity),
                     Text::new(initial),
                     TextFont {
-                        font_size: 16.0,
+                        font_size: FontSize::Px(16.0),
                         ..default()
                     },
                     TextColor(color),

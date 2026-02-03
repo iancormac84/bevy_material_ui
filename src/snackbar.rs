@@ -523,7 +523,7 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                 SnackbarMessage,
                 Text::new(&message_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(message_color),
@@ -552,7 +552,7 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                         btn.spawn((
                             Text::new(action),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(action_color),
@@ -633,7 +633,7 @@ pub fn spawn_snackbar(
                 SnackbarMessage,
                 Text::new(&message),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.inverse_on_surface),
@@ -662,7 +662,7 @@ pub fn spawn_snackbar(
                         btn.spawn((
                             Text::new(action_text),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(theme.inverse_primary),

@@ -251,7 +251,7 @@ fn card_shadow_system(mut cards: Query<(&MaterialCard, &mut BoxShadow), Changed<
 ///     commands.spawn((
 ///         CardBuilder::new().elevated().build(&theme),
 ///         children![
-///             (Text::new("Card Title"), TextFont { font_size: 20.0, ..default() }),
+///             (Text::new("Card Title"), TextFont { font_size: FontSize::Px(20.0), ..default() }),
 ///         ],
 ///     ));
 /// }

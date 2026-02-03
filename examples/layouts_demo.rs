@@ -130,7 +130,7 @@ fn spawn_layout_section(
             section.spawn((
                 Text::new(title),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -156,7 +156,7 @@ fn spawn_layout_entry(
             entry.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 13.0,
+                    font_size: FontSize::Px(13.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -286,7 +286,7 @@ impl LayoutDemoButtonExt for ChildSpawnerCommands<'_> {
                     ButtonLabel,
                     Text::new(label),
                     TextFont {
-                        font_size: 13.0,
+                        font_size: FontSize::Px(13.0),
                         ..default()
                     },
                     TextColor(text_color),
@@ -563,7 +563,7 @@ fn spawn_list_detail_scaffold(parent: &mut ChildSpawnerCommands, theme: &Materia
                             item.spawn((
                                 Text::new((*label).to_string()),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -666,7 +666,7 @@ fn spawn_drawer_list(
                     item.spawn((
                         Text::new((*label).to_string()),
                         TextFont {
-                            font_size: 12.0,
+                            font_size: FontSize::Px(12.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),

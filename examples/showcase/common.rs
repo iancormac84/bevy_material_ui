@@ -644,7 +644,7 @@ pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
                 header.spawn((
                     Text::new("Copy"),
                     TextFont {
-                        font_size: 14.0,
+                        font_size: FontSize::Px(14.0),
                         ..default()
                     },
                     TextColor(theme.on_surface_variant),
@@ -673,7 +673,7 @@ pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
                 scroller.spawn((
                     Text::new(code),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(theme.on_surface.with_alpha(0.87)),
@@ -702,7 +702,7 @@ pub fn spawn_section_header(
         Text::new(""),
         LocalizedText::new(title_key).with_default(title_default),
         TextFont {
-            font_size: 22.0,
+            font_size: FontSize::Px(22.0),
             ..default()
         },
         TextColor(theme.primary),
@@ -714,7 +714,7 @@ pub fn spawn_section_header(
             Text::new(""),
             LocalizedText::new(description_key).with_default(description_default),
             TextFont {
-                font_size: 14.0,
+                font_size: FontSize::Px(14.0),
                 ..default()
             },
             TextColor(theme.on_surface_variant),

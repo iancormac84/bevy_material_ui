@@ -43,7 +43,7 @@ pub fn spawn_button_group_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                         col.spawn((
                             Text::new("Horizontal (single)"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -73,7 +73,7 @@ pub fn spawn_button_group_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                         col.spawn((
                             Text::new("Vertical (single)"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -103,7 +103,7 @@ pub fn spawn_button_group_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                         col.spawn((
                             Text::new("Multi-select"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -165,7 +165,7 @@ fn spawn_toggle_button(
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),

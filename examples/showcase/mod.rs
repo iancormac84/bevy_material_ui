@@ -99,7 +99,7 @@ fn setup_ui(
             .with_children(|sidebar| {
                 sidebar.spawn((
                     Text::new("Material UI Showcase"),
-                    TextFont { font_size: 18.0, ..default() },
+                    TextFont { font_size: FontSize::Px(18.0), ..default() },
                     TextColor(theme.on_surface),
                     Node { margin: UiRect::bottom(Val::Px(8.0)), ..default() },
                 ));

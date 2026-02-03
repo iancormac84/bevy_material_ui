@@ -59,7 +59,7 @@ fn spawn_layout_section(
             section.spawn((
                 Text::new(title),
                 TextFont {
-                    font_size: 16.0,
+                    font_size: FontSize::Px(16.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -85,7 +85,7 @@ fn spawn_layout_entry(
             entry.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 13.0,
+                    font_size: FontSize::Px(13.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -411,7 +411,7 @@ fn spawn_standard_drawer_card(parent: &mut ChildSpawnerCommands, theme: &Materia
                                     item.spawn((
                                         Text::new((*label).to_string()),
                                         TextFont {
-                                            font_size: 13.0,
+                                            font_size: FontSize::Px(13.0),
                                             ..default()
                                         },
                                         TextColor(theme.on_surface),
@@ -479,7 +479,7 @@ fn spawn_permanent_drawer_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                                     item.spawn((
                                         Text::new((*label).to_string()),
                                         TextFont {
-                                            font_size: 13.0,
+                                            font_size: FontSize::Px(13.0),
                                             ..default()
                                         },
                                         TextColor(theme.on_surface),
@@ -544,7 +544,7 @@ fn spawn_modal_drawer_example(parent: &mut ChildSpawnerCommands, theme: Material
                             item.spawn((
                                 Text::new((*label).to_string()),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -619,7 +619,7 @@ fn spawn_list_detail_card(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
                             item.spawn((
                                 Text::new((*label).to_string()),
                                 TextFont {
-                                    font_size: 13.0,
+                                    font_size: FontSize::Px(13.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -680,7 +680,7 @@ fn spawn_supporting_panes_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                             item.spawn((
                                 Text::new((*label).to_string()),
                                 TextFont {
-                                    font_size: 13.0,
+                                    font_size: FontSize::Px(13.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -793,7 +793,7 @@ fn spawn_status_stack(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme) 
             col.spawn((
                 Text::new("Status: OK"),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),

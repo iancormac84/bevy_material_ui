@@ -1720,7 +1720,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                 TextFieldLabelFor(field_entity),
                                 Text::new(label.as_str()),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(label_color),
@@ -1779,7 +1779,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                     TextFieldPlaceholderFor(field_entity),
                                     Text::new(placeholder_text.as_str()),
                                     TextFont {
-                                        font_size: 16.0,
+                                        font_size: FontSize::Px(16.0),
                                         ..default()
                                     },
                                     TextColor(placeholder_color),
@@ -1800,7 +1800,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                                     TextFieldInputFor(field_entity),
                                     Text::new(initial_display),
                                     TextFont {
-                                        font_size: 16.0,
+                                        font_size: FontSize::Px(16.0),
                                         ..default()
                                     },
                                     TextColor(initial_color),
@@ -1853,7 +1853,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                     TextFieldSupportingFor(field_entity),
                     Text::new(supporting_display),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(supporting_color),
@@ -1981,7 +1981,7 @@ pub fn spawn_text_field_control(
                                 TextFieldLabelFor(field_entity),
                                 Text::new(label.as_str()),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(label_color),
@@ -2040,7 +2040,7 @@ pub fn spawn_text_field_control(
                                     TextFieldPlaceholderFor(field_entity),
                                     Text::new(placeholder_text.as_str()),
                                     TextFont {
-                                        font_size: 16.0,
+                                        font_size: FontSize::Px(16.0),
                                         ..default()
                                     },
                                     TextColor(placeholder_color),
@@ -2061,7 +2061,7 @@ pub fn spawn_text_field_control(
                                     TextFieldInputFor(field_entity),
                                     Text::new(initial_display),
                                     TextFont {
-                                        font_size: 16.0,
+                                        font_size: FontSize::Px(16.0),
                                         ..default()
                                     },
                                     TextColor(initial_color),
@@ -2114,7 +2114,7 @@ pub fn spawn_text_field_control(
                     TextFieldSupportingFor(field_entity),
                     Text::new(supporting_display),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(supporting_color),
@@ -2240,7 +2240,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                                 TextFieldLabelFor(field_entity),
                                 Text::new(label.as_str()),
                                 TextFont {
-                                    font_size: 12.0,
+                                    font_size: FontSize::Px(12.0),
                                     ..default()
                                 },
                                 TextColor(label_color),
@@ -2299,7 +2299,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                                     TextFieldPlaceholderFor(field_entity),
                                     Text::new(placeholder_text.as_str()),
                                     TextFont {
-                                        font_size: 16.0,
+                                        font_size: FontSize::Px(16.0),
                                         ..default()
                                     },
                                     TextColor(placeholder_color),
@@ -2320,7 +2320,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                                     TextFieldInputFor(field_entity),
                                     Text::new(initial_display),
                                     TextFont {
-                                        font_size: 16.0,
+                                        font_size: FontSize::Px(16.0),
                                         ..default()
                                     },
                                     TextColor(initial_color),
@@ -2373,7 +2373,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                     TextFieldSupportingFor(field_entity),
                     Text::new(supporting_display),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(supporting_color),

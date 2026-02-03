@@ -103,7 +103,7 @@ fn setup(
                         row.spawn((
                             Text::new("Selection Mode:"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface),
@@ -134,7 +134,7 @@ fn setup(
                                     ChipLabel,
                                     Text::new(label),
                                     TextFont {
-                                        font_size: 12.0,
+                                        font_size: FontSize::Px(12.0),
                                         ..default()
                                     },
                                     TextColor(label_color),
@@ -264,7 +264,7 @@ fn setup(
                         container.spawn((
                             Text::new("Virtualized list (500 items)"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface),
@@ -344,7 +344,7 @@ fn setup(
                                     ListVirtualizeLabel,
                                     Text::new(switch_label),
                                     TextFont {
-                                        font_size: 14.0,
+                                        font_size: FontSize::Px(14.0),
                                         ..default()
                                     },
                                     TextColor(theme.on_surface),
@@ -378,7 +378,7 @@ fn setup(
                         demo.spawn((
                             Text::new("Scrollbar orientations"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface),

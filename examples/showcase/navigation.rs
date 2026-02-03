@@ -58,7 +58,7 @@ pub fn spawn_nav_item(
                 Text::new(""),
                 LocalizedText::new(section.i18n_key()).with_default(section.display_name()),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),

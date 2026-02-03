@@ -579,7 +579,7 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
                     Text::new(""),
                     LocalizedText::new(key),
                     TextFont {
-                        font_size: 22.0,
+                        font_size: FontSize::Px(22.0),
                         ..default()
                     },
                     TextColor(title_color),
@@ -592,7 +592,7 @@ impl SpawnAppBarChild for ChildSpawnerCommands<'_> {
                 bar.spawn((
                     Text::new(&title_text),
                     TextFont {
-                        font_size: 22.0,
+                        font_size: FontSize::Px(22.0),
                         ..default()
                     },
                     TextColor(title_color),
@@ -688,7 +688,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                     Text::new(""),
                                     LocalizedText::new(key),
                                     TextFont {
-                                        font_size: 22.0,
+                                        font_size: FontSize::Px(22.0),
                                         ..default()
                                     },
                                     TextColor(title_color),
@@ -698,7 +698,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                     AppBarTitle,
                                     Text::new(&title),
                                     TextFont {
-                                        font_size: 22.0,
+                                        font_size: FontSize::Px(22.0),
                                         ..default()
                                     },
                                     TextColor(title_color),
@@ -715,7 +715,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                             Text::new(""),
                             LocalizedText::new(key),
                             TextFont {
-                                font_size: 22.0,
+                                font_size: FontSize::Px(22.0),
                                 ..default()
                             },
                             TextColor(title_color),
@@ -730,7 +730,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                             AppBarTitle,
                             Text::new(&title),
                             TextFont {
-                                font_size: 22.0,
+                                font_size: FontSize::Px(22.0),
                                 ..default()
                             },
                             TextColor(title_color),
@@ -853,7 +853,7 @@ pub fn spawn_top_app_bar(
                             AppBarTitle,
                             Text::new(&title),
                             TextFont {
-                                font_size: 22.0,
+                                font_size: FontSize::Px(22.0),
                                 ..default()
                             },
                             TextColor(title_color),
@@ -867,7 +867,7 @@ pub fn spawn_top_app_bar(
                     AppBarTitle,
                     Text::new(&title),
                     TextFont {
-                        font_size: 22.0,
+                        font_size: FontSize::Px(22.0),
                         ..default()
                     },
                     TextColor(title_color),
@@ -987,7 +987,7 @@ pub fn spawn_top_app_bar_with_right_content(
                                     AppBarTitle,
                                     Text::new(&title),
                                     TextFont {
-                                        font_size: 22.0,
+                                        font_size: FontSize::Px(22.0),
                                         ..default()
                                     },
                                     TextColor(title_color),
@@ -1000,7 +1000,7 @@ pub fn spawn_top_app_bar_with_right_content(
                             AppBarTitle,
                             Text::new(&title),
                             TextFont {
-                                font_size: 22.0,
+                                font_size: FontSize::Px(22.0),
                                 ..default()
                             },
                             TextColor(title_color),
@@ -1014,7 +1014,7 @@ pub fn spawn_top_app_bar_with_right_content(
                     AppBarTitle,
                     Text::new(&title),
                     TextFont {
-                        font_size: 22.0,
+                        font_size: FontSize::Px(22.0),
                         ..default()
                     },
                     TextColor(title_color),

@@ -1329,7 +1329,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                         row.spawn((
                             Text::new("Select Time"),
                             TextFont {
-                                font_size: 24.0,
+                                font_size: FontSize::Px(24.0),
                                 ..default()
                             },
                             TextColor(on_surface),
@@ -1408,7 +1408,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     TimePickerHourText { picker: entity },
                                     Text::new(format!("{:02}", display_hour)),
                                     TextFont {
-                                        font_size: 32.0,
+                                        font_size: FontSize::Px(32.0),
                                         ..default()
                                     },
                                     TextColor(theme.on_primary_container),
@@ -1418,7 +1418,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                         time_display.spawn((
                             Text::new(":"),
                             TextFont {
-                                font_size: 32.0,
+                                font_size: FontSize::Px(32.0),
                                 ..default()
                             },
                             TextColor(primary),
@@ -1447,7 +1447,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     TimePickerMinuteText { picker: entity },
                                     Text::new(format!("{:02}", initial_minute)),
                                     TextFont {
-                                        font_size: 32.0,
+                                        font_size: FontSize::Px(32.0),
                                         ..default()
                                     },
                                     TextColor(theme.on_surface),
@@ -1498,7 +1498,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 btn.spawn((
                                     Text::new(label),
                                     TextFont {
-                                        font_size: 14.0,
+                                        font_size: FontSize::Px(14.0),
                                         ..default()
                                     },
                                     TextColor(fg),
@@ -1604,7 +1604,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             n.spawn((
                                                 Text::new(hour.to_string()),
                                                 TextFont {
-                                                    font_size: 16.0,
+                                                    font_size: FontSize::Px(16.0),
                                                     ..default()
                                                 },
                                                 TextColor(fg),
@@ -1661,7 +1661,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             n.spawn((
                                                 Text::new(format!("{:02}", inner_hour)),
                                                 TextFont {
-                                                    font_size: 16.0,
+                                                    font_size: FontSize::Px(16.0),
                                                     ..default()
                                                 },
                                                 TextColor(on_surface),
@@ -1703,7 +1703,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             n.spawn((
                                                 Text::new(format!("{:02}", outer_hour)),
                                                 TextFont {
-                                                    font_size: 16.0,
+                                                    font_size: FontSize::Px(16.0),
                                                     ..default()
                                                 },
                                                 TextColor(on_surface),
@@ -1750,7 +1750,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                             n.spawn((
                                                 Text::new(format!("{:02}", minute)),
                                                 TextFont {
-                                                    font_size: 16.0,
+                                                    font_size: FontSize::Px(16.0),
                                                     ..default()
                                                 },
                                                 TextColor(on_surface),
@@ -1873,7 +1873,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                             Interaction::None,
                             Text::new("Cancel"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(primary),
@@ -1893,7 +1893,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                             Interaction::None,
                             Text::new("OK"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(primary),

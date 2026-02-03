@@ -492,7 +492,7 @@ pub fn spawn_chip(commands: &mut Commands, theme: &MaterialTheme, builder: ChipB
                     ChipLeadingIcon,
                     Text::new("✓"),
                     TextFont {
-                        font_size: CHIP_ICON_SIZE,
+                        font_size: FontSize::Px(CHIP_ICON_SIZE),
                         ..default()
                     },
                     TextColor(icon_color),
@@ -502,7 +502,7 @@ pub fn spawn_chip(commands: &mut Commands, theme: &MaterialTheme, builder: ChipB
                     ChipLeadingIcon,
                     Text::new(leading_icon.as_deref().unwrap_or("★")),
                     TextFont {
-                        font_size: CHIP_ICON_SIZE,
+                        font_size: FontSize::Px(CHIP_ICON_SIZE),
                         ..default()
                     },
                     TextColor(icon_color),
@@ -514,7 +514,7 @@ pub fn spawn_chip(commands: &mut Commands, theme: &MaterialTheme, builder: ChipB
                 ChipLabel,
                 Text::new(&label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(label_color),
@@ -540,7 +540,7 @@ pub fn spawn_chip(commands: &mut Commands, theme: &MaterialTheme, builder: ChipB
                             ChipDeleteIcon,
                             Text::new("✕"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(icon_color),
@@ -618,7 +618,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
                     ChipLeadingIcon,
                     Text::new("✓"),
                     TextFont {
-                        font_size: CHIP_ICON_SIZE,
+                        font_size: FontSize::Px(CHIP_ICON_SIZE),
                         ..default()
                     },
                     TextColor(icon_color),
@@ -628,7 +628,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
                     ChipLeadingIcon,
                     Text::new(leading_icon.as_deref().unwrap_or("★")),
                     TextFont {
-                        font_size: CHIP_ICON_SIZE,
+                        font_size: FontSize::Px(CHIP_ICON_SIZE),
                         ..default()
                     },
                     TextColor(icon_color),
@@ -640,7 +640,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
                 ChipLabel,
                 Text::new(&label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(label_color),
@@ -666,7 +666,7 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
                             ChipDeleteIcon,
                             Text::new("✕"),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(icon_color),

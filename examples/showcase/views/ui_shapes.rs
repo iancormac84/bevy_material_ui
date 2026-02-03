@@ -29,7 +29,7 @@ pub fn spawn_ui_shapes_section(parent: &mut ChildSpawnerCommands, theme: &Materi
             section.spawn((
                 Text::new("Run `cargo run --example ui_shapes_demo` for the full interactive demo with shape rendering."),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -78,7 +78,7 @@ fn spawn_shape_placeholder(
             card.spawn((
                 Text::new("⬡"),
                 TextFont {
-                    font_size: 32.0,
+                    font_size: FontSize::Px(32.0),
                     ..default()
                 },
                 TextColor(theme.primary),
@@ -87,7 +87,7 @@ fn spawn_shape_placeholder(
             card.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

@@ -65,7 +65,7 @@ pub fn spawn_app_bar_section(
                     col.spawn((
                         Text::new("Top App Bar (Small)"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -102,7 +102,7 @@ pub fn spawn_app_bar_section(
                     col.spawn((
                         Text::new("Bottom App Bar"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),

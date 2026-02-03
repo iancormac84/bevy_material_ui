@@ -60,7 +60,7 @@ fn spawn_icon_button_demo(
             col.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 11.0,
+                    font_size: FontSize::Px(11.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),

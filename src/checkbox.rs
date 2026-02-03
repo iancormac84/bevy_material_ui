@@ -797,7 +797,7 @@ impl SpawnCheckbox for Commands<'_, '_> {
                 Interaction::None,
                 Text::new(label_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(label_color),
@@ -928,7 +928,7 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                 Interaction::None,
                 Text::new(label_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(label_color),

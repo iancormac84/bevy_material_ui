@@ -46,7 +46,7 @@ pub fn spawn_loading_indicator_section(
                         LocalizedText::new("showcase.loading.default")
                             .with_default("Loading indicator"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -63,7 +63,7 @@ pub fn spawn_loading_indicator_section(
                         LocalizedText::new("showcase.loading.with_container")
                             .with_default("Loading indicator with container"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -81,7 +81,7 @@ pub fn spawn_loading_indicator_section(
                         LocalizedText::new("showcase.loading.multi_color")
                             .with_default("Loading indicator with multiple colors"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -99,7 +99,7 @@ pub fn spawn_loading_indicator_section(
                         LocalizedText::new("showcase.loading.small")
                             .with_default("Small loading indicator"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -117,7 +117,7 @@ pub fn spawn_loading_indicator_section(
                         LocalizedText::new("showcase.loading.large_fast")
                             .with_default("Large loading indicator (fast)"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),

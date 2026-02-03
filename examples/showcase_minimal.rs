@@ -93,7 +93,7 @@ fn setup_ui(mut commands: Commands, theme: Res<MaterialTheme>) {
                 Text::new(""),
                 LocalizedText::new("showcase.app.title").with_default("Material UI"),
                 TextFont {
-                    font_size: 20.0,
+                    font_size: FontSize::Px(20.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -104,7 +104,7 @@ fn setup_ui(mut commands: Commands, theme: Res<MaterialTheme>) {
                 LocalizedText::new("showcase.translations.help")
                     .with_default("Press L to cycle languages"),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface_variant),
@@ -137,7 +137,7 @@ fn setup_ui(mut commands: Commands, theme: Res<MaterialTheme>) {
                             row.spawn((
                                 Text::new(format!("Row {i}: ")),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -149,7 +149,7 @@ fn setup_ui(mut commands: Commands, theme: Res<MaterialTheme>) {
                                 LocalizedText::new("showcase.common.result_prefix")
                                     .with_default("Result:"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface_variant),

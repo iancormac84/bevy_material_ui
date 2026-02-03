@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         card.spawn((
                             Text::new(title),
                             TextFont {
-                                font_size: 16.0,
+                                font_size: FontSize::Px(16.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface),
@@ -64,7 +64,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         card.spawn((
                             Text::new("Card content goes here with supporting text."),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),

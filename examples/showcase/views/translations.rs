@@ -76,7 +76,7 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                     row.spawn((
                         Text::new("Tip: press L to toggle en/es"),
                         TextFont {
-                            font_size: 12.0,
+                            font_size: FontSize::Px(12.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -96,7 +96,7 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                         Text::new(""),
                         LocalizedText::new("showcase.translations.greeting").with_default("Hello!"),
                         TextFont {
-                            font_size: 16.0,
+                            font_size: FontSize::Px(16.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -113,7 +113,7 @@ pub fn spawn_translations_section(parent: &mut ChildSpawnerCommands, theme: &Mat
                                 LocalizedText::new("showcase.translations.button")
                                     .with_default("Click me"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_primary),

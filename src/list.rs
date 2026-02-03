@@ -765,7 +765,7 @@ fn list_virtualization_system(
                                 ListItemHeadline,
                                 Text::new(&model_clone.headline),
                                 TextFont {
-                                    font_size: 16.0,
+                                    font_size: FontSize::Px(16.0),
                                     ..default()
                                 },
                                 TextColor(headline_color),
@@ -776,7 +776,7 @@ fn list_virtualization_system(
                                     ListItemSupportingText,
                                     Text::new(supporting),
                                     TextFont {
-                                        font_size: 14.0,
+                                        font_size: FontSize::Px(14.0),
                                         ..default()
                                     },
                                     TextColor(supporting_color),
@@ -801,7 +801,7 @@ fn list_virtualization_system(
                                     trailing.spawn((
                                         Text::new(text),
                                         TextFont {
-                                            font_size: 14.0,
+                                            font_size: FontSize::Px(14.0),
                                             ..default()
                                         },
                                         TextColor(supporting_color),
@@ -1288,7 +1288,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                     ListItemHeadline,
                     Text::new(&headline_str),
                     TextFont {
-                        font_size: 16.0,
+                        font_size: FontSize::Px(16.0),
                         ..default()
                     },
                     TextColor(headline_color),
@@ -1300,7 +1300,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                         ListItemSupportingText,
                         Text::new(supporting),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(supporting_color),
@@ -1358,7 +1358,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                     ListItemHeadline,
                     Text::new(&headline),
                     TextFont {
-                        font_size: 16.0,
+                        font_size: FontSize::Px(16.0),
                         ..default()
                     },
                     TextColor(headline_color),
@@ -1369,7 +1369,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                         ListItemSupportingText,
                         Text::new(supporting),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(supporting_color),
@@ -1393,7 +1393,7 @@ impl SpawnListChild for ChildSpawnerCommands<'_> {
                         trailing.spawn((
                             Text::new(text),
                             TextFont {
-                                font_size: 14.0,
+                                font_size: FontSize::Px(14.0),
                                 ..default()
                             },
                             TextColor(supporting_color),

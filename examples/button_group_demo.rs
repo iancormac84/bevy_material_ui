@@ -45,7 +45,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     .spawn((
                         Text::new("Button Groups"),
                         TextFont {
-                            font_size: 16.0,
+                            font_size: FontSize::Px(16.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -181,7 +181,7 @@ fn spawn_toggle_button(
             btn.spawn((
                 Text::new(label),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(text_color),

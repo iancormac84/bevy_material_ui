@@ -70,7 +70,7 @@ pub fn spawn_menus_section(
                                 MenuSelectedText,
                                 Text::new("Options"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -165,7 +165,7 @@ fn spawn_menu_item(
                     ListItemHeadline,
                     Text::new(label),
                     TextFont {
-                        font_size: 16.0,
+                        font_size: FontSize::Px(16.0),
                         ..default()
                     },
                     TextColor(headline_color),
@@ -176,7 +176,7 @@ fn spawn_menu_item(
                         ListItemSupportingText,
                         Text::new(shortcut),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(supporting_color),

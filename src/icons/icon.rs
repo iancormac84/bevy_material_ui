@@ -736,7 +736,7 @@ fn sync_icon_render_components(
                 if let Some(icon_font) = &ensured_font_handle {
                     commands.entity(entity).insert(TextFont {
                         font: icon_font.clone(),
-                        font_size: desired_size,
+                        font_size: FontSize::Px(desired_size),
                         ..default()
                     });
                 }

@@ -239,7 +239,7 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
                 ToolbarTitle,
                 Text::new(title),
                 TextFont {
-                    font_size: 22.0,
+                    font_size: FontSize::Px(22.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),

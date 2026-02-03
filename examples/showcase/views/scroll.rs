@@ -34,7 +34,7 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     col.spawn((
                         Text::new("Vertical scrollbar"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -60,7 +60,7 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                             content.spawn((
                                 Text::new(format!("Item {i}")),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -80,7 +80,7 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     col.spawn((
                         Text::new("Horizontal scrollbar"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface_variant),
@@ -120,7 +120,7 @@ pub fn spawn_scroll_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                                     card.spawn((
                                         Text::new(format!("{i}")),
                                         TextFont {
-                                            font_size: 14.0,
+                                            font_size: FontSize::Px(14.0),
                                             ..default()
                                         },
                                         TextColor(theme.on_surface),

@@ -38,7 +38,7 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                         LocalizedText::new("showcase.dividers.content_above")
                             .with_default("Content above divider"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -53,7 +53,7 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                         LocalizedText::new("showcase.dividers.content_below")
                             .with_default("Content below divider"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),
@@ -68,7 +68,7 @@ pub fn spawn_dividers_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                         LocalizedText::new("showcase.dividers.after_inset")
                             .with_default("After inset divider"),
                         TextFont {
-                            font_size: 14.0,
+                            font_size: FontSize::Px(14.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),

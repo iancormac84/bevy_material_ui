@@ -50,7 +50,7 @@ pub fn spawn_progress_section(parent: &mut ChildSpawnerCommands, theme: &Materia
                             LocalizedText::new("showcase.progress.indeterminate")
                                 .with_default("Indeterminate"),
                             TextFont {
-                                font_size: 12.0,
+                                font_size: FontSize::Px(12.0),
                                 ..default()
                             },
                             TextColor(theme.on_surface_variant),
@@ -104,7 +104,7 @@ fn spawn_animated_linear_progress(
                         (initial.clamp(0.0, 1.0) * 100.0).round() as i32
                     )),
                     TextFont {
-                        font_size: 12.0,
+                        font_size: FontSize::Px(12.0),
                         ..default()
                     },
                     TextColor(theme.on_surface_variant),

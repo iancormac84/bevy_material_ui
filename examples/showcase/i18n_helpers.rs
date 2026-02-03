@@ -124,7 +124,7 @@ pub fn spawn_checkbox_i18n(
                 Text::new(""),
                 LocalizedText::new(translation_key).with_default(default_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -200,7 +200,7 @@ pub fn spawn_switch_i18n(
                 Text::new(""),
                 LocalizedText::new(translation_key).with_default(default_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -303,7 +303,7 @@ pub fn spawn_radio_i18n(
                 Text::new(""),
                 LocalizedText::new(translation_key).with_default(default_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -352,7 +352,7 @@ pub fn spawn_chip_i18n(
                 chip_parent.spawn((
                     Text::new("✓"),
                     TextFont {
-                        font_size: 18.0,
+                        font_size: FontSize::Px(18.0),
                         ..default()
                     },
                     TextColor(icon_color),
@@ -365,7 +365,7 @@ pub fn spawn_chip_i18n(
                 Text::new(""),
                 LocalizedText::new(translation_key).with_default(default_text),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 TextColor(label_color),
@@ -423,7 +423,7 @@ pub fn spawn_extended_fab_i18n(
                 LocalizedText::new(translation_key).with_default(default_text),
                 TextColor(text_color),
                 TextFont {
-                    font_size: 14.0,
+                    font_size: FontSize::Px(14.0),
                     ..default()
                 },
                 NeedsInternationalFont,

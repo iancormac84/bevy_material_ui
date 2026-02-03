@@ -1138,7 +1138,7 @@ fn apply_international_font_system(
 
     // Apply appropriate font to all marked entities
     for (entity, mut text_font) in query.iter_mut() {
-        text_font.font = font_handle.clone();
+        text_font.font = FontSource::Handle(font_handle.clone());
 
         // Remove marker to prevent reprocessing
         commands
@@ -1193,7 +1193,7 @@ fn update_font_on_language_change_system(
 
     // Update all localized text to use the appropriate font
     for mut text_font in query.iter_mut() {
-        text_font.font = font_handle.clone();
+        text_font.font = FontSource::Handle(font_handle.clone());
     }
 }
 
@@ -2349,7 +2349,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                 FpsText,
                 Text::new(""),
                 TextFont {
-                    font_size: 12.0,
+                    font_size: FontSize::Px(12.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -2410,7 +2410,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                 Text::new(""),
                 LocalizedText::new("showcase.settings.title").with_default("Settings"),
                 TextFont {
-                    font_size: 24.0,
+                    font_size: FontSize::Px(24.0),
                     ..default()
                 },
                 TextColor(theme.on_surface),
@@ -2446,7 +2446,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                 LocalizedText::new("showcase.settings.vsync_mode")
                                     .with_default("AutoNoVsync"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(theme.on_surface),
@@ -2538,7 +2538,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                 Text::new(""),
                                 LocalizedText::new("mui.common.ok").with_default("OK"),
                                 TextFont {
-                                    font_size: 14.0,
+                                    font_size: FontSize::Px(14.0),
                                     ..default()
                                 },
                                 TextColor(ok_text_color),
@@ -2674,7 +2674,7 @@ fn spawn_ui_root(
                         LocalizedText::new("showcase.app.title")
                             .with_default("Material UI Showcase"),
                         TextFont {
-                            font_size: 18.0,
+                            font_size: FontSize::Px(18.0),
                             ..default()
                         },
                         TextColor(theme.on_surface),

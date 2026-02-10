@@ -258,7 +258,7 @@ fn loading_indicator_material_update_system(
         // Update material for shape child
         for child in children.iter() {
             if let Ok(material_node) = material_query.get(child) {
-                if let Some(material) = materials.get_mut(&material_node.0) {
+                if let Some(mut material) = materials.get_mut(&material_node.0) {
                     // Calculate current and next shapes
                     let shape_index = indicator.morph_fraction.floor() as u32;
                     let morph_t = indicator.morph_fraction.fract();

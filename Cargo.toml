@@ -34,12 +34,11 @@ rustdoc-args = ["--cfg", "docsrs"]
 bevy = { git = "https://github.com/bevyengine/bevy.git", default-features = false, features = [
 	"bevy_asset",
 	"bevy_log",
-	"bevy_picking",
 	"bevy_winit",
 	"bevy_render",
 	"bevy_core_pipeline",
 	"bevy_sprite",
-	"bevy_ui",
+	"ui",
 	"bevy_ui_render",
 	"bevy_text",
 	"default_font",

@@ -55,6 +55,7 @@ struct SetChildOfOrDespawn {
 }
 
 impl Command for SetChildOfOrDespawn {
+    type Out = ();
     fn apply(self, world: &mut World) {
         // If the child is already gone, nothing to do.
         if world.get_entity(self.child).is_err() {
@@ -79,6 +80,7 @@ struct InsertChildOfIfExists {
 }
 
 impl Command for InsertChildOfIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if world.get_entity(self.entity).is_err() {
             return;
@@ -97,6 +99,7 @@ struct InsertNodeIfExists {
 }
 
 impl Command for InsertNodeIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if let Ok(mut entity) = world.get_entity_mut(self.entity) {
             entity.insert(self.node);

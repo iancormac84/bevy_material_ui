@@ -35,6 +35,7 @@ pub(crate) struct InsertTestIdIfExists {
 }
 
 impl Command for InsertTestIdIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         let Ok(mut entity_mut) = world.get_entity_mut(self.entity) else {
             return;

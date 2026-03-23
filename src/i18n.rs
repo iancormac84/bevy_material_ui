@@ -325,6 +325,7 @@ struct TryInsertLocalizedTextState {
 }
 
 impl Command for TryInsertLocalizedTextState {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if let Ok(mut entity) = world.get_entity_mut(self.entity) {
             entity.insert(self.state);

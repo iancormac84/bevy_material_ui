@@ -1234,6 +1234,7 @@ struct InsertTestIdIfExists {
 }
 
 impl Command for InsertTestIdIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if let Ok(mut entity) = world.get_entity_mut(self.entity) {
             // Only insert if still missing; entity may have been rebuilt.

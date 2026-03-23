@@ -18,6 +18,7 @@ struct InsertImageNodeIfExists {
 }
 
 impl Command for InsertImageNodeIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if let Ok(mut entity) = world.get_entity_mut(self.entity) {
             entity.insert(self.image_node);
@@ -32,6 +33,7 @@ struct InsertNodeIfExists {
 }
 
 impl Command for InsertNodeIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if let Ok(mut entity) = world.get_entity_mut(self.entity) {
             entity.insert(self.node);

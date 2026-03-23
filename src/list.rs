@@ -26,6 +26,7 @@ struct DespawnDescendantsIfExists {
 }
 
 impl Command for DespawnDescendantsIfExists {
+    type Out = ();
     fn apply(self, world: &mut World) {
         if world.get_entity(self.entity).is_err() {
             return;

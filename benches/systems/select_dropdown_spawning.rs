@@ -1,6 +1,7 @@
 use bevy::prelude::Startup;
 use bevy_material_ui::theme::MaterialTheme;
-use criterion::{black_box, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion};
+use std::hint::black_box;
 
 use super::{setup_app, spawn_select_for_bench, SelectSpawnBenchConfig};
 

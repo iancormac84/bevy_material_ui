@@ -1,5 +1,6 @@
 use bevy_material_ui::theme::MaterialTheme;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 use super::setup_app;
 

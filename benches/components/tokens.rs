@@ -2,7 +2,8 @@ use bevy_material_ui::{
     elevation::Elevation,
     tokens::{CornerRadius, Duration, Easing, Spacing},
 };
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark design tokens
 pub fn bench_tokens(c: &mut Criterion) {

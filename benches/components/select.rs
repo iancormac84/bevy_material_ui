@@ -1,5 +1,6 @@
 use bevy_material_ui::select::{MaterialSelect, SelectOption, SelectVariant};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark select component
 pub fn bench_select(c: &mut Criterion) {

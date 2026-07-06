@@ -1,5 +1,6 @@
 use bevy_material_ui::search::MaterialSearchBar;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark search bar component
 pub fn bench_search_bar(c: &mut Criterion) {

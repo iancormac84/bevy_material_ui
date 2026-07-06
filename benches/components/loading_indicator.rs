@@ -1,5 +1,6 @@
 use bevy_material_ui::loading_indicator::MaterialLoadingIndicator;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark loading indicator component
 pub fn bench_loading_indicator(c: &mut Criterion) {

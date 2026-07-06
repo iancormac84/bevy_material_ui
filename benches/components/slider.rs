@@ -1,5 +1,6 @@
 use bevy_material_ui::slider::MaterialSlider;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark slider component
 pub fn bench_slider(c: &mut Criterion) {

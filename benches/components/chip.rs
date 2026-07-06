@@ -1,5 +1,6 @@
 use bevy_material_ui::chip::{ChipVariant, MaterialChip};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark chip component
 pub fn bench_chip(c: &mut Criterion) {

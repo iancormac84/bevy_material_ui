@@ -1,5 +1,6 @@
 use bevy_material_ui::{checkbox::CheckboxState, elevation::Elevation, slider::MaterialSlider};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark checkbox state transitions and related state changes.
 pub fn bench_state_changes(c: &mut Criterion) {

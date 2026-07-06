@@ -1,5 +1,6 @@
 use bevy_material_ui::radio::MaterialRadio;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark radio component
 pub fn bench_radio(c: &mut Criterion) {

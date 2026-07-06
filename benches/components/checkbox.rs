@@ -1,5 +1,6 @@
 use bevy_material_ui::checkbox::{CheckboxState, MaterialCheckbox};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark checkbox component
 pub fn bench_checkbox(c: &mut Criterion) {

@@ -1,5 +1,6 @@
 use bevy_material_ui::fab::{FabSize, MaterialFab};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark FAB component creation
 pub fn bench_fab(c: &mut Criterion) {

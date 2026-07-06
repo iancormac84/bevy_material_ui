@@ -1,5 +1,6 @@
 use bevy_material_ui::divider::MaterialDivider;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark divider component
 pub fn bench_divider(c: &mut Criterion) {

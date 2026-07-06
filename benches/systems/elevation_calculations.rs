@@ -1,5 +1,6 @@
 use bevy_material_ui::elevation::{Elevation, ElevationShadow};
-use criterion::{black_box, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion};
+use std::hint::black_box;
 
 /// Benchmark elevation shadow calculations
 pub fn bench_elevation_calculations(c: &mut Criterion) {

@@ -1,5 +1,6 @@
 use bevy_material_ui::button::{ButtonVariant, MaterialButton};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark button component creation
 pub fn bench_button_creation(c: &mut Criterion) {

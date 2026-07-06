@@ -1,4 +1,5 @@
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark scroll container operations
 pub fn bench_scroll_operations(c: &mut Criterion) {

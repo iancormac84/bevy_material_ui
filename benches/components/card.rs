@@ -1,5 +1,6 @@
 use bevy_material_ui::card::MaterialCard;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark card component
 pub fn bench_card(c: &mut Criterion) {

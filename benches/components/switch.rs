@@ -1,5 +1,6 @@
 use bevy_material_ui::switch::MaterialSwitch;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark switch component
 pub fn bench_switch(c: &mut Criterion) {

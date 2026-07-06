@@ -1,5 +1,6 @@
 use bevy_material_ui::progress::{MaterialCircularProgress, MaterialLinearProgress};
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark progress indicator
 pub fn bench_progress(c: &mut Criterion) {

@@ -4,7 +4,8 @@
 //! palette generation, and color scheme creation.
 
 use bevy_material_ui::color::{Hct, MaterialColorScheme, TonalPalette};
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use std::hint::black_box;
 
 /// Benchmark HCT to sRGB conversion
 fn bench_hct_to_srgb(c: &mut Criterion) {

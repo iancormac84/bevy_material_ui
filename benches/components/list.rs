@@ -1,5 +1,6 @@
 use bevy_material_ui::list::MaterialListItem;
-use criterion::{black_box, Criterion};
+use criterion::Criterion;
+use std::hint::black_box;
 
 /// Benchmark list component
 pub fn bench_list(c: &mut Criterion) {

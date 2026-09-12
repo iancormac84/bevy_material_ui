@@ -3,7 +3,7 @@
 //! Tabs organize content across different screens, data sets, and other interactions.
 //! Reference: <https://m3.material.io/components/tabs/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     ripple::RippleHost,
@@ -241,8 +241,8 @@ pub struct TabLabelText;
 fn tab_interaction_system(
     mut tab_queries: ParamSet<(
         Query<
-            (Entity, &Interaction, &mut MaterialTab, &ChildOf),
-            (Changed<Interaction>, With<MaterialTab>),
+            (Entity, &PickingInteraction, &mut MaterialTab, &ChildOf),
+            (Changed<PickingInteraction>, With<MaterialTab>),
         >,
         Query<&mut MaterialTab>,
     )>,
@@ -262,7 +262,7 @@ fn tab_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 tab.pressed = true;
                 tab.hovered = false;
 
@@ -283,11 +283,11 @@ fn tab_interaction_system(
                     });
                 }
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 tab.pressed = false;
                 tab.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 tab.pressed = false;
                 tab.hovered = false;
             }

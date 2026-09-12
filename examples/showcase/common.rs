@@ -627,7 +627,7 @@ pub fn spawn_code_block(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme
                             .filled_tonal()
                             .disabled(disabled)
                             .build(theme),
-                        Interaction::None,
+                        PickingInteraction::None,
                     ))
                     .with_children(|btn| {
                         if let Some(icon) = MaterialIcon::from_name("content_copy")

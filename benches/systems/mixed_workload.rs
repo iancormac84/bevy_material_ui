@@ -66,7 +66,7 @@ pub fn bench_mixed_workload(c: &mut Criterion) {
             (
                 MaterialButton::new(format!("Button {}", i)),
                 Node::default(),
-                Interaction::None,
+                PickingInteraction::None,
             )
         }));
 
@@ -74,7 +74,7 @@ pub fn bench_mixed_workload(c: &mut Criterion) {
             (
                 MaterialCheckbox::new().with_state(CheckboxState::Unchecked),
                 Node::default(),
-                Interaction::None,
+                PickingInteraction::None,
             )
         }));
 
@@ -83,14 +83,14 @@ pub fn bench_mixed_workload(c: &mut Criterion) {
             let world = app.world_mut();
 
             // Query buttons
-            let mut button_query = world.query::<(&MaterialButton, &Interaction)>();
+            let mut button_query = world.query::<(&MaterialButton, &PickingInteraction)>();
             for (button, interaction) in button_query.iter(world) {
                 black_box((button, interaction));
                 count += 1;
             }
 
             // Query checkboxes
-            let mut checkbox_query = world.query::<(&MaterialCheckbox, &Interaction)>();
+            let mut checkbox_query = world.query::<(&MaterialCheckbox, &PickingInteraction)>();
             for (checkbox, interaction) in checkbox_query.iter(world) {
                 black_box((checkbox, interaction));
                 count += 1;

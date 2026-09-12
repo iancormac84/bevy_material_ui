@@ -114,7 +114,7 @@ pub fn spawn_list_section(
                                 .selection_mode(ListSelectionMode::Single)
                                 .build_scrollable(),
                             BackgroundColor(theme_clone.surface),
-                            Interaction::None, // Enable hover detection
+                            PickingInteraction::None, // Enable hover detection
                         ))
                         .with_children(|list| {
                             // 10 list items with translation keys
@@ -198,7 +198,7 @@ pub fn spawn_list_section(
                                         .two_line()
                                         .supporting_text(*supporting_default)
                                         .build(&theme_clone),
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                 ))
                                 .with_children(|item| {
                                     // Leading (match library default list item layout)
@@ -313,7 +313,7 @@ pub fn spawn_list_section(
                                 TestId::new("list_virtualize_toggle"),
                                 switch,
                                 Button,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 RippleHost::new(),
                                 Node {
                                     width: Val::Px(bevy_material_ui::switch::SWITCH_TRACK_WIDTH),
@@ -419,7 +419,7 @@ pub fn spawn_list_section(
                                 ..default()
                             },
                             BackgroundColor(theme_clone.surface_container_low),
-                            Interaction::None,
+                            PickingInteraction::None,
                         ))
                         .with_children(|scroller| {
                             for i in 1..=18 {
@@ -455,7 +455,7 @@ pub fn spawn_list_section(
                                 ..default()
                             },
                             BackgroundColor(theme_clone.surface_container_low),
-                            Interaction::None,
+                            PickingInteraction::None,
                         ))
                         .with_children(|scroller| {
                             scroller
@@ -527,7 +527,7 @@ fn spawn_large_list_demo(
                 .overscan_rows(3)
                 .build_scrollable(),
             BackgroundColor(theme.surface),
-            Interaction::None,
+            PickingInteraction::None,
         ));
         return;
     }
@@ -541,11 +541,11 @@ fn spawn_large_list_demo(
                 .selection_mode(ListSelectionMode::Single)
                 .build_scrollable(),
             BackgroundColor(theme.surface),
-            Interaction::None,
+            PickingInteraction::None,
         ))
         .with_children(|list| {
             for builder in items {
-                list.spawn((SelectableListItem, builder.build(theme), Interaction::None));
+                list.spawn((SelectableListItem, builder.build(theme), PickingInteraction::None));
             }
         });
 }
@@ -611,7 +611,7 @@ fn spawn_list_mode_option(
     parent
         .spawn((
             ListSelectionModeOption(mode),
-            Interaction::None,
+            PickingInteraction::None,
             ChipBuilder::filter(label)
                 .selected(is_selected)
                 .build(theme),

@@ -129,7 +129,7 @@ fn spawn_tab_button(
             tab,
             TestId::new(test_id),
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             Node {
                 flex_grow: 1.0,
                 height: Val::Px(48.0),

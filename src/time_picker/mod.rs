@@ -3,6 +3,7 @@
 //! A standalone time picker with clock face and keyboard input modes.
 
 use bevy::picking::Pickable;
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::{ComputedNode, FocusPolicy, UiGlobalTransform};
 use std::collections::HashMap;
@@ -569,10 +570,10 @@ fn time_picker_keyboard_dismiss_system(
 
 fn time_picker_mode_toggle_system(
     mut pickers: Query<&mut MaterialTimePicker>,
-    toggles: Query<(&Interaction, &TimePickerModeToggle), Changed<Interaction>>,
+    toggles: Query<(&PickingInteraction, &TimePickerModeToggle), Changed<PickingInteraction>>,
 ) {
     for (interaction, toggle) in toggles.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -693,10 +694,10 @@ fn time_picker_view_visibility_system(
 
 fn time_picker_period_toggle_system(
     mut pickers: Query<&mut MaterialTimePicker>,
-    toggles: Query<(&Interaction, &TimePickerPeriodToggle), Changed<Interaction>>,
+    toggles: Query<(&PickingInteraction, &TimePickerPeriodToggle), Changed<PickingInteraction>>,
 ) {
     for (interaction, toggle) in toggles.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -716,10 +717,10 @@ fn time_picker_period_toggle_system(
 
 fn time_picker_selection_mode_system(
     mut pickers: Query<&mut MaterialTimePicker>,
-    chips: Query<(&Interaction, &TimePickerSelectionChip), Changed<Interaction>>,
+    chips: Query<(&PickingInteraction, &TimePickerSelectionChip), Changed<PickingInteraction>>,
 ) {
     for (interaction, chip) in chips.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -734,7 +735,7 @@ fn time_picker_selection_mode_system(
 fn time_picker_clock_interaction_system(
     mut pickers: Query<&mut MaterialTimePicker>,
     clock_faces: Query<(&ComputedNode, &UiGlobalTransform, &TimePickerClockFace)>,
-    clock_numbers: Query<(&TimePickerClockNumber, &Interaction, &Node)>,
+    clock_numbers: Query<(&TimePickerClockNumber, &PickingInteraction, &Node)>,
     mouse: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
 ) {
@@ -770,7 +771,7 @@ fn time_picker_clock_interaction_system(
         let over_number_button = clock_numbers.iter().any(|(n, interaction, number_node)| {
             n.picker == clock.picker
                 && number_node.display != Display::None
-                && matches!(*interaction, Interaction::Hovered | Interaction::Pressed)
+                && matches!(*interaction, PickingInteraction::Hovered | PickingInteraction::Pressed)
         });
         if over_number_button {
             continue;
@@ -837,10 +838,10 @@ fn time_picker_clock_interaction_system(
 
 fn time_picker_clock_number_button_system(
     mut pickers: Query<&mut MaterialTimePicker>,
-    numbers: Query<(&Interaction, &TimePickerClockNumber), Changed<Interaction>>,
+    numbers: Query<(&PickingInteraction, &TimePickerClockNumber), Changed<PickingInteraction>>,
 ) {
     for (interaction, number) in numbers.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -883,15 +884,15 @@ fn time_picker_action_system(
         Query<&mut MaterialTimePicker>,
         Query<(Entity, &MaterialTimePicker)>,
     )>,
-    actions: Query<(&Interaction, &TimePickerAction), Changed<Interaction>>,
-    scrim: Query<(&Interaction, &TimePickerScrim), Changed<Interaction>>,
+    actions: Query<(&PickingInteraction, &TimePickerAction), Changed<PickingInteraction>>,
+    scrim: Query<(&PickingInteraction, &TimePickerScrim), Changed<PickingInteraction>>,
     mut submit_events: MessageWriter<TimePickerSubmitEvent>,
     mut cancel_events: MessageWriter<TimePickerCancelEvent>,
     mut prev_open: Local<HashMap<Entity, bool>>,
 ) {
     // Handle scrim clicks
     for (interaction, scrim) in scrim.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -913,7 +914,7 @@ fn time_picker_action_system(
 
     // Handle action buttons
     for (interaction, action) in actions.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -1274,7 +1275,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                 TimePickerScrim { picker: entity },
                 // Required for `Interaction` updates so scrim clicks can be detected.
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::Px(0.0),
@@ -1296,7 +1297,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
             root.spawn((
                 TimePickerDialog,
                 FocusPolicy::Block,
-                Interaction::None,
+                PickingInteraction::None,
                 Node {
                     width,
                     flex_direction: FlexDirection::Column,
@@ -1339,7 +1340,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                             Button,
                             TimePickerModeToggle { picker: entity },
                             TestId::new("time_picker_mode_toggle"),
-                            Interaction::None,
+                            PickingInteraction::None,
                             Node {
                                 width: Val::Px(40.0),
                                 height: Val::Px(40.0),
@@ -1393,7 +1394,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     mode: TimeSelectionMode::Hour,
                                 },
                                 TestId::new("time_picker_chip_hour"),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
@@ -1432,7 +1433,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     mode: TimeSelectionMode::Minute,
                                 },
                                 TestId::new("time_picker_chip_minute"),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
@@ -1484,7 +1485,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     picker: entity,
                                     period,
                                 },
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
@@ -1537,7 +1538,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                             .spawn((
                                 TimePickerClockFace { picker: entity },
                                 FocusPolicy::Block,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     width: Val::Px(240.0),
                                     height: Val::Px(240.0),
@@ -1581,7 +1582,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: hour,
                                                 format: Some(TimeFormat::H12),
                                             },
-                                            Interaction::None,
+                                            PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
@@ -1638,7 +1639,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 format: Some(TimeFormat::H24),
                                             },
                                             TestId::new(format!("time_picker_clock_hour_{}", inner_hour)),
-                                            Interaction::None,
+                                            PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
@@ -1680,7 +1681,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 format: Some(TimeFormat::H24),
                                             },
                                             TestId::new(format!("time_picker_clock_hour_{}", outer_hour)),
-                                            Interaction::None,
+                                            PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display,
@@ -1727,7 +1728,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 format: None,
                                             },
                                             TestId::new(format!("time_picker_clock_minute_{}", minute)),
-                                            Interaction::None,
+                                            PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
                                                 display: Display::None,
@@ -1870,7 +1871,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 is_confirm: false,
                             },
                             TestId::new("time_picker_cancel"),
-                            Interaction::None,
+                            PickingInteraction::None,
                             Text::new("Cancel"),
                             TextFont {
                                 font_size: FontSize::Px(14.0),
@@ -1890,7 +1891,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 is_confirm: true,
                             },
                             TestId::new("time_picker_confirm"),
-                            Interaction::None,
+                            PickingInteraction::None,
                             Text::new("OK"),
                             TextFont {
                                 font_size: FontSize::Px(14.0),

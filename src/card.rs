@@ -9,7 +9,7 @@
 //! - Native `BoxShadow` for elevation shadows
 //! - Modern bundle patterns
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
 
 use crate::{
@@ -170,8 +170,8 @@ pub struct CardClickEvent {
 /// System to handle card interactions
 fn card_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialCard),
-        (Changed<Interaction>, With<MaterialCard>),
+        (Entity, &PickingInteraction, &mut MaterialCard),
+        (Changed<PickingInteraction>, With<MaterialCard>),
     >,
     mut click_events: MessageWriter<CardClickEvent>,
 ) {
@@ -181,16 +181,16 @@ fn card_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 card.pressed = true;
                 card.hovered = false;
                 click_events.write(CardClickEvent { entity });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 card.pressed = false;
                 card.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 card.pressed = false;
                 card.hovered = false;
             }

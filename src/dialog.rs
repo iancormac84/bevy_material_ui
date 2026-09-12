@@ -7,6 +7,7 @@
 
 use bevy::ecs::system::ParamSet;
 use bevy::picking::Pickable;
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::BoxShadow;
 use bevy::ui::FocusPolicy;
@@ -276,7 +277,7 @@ fn dialog_promote_to_overlay_system(
         commands.entity(scrim_entity).insert((
             // Required for bevy_ui `Interaction` updates.
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             FocusPolicy::Block,
             if dialog.modal {
                 Pickable {
@@ -592,10 +593,10 @@ fn dialog_dismiss_on_scrim_click_system(
     mut close_events: MessageWriter<DialogCloseEvent>,
     mut dialogs: Query<&mut MaterialDialog>,
     just_opened: Query<(), With<DialogJustOpened>>,
-    mut scrims: Query<(&DialogScrimFor, &Interaction), (With<DialogScrim>, Changed<Interaction>)>,
+    mut scrims: Query<(&DialogScrimFor, &PickingInteraction), (With<DialogScrim>, Changed<PickingInteraction>)>,
 ) {
     for (for_dialog, interaction) in scrims.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 

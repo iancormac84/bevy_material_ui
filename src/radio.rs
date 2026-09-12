@@ -20,7 +20,7 @@
 //! }
 //! ```
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     motion::StateLayer,
@@ -240,8 +240,8 @@ pub const RADIO_TOUCH_TARGET: f32 = 48.0;
 /// System to handle radio interactions
 fn radio_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialRadio),
-        (Changed<Interaction>, With<MaterialRadio>),
+        (Entity, &PickingInteraction, &mut MaterialRadio),
+        (Changed<PickingInteraction>, With<MaterialRadio>),
     >,
     mut change_events: MessageWriter<RadioChangeEvent>,
 ) {
@@ -251,7 +251,7 @@ fn radio_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 radio.pressed = true;
                 radio.hovered = false;
 
@@ -265,11 +265,11 @@ fn radio_interaction_system(
                     });
                 }
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 radio.pressed = false;
                 radio.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 radio.pressed = false;
                 radio.hovered = false;
             }
@@ -549,7 +549,7 @@ impl SpawnRadio for Commands<'_, '_> {
             row.spawn((
                 builder.radio,
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 RippleHost::new(),
                 Node {
                     width: Val::Px(RADIO_TOUCH_TARGET),
@@ -675,7 +675,7 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
             row.spawn((
                 builder.radio,
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 RippleHost::new(),
                 Node {
                     width: Val::Px(RADIO_TOUCH_TARGET),

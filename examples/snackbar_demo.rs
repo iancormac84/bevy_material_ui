@@ -107,7 +107,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                             row.spawn((
                                 SnackbarDurationOption(duration),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 ChipBuilder::filter(label)
                                     .selected(is_default)
                                     .build(&theme),
@@ -151,7 +151,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                         row.spawn((
                             SnackbarActionToggle,
-                            Interaction::None,
+                            PickingInteraction::None,
                             ChipBuilder::filter(toggle_label)
                                 .selected(false)
                                 .build(&theme),
@@ -183,7 +183,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                 row.spawn((
                     SnackbarTrigger,
-                    Interaction::None,
+                    PickingInteraction::None,
                     MaterialButtonBuilder::new(trigger_label)
                         .filled()
                         .build(&theme),
@@ -239,7 +239,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                 snackbar
                     .spawn((
-                        Interaction::None,
+                        PickingInteraction::None,
                         MaterialButtonBuilder::new("UNDO").text().build(&theme),
                     ))
                     .with_children(|btn| {
@@ -257,7 +257,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 snackbar
                     .spawn((
                         Button,
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(32.0),
                             height: Val::Px(32.0),
@@ -280,14 +280,14 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 fn snackbar_options_system(
     mut state: ResMut<SnackbarDemoState>,
     mut duration_clicks: Query<
-        (&Interaction, &SnackbarDurationOption),
-        (Changed<Interaction>, With<MaterialChip>),
+        (&PickingInteraction, &SnackbarDurationOption),
+        (Changed<PickingInteraction>, With<MaterialChip>),
     >,
     mut duration_chips: Query<(&SnackbarDurationOption, &mut MaterialChip)>,
     mut action_clicks: Query<
-        (&Interaction, Entity),
+        (&PickingInteraction, Entity),
         (
-            Changed<Interaction>,
+            Changed<PickingInteraction>,
             With<SnackbarActionToggle>,
             With<MaterialChip>,
         ),
@@ -296,7 +296,7 @@ fn snackbar_options_system(
 ) {
     let mut new_duration = None;
     for (interaction, opt) in duration_clicks.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             new_duration = Some(opt.0);
         }
     }
@@ -310,7 +310,7 @@ fn snackbar_options_system(
 
     let mut toggled = false;
     for (interaction, _entity) in action_clicks.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             toggled = true;
         }
     }
@@ -325,11 +325,11 @@ fn snackbar_options_system(
 
 fn snackbar_trigger_system(
     state: Res<SnackbarDemoState>,
-    mut clicks: Query<(&Interaction, Entity), (Changed<Interaction>, With<SnackbarTrigger>)>,
+    mut clicks: Query<(&PickingInteraction, Entity), (Changed<PickingInteraction>, With<SnackbarTrigger>)>,
     mut show: MessageWriter<ShowSnackbar>,
 ) {
     for (interaction, _entity) in clicks.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 

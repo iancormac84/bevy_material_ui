@@ -49,7 +49,7 @@ pub fn spawn_menus_section(
                             MenuTrigger,
                             trigger_button,
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             RippleHost::new(),
                             Node {
                                 padding: UiRect::axes(Val::Px(16.0), Val::Px(10.0)),
@@ -148,7 +148,7 @@ fn spawn_menu_item(
     parent
         .spawn((
             MenuItemMarker(label.to_string()),
-            Interaction::None,
+            PickingInteraction::None,
             builder.build(theme),
         ))
         .with_children(|item| {

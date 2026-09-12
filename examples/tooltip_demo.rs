@@ -88,7 +88,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                             row.spawn((
                                 TooltipPositionOption(pos),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 MaterialButtonBuilder::new(label)
                                     .variant(if selected {
                                         ButtonVariant::FilledTonal
@@ -142,7 +142,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                             row.spawn((
                                 TooltipDelayOption(delay),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 MaterialButtonBuilder::new(label)
                                     .variant(if selected {
                                         ButtonVariant::FilledTonal
@@ -183,7 +183,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 row.spawn((
                     TooltipDemoButton,
                     TooltipTrigger::new("Hover to see tooltip!").bottom(),
-                    Interaction::None,
+                    PickingInteraction::None,
                     MaterialButtonBuilder::new(demo_label)
                         .filled()
                         .build(&theme),
@@ -239,17 +239,17 @@ struct TooltipDemoButton;
 
 fn tooltip_demo_options_system(
     mut options: ResMut<TooltipDemoOptions>,
-    position_buttons: Query<(&TooltipPositionOption, &Interaction), Changed<Interaction>>,
-    delay_buttons: Query<(&TooltipDelayOption, &Interaction), Changed<Interaction>>,
+    position_buttons: Query<(&TooltipPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
+    delay_buttons: Query<(&TooltipDelayOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in position_buttons.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.position = opt.0;
         }
     }
 
     for (opt, interaction) in delay_buttons.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.delay = opt.0;
         }
     }

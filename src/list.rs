@@ -3,6 +3,7 @@
 //! Lists are continuous, vertical indexes of text and images.
 //! Reference: <https://m3.material.io/components/lists/overview>
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::{ComputedNode, ScrollPosition};
 
@@ -832,8 +833,8 @@ fn list_virtualization_system(
 /// System to handle list item interactions
 fn list_item_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialListItem),
-        (Changed<Interaction>, With<MaterialListItem>),
+        (Entity, &PickingInteraction, &mut MaterialListItem),
+        (Changed<PickingInteraction>, With<MaterialListItem>),
     >,
     mut click_events: MessageWriter<ListItemClickEvent>,
 ) {
@@ -843,16 +844,16 @@ fn list_item_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 item.pressed = true;
                 item.hovered = false;
                 click_events.write(ListItemClickEvent { entity });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 item.pressed = false;
                 item.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 item.pressed = false;
                 item.hovered = false;
             }

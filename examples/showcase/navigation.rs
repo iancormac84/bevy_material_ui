@@ -40,7 +40,7 @@ pub fn spawn_nav_item(
             TestId::new(test_id),
             item,
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Px(48.0), // Slightly smaller for navigation

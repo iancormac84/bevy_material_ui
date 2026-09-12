@@ -3,7 +3,7 @@
 //! Text fields let users enter and edit text.
 //! Reference: <https://m3.material.io/components/text-fields/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
@@ -814,7 +814,7 @@ fn text_field_focus_system(
     mut keyboard_inputs: MessageReader<bevy::input::keyboard::KeyboardInput>,
     mut active: ResMut<ActiveTextField>,
     mut fields: ParamSet<(
-        Query<(Entity, &Interaction), (Changed<Interaction>, With<MaterialTextField>)>,
+        Query<(Entity, &PickingInteraction), (Changed<PickingInteraction>, With<MaterialTextField>)>,
         Query<(Entity, &mut MaterialTextField), With<MaterialTextField>>,
     )>,
 ) {
@@ -822,11 +822,11 @@ fn text_field_focus_system(
 
     // Determine which field was pressed this frame.
     for (entity, interaction) in fields.p0().iter_mut() {
-        if *interaction == Interaction::Pressed
+        if *interaction == PickingInteraction::Pressed
             // Some frames (notably during window resize) can miss the transient
             // `Pressed` state. When the mouse button is released, interaction will
             // typically be `Hovered`, so treat that as activation as well.
-            || (*interaction == Interaction::Hovered && mouse.just_released(MouseButton::Left))
+            || (*interaction == PickingInteraction::Hovered && mouse.just_released(MouseButton::Left))
         {
             active.0 = Some(entity);
             activated_this_frame = true;
@@ -1462,7 +1462,7 @@ impl TextFieldBuilder {
             TextFieldFormatState::default(),
             self.localization,
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             Node {
                 width: self.width,
                 height: Val::Px(TEXT_FIELD_HEIGHT),
@@ -1674,7 +1674,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                         TextFieldLeadingIconButtonFor(field_entity),
                         Button,
                         RippleHost::new(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
@@ -1816,7 +1816,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                         TextFieldEndIconButtonFor(field_entity),
                         Button,
                         RippleHost::new(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
@@ -1935,7 +1935,7 @@ pub fn spawn_text_field_control(
                         TextFieldLeadingIconButtonFor(field_entity),
                         Button,
                         RippleHost::new(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
@@ -2077,7 +2077,7 @@ pub fn spawn_text_field_control(
                         TextFieldEndIconButtonFor(field_entity),
                         Button,
                         RippleHost::new(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
@@ -2194,7 +2194,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                         TextFieldLeadingIconButtonFor(field_entity),
                         Button,
                         RippleHost::new(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
@@ -2336,7 +2336,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                         TextFieldEndIconButtonFor(field_entity),
                         Button,
                         RippleHost::new(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             width: Val::Px(40.0),
                             height: Val::Px(40.0),
@@ -2392,12 +2392,12 @@ fn text_field_end_icon_click_system(
     mut click_events: MessageWriter<TextFieldChangeEvent>,
     mut fields: Query<&mut MaterialTextField>,
     interactions: Query<
-        (&Interaction, &TextFieldEndIconButtonFor),
-        (Changed<Interaction>, With<TextFieldEndIconButton>),
+        (&PickingInteraction, &TextFieldEndIconButtonFor),
+        (Changed<PickingInteraction>, With<TextFieldEndIconButton>),
     >,
 ) {
     for (interaction, TextFieldEndIconButtonFor(field_entity)) in interactions.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 

@@ -60,7 +60,7 @@ pub fn spawn_checkbox_i18n(
             row.spawn((
                 checkbox,
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 RippleHost::new(),
                 Node {
                     width: Val::Px(CHECKBOX_TOUCH_TARGET),
@@ -166,7 +166,7 @@ pub fn spawn_switch_i18n(
             row.spawn((
                 switch,
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 RippleHost::new(),
                 Node {
                     width: Val::Px(SWITCH_TRACK_WIDTH),
@@ -236,7 +236,7 @@ pub fn spawn_radio_i18n(
             row.spawn((
                 radio,
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 RippleHost::new(),
                 Node {
                     width: Val::Px(RADIO_TOUCH_TARGET),
@@ -330,7 +330,7 @@ pub fn spawn_chip_i18n(
         .spawn((
             chip,
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             RippleHost::new(),
             Node {
                 height: Val::Px(32.0),
@@ -396,7 +396,7 @@ pub fn spawn_extended_fab_i18n(
         .spawn((
             fab,
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             RippleHost::new(),
             Node {
                 height: Val::Px(56.0),

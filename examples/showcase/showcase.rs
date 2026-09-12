@@ -2204,11 +2204,11 @@ fn demo_click_log_system(
 
 fn list_demo_mode_options_system(
     mut options: ResMut<ListDemoOptions>,
-    mut mode_buttons: Query<(&ListSelectionModeOption, &Interaction), Changed<Interaction>>,
+    mut mode_buttons: Query<(&ListSelectionModeOption, &PickingInteraction), Changed<PickingInteraction>>,
     mut telemetry: ResMut<ComponentTelemetry>,
 ) {
     for (opt, interaction) in mode_buttons.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -2357,7 +2357,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                     SettingsButton,
                     button,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         width: Val::Px(ICON_BUTTON_SIZE),
@@ -2459,7 +2459,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                     SettingsVsyncSwitch,
                                     switch,
                                     Button,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     RippleHost::new(),
                                     Node {
                                         width: Val::Px(SWITCH_TRACK_WIDTH),
@@ -2518,7 +2518,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                     actions
                         .spawn((
                             SettingsDialogOkButton,
-                            Interaction::None,
+                            PickingInteraction::None,
                             MaterialButtonBuilder::new(ok_label).filled().build(&theme),
                         ))
                         .with_children(|btn| {
@@ -2616,14 +2616,14 @@ fn settings_vsync_toggle_system(
 fn settings_dialog_ok_close_system(
     ui: Option<Res<SettingsUiEntities>>,
     mut dialogs: Query<&mut MaterialDialog, With<SettingsDialog>>,
-    mut interactions: Query<&Interaction, (Changed<Interaction>, With<SettingsDialogOkButton>)>,
+    mut interactions: Query<&PickingInteraction, (Changed<PickingInteraction>, With<SettingsDialogOkButton>)>,
 ) {
     let Some(ui) = ui else { return };
     let Ok(mut dialog) = dialogs.get_mut(ui.dialog) else {
         return;
     };
 
-    let should_close = interactions.iter_mut().any(|i| *i == Interaction::Pressed);
+    let should_close = interactions.iter_mut().any(|i| *i == PickingInteraction::Pressed);
     if should_close {
         dialog.open = false;
     }
@@ -2770,11 +2770,11 @@ fn spawn_detail_scroller(
 fn theme_mode_option_system(
     mut theme: ResMut<MaterialTheme>,
     selection: Res<ShowcaseThemeSelection>,
-    mut options: Query<(&ThemeModeOption, &Interaction), Changed<Interaction>>,
+    mut options: Query<(&ThemeModeOption, &PickingInteraction), Changed<PickingInteraction>>,
     mut telemetry: ResMut<ComponentTelemetry>,
 ) {
     for (opt, interaction) in options.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -2788,11 +2788,11 @@ fn theme_mode_option_system(
 fn theme_seed_option_system(
     mut theme: ResMut<MaterialTheme>,
     mut selection: ResMut<ShowcaseThemeSelection>,
-    mut options: Query<(&ThemeSeedOption, &Interaction), Changed<Interaction>>,
+    mut options: Query<(&ThemeSeedOption, &PickingInteraction), Changed<PickingInteraction>>,
     mut telemetry: ResMut<ComponentTelemetry>,
 ) {
     for (opt, interaction) in options.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -2848,9 +2848,9 @@ fn email_validation_system(
 
 #[allow(clippy::type_complexity)]
 fn menu_demo_system(
-    mut triggers: Query<(&ChildOf, &Interaction), (With<MenuTrigger>, Changed<Interaction>)>,
+    mut triggers: Query<(&ChildOf, &PickingInteraction), (With<MenuTrigger>, Changed<PickingInteraction>)>,
     mut dropdowns: Query<(&ChildOf, &mut Visibility), With<MenuDropdown>>,
-    mut items: Query<(&ChildOf, &Interaction, &MenuItemMarker), Changed<Interaction>>,
+    mut items: Query<(&ChildOf, &PickingInteraction, &MenuItemMarker), Changed<PickingInteraction>>,
     triggers_all: Query<(Entity, &ChildOf), With<MenuTrigger>>,
     mut selected_text: Query<(&ChildOf, &mut Text), With<MenuSelectedText>>,
     parents: Query<&ChildOf>,
@@ -2865,7 +2865,7 @@ fn menu_demo_system(
 
     // Toggle dropdown on trigger press
     for (parent, interaction) in triggers.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -2882,7 +2882,7 @@ fn menu_demo_system(
 
     // Select item
     for (parent, interaction, label) in items.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -2915,7 +2915,7 @@ fn menu_demo_system(
 
 #[allow(clippy::type_complexity)]
 fn date_picker_demo_system(
-    mut open_buttons: Query<(&Interaction, &DatePickerOpenButton), Changed<Interaction>>,
+    mut open_buttons: Query<(&PickingInteraction, &DatePickerOpenButton), Changed<PickingInteraction>>,
     mut pickers: ParamSet<(Query<&mut MaterialDatePicker>, Query<&MaterialDatePicker>)>,
     mut submit: MessageReader<DatePickerSubmitEvent>,
     mut cancel: MessageReader<DatePickerCancelEvent>,
@@ -2950,7 +2950,7 @@ fn date_picker_demo_system(
 
     // Open picker when the demo button is pressed.
     for (interaction, open_button) in open_buttons.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -2994,7 +2994,7 @@ fn date_picker_demo_system(
 }
 
 fn time_picker_demo_system(
-    mut open_buttons: Query<(&Interaction, &TimePickerOpenButton), Changed<Interaction>>,
+    mut open_buttons: Query<(&PickingInteraction, &TimePickerOpenButton), Changed<PickingInteraction>>,
     mut pickers: ParamSet<(Query<&mut MaterialTimePicker>, Query<&MaterialTimePicker>)>,
     mut submit: MessageReader<TimePickerSubmitEvent>,
     mut cancel: MessageReader<TimePickerCancelEvent>,
@@ -3017,7 +3017,7 @@ fn time_picker_demo_system(
 
     // Open picker when the demo button is pressed.
     for (interaction, open_button) in open_buttons.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -3085,17 +3085,17 @@ fn rebuild_ui_on_theme_change_system(
 
 fn snackbar_demo_options_system(
     mut options: ResMut<SnackbarDemoOptions>,
-    mut duration_buttons: Query<(&SnackbarDurationOption, &Interaction), Changed<Interaction>>,
-    mut action_toggle: Query<&Interaction, (Changed<Interaction>, With<SnackbarActionToggle>)>,
+    mut duration_buttons: Query<(&SnackbarDurationOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut action_toggle: Query<&PickingInteraction, (Changed<PickingInteraction>, With<SnackbarActionToggle>)>,
 ) {
     for (opt, interaction) in duration_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.duration = opt.0;
         }
     }
 
     for interaction in action_toggle.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.has_action = !options.has_action;
         }
     }
@@ -3103,12 +3103,12 @@ fn snackbar_demo_options_system(
 
 fn snackbar_demo_trigger_system(
     options: Res<SnackbarDemoOptions>,
-    mut triggers: Query<&Interaction, (Changed<Interaction>, With<SnackbarTrigger>)>,
+    mut triggers: Query<&PickingInteraction, (Changed<PickingInteraction>, With<SnackbarTrigger>)>,
     mut show: MessageWriter<ShowSnackbar>,
     mut telemetry: ResMut<ComponentTelemetry>,
 ) {
     for interaction in triggers.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -3160,17 +3160,17 @@ fn snackbar_demo_action_log_system(
 
 fn tooltip_demo_options_system(
     mut options: ResMut<TooltipDemoOptions>,
-    mut position_buttons: Query<(&TooltipPositionOption, &Interaction), Changed<Interaction>>,
-    mut delay_buttons: Query<(&TooltipDelayOption, &Interaction), Changed<Interaction>>,
+    mut position_buttons: Query<(&TooltipPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut delay_buttons: Query<(&TooltipDelayOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in position_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.position = opt.0;
         }
     }
 
     for (opt, interaction) in delay_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.delay = opt.0;
         }
     }
@@ -3258,10 +3258,10 @@ fn tooltip_demo_style_system(
 
 fn dialog_demo_position_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut position_buttons: Query<(&DialogPositionOption, &Interaction), Changed<Interaction>>,
+    mut position_buttons: Query<(&DialogPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in position_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.position = opt.0;
         }
     }
@@ -3269,10 +3269,10 @@ fn dialog_demo_position_options_system(
 
 fn dialog_demo_modal_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut modal_buttons: Query<(&DialogModalOption, &Interaction), Changed<Interaction>>,
+    mut modal_buttons: Query<(&DialogModalOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in modal_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.modal = opt.0;
         }
     }
@@ -3352,9 +3352,9 @@ fn dialog_demo_apply_position_system(
 }
 
 fn dialog_demo_open_close_system(
-    mut show_buttons: Query<&Interaction, (Changed<Interaction>, With<ShowDialogButton>)>,
-    mut close_buttons: Query<&Interaction, (Changed<Interaction>, With<DialogCloseButton>)>,
-    mut confirm_buttons: Query<&Interaction, (Changed<Interaction>, With<DialogConfirmButton>)>,
+    mut show_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<ShowDialogButton>)>,
+    mut close_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogCloseButton>)>,
+    mut confirm_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogConfirmButton>)>,
     mut dialogs: Query<(&mut MaterialDialog, Option<&mut Visibility>), With<DialogContainer>>,
     mut result_text: Query<&mut Text, With<DialogResultDisplay>>,
     i18n: Option<Res<MaterialI18n>>,
@@ -3386,19 +3386,19 @@ fn dialog_demo_open_close_system(
     let mut close_reason: Option<String> = None;
 
     for interaction in show_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             open = true;
         }
     }
 
     for interaction in close_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             close_reason = Some(cancelled.clone());
         }
     }
 
     for interaction in confirm_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             close_reason = Some(confirmed.clone());
         }
     }

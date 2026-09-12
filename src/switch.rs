@@ -20,7 +20,7 @@
 //! }
 //! ```
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::CornerRadius};
 
@@ -206,8 +206,8 @@ pub const SWITCH_HANDLE_SIZE_PRESSED: f32 = 28.0;
 /// System to handle switch interactions
 fn switch_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialSwitch),
-        (Changed<Interaction>, With<MaterialSwitch>),
+        (Entity, &PickingInteraction, &mut MaterialSwitch),
+        (Changed<PickingInteraction>, With<MaterialSwitch>),
     >,
     mut change_events: MessageWriter<SwitchChangeEvent>,
 ) {
@@ -217,7 +217,7 @@ fn switch_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 switch.pressed = true;
                 switch.hovered = false;
                 switch.selected = !switch.selected;
@@ -226,11 +226,11 @@ fn switch_interaction_system(
                     selected: switch.selected,
                 });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 switch.pressed = false;
                 switch.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 switch.pressed = false;
                 switch.hovered = false;
             }
@@ -240,7 +240,7 @@ fn switch_interaction_system(
 
 /// System to handle interactions on switch labels
 fn switch_label_interaction_system(
-    mut label_query: Query<(&Interaction, &SwitchLabelFor), Changed<Interaction>>,
+    mut label_query: Query<(&PickingInteraction, &SwitchLabelFor), Changed<PickingInteraction>>,
     mut switches: Query<&mut MaterialSwitch>,
     mut change_events: MessageWriter<SwitchChangeEvent>,
 ) {
@@ -254,7 +254,7 @@ fn switch_label_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 switch.pressed = false;
                 switch.hovered = false;
                 switch.selected = !switch.selected;
@@ -264,11 +264,11 @@ fn switch_label_interaction_system(
                     selected: switch.selected,
                 });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 switch.pressed = false;
                 switch.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 switch.pressed = false;
                 switch.hovered = false;
             }
@@ -491,7 +491,7 @@ impl SpawnSwitch for Commands<'_, '_> {
                 .spawn((
                     switch,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         width: Val::Px(SWITCH_TRACK_WIDTH),
@@ -525,7 +525,7 @@ impl SpawnSwitch for Commands<'_, '_> {
             row.spawn((
                 SwitchLabelFor(switch_entity),
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: FontSize::Px(14.0),
@@ -580,7 +580,7 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
                 .spawn((
                     switch,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         width: Val::Px(SWITCH_TRACK_WIDTH),
@@ -614,7 +614,7 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
             row.spawn((
                 SwitchLabelFor(switch_entity),
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: FontSize::Px(14.0),

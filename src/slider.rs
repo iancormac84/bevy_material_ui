@@ -3,6 +3,7 @@
 //! Sliders allow users to select a value from a range.
 //! Reference: <https://m3.material.io/components/sliders/overview>
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::input::touch::{TouchInput, TouchPhase, Touches};
 use bevy::ui::UiGlobalTransform;
@@ -505,7 +506,7 @@ fn slider_interaction_system(
     mut interaction_query: Query<
         (
             Entity,
-            &Interaction,
+            &PickingInteraction,
             &mut MaterialSlider,
             &SliderParts,
             &ComputedNode,
@@ -538,17 +539,17 @@ fn slider_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 slider.dragging = true;
                 slider.hovered = false;
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 if !mouse_button.pressed(MouseButton::Left) {
                     slider.dragging = false;
                 }
                 slider.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 if !mouse_button.pressed(MouseButton::Left) {
                     slider.dragging = false;
                 }
@@ -1375,7 +1376,7 @@ pub fn spawn_slider_control_with<E: Bundle>(
     let mut slider_ec = parent.spawn((
         slider,
         Button,
-        Interaction::None,
+        PickingInteraction::None,
         extra,
         Node {
             width: Val::Percent(100.0),

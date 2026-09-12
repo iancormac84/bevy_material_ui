@@ -47,7 +47,7 @@ pub fn spawn_date_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
 
                     row.spawn((
                         DatePickerOpenButton(picker_entity),
-                        Interaction::None,
+                        PickingInteraction::None,
                         MaterialButtonBuilder::new("").filled().build(theme),
                     ))
                     .with_children(|btn| {

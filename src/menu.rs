@@ -5,7 +5,7 @@
 //!
 //! Reference: <https://m3.material.io/components/menus/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
 
 use std::collections::HashMap;
@@ -340,8 +340,8 @@ fn menu_shadow_system(mut menus: Query<(&MaterialMenu, &mut BoxShadow), Changed<
 /// System to handle menu item interactions
 fn menu_item_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialMenuItem, &ChildOf),
-        (Changed<Interaction>, With<MaterialMenuItem>),
+        (Entity, &PickingInteraction, &mut MaterialMenuItem, &ChildOf),
+        (Changed<PickingInteraction>, With<MaterialMenuItem>),
     >,
     menus: Query<Entity, With<MaterialMenu>>,
     mut select_events: MessageWriter<MenuItemSelectEvent>,
@@ -352,7 +352,7 @@ fn menu_item_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 item.pressed = true;
                 item.hovered = false;
 
@@ -366,11 +366,11 @@ fn menu_item_interaction_system(
                     }
                 }
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 item.pressed = false;
                 item.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 item.pressed = false;
                 item.hovered = false;
             }

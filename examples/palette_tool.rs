@@ -350,7 +350,7 @@ fn spawn_mode_button(
         .text_color(theme);
 
     parent
-        .spawn((ThemeModeOption(mode), Interaction::None, btn))
+        .spawn((ThemeModeOption(mode), PickingInteraction::None, btn))
         .with_children(|btn| {
             btn.spawn((
                 ButtonLabel,
@@ -681,7 +681,7 @@ fn spawn_copy_seed_button(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
         .text_color(theme);
 
     parent
-        .spawn((CopySeedButton, Interaction::None, btn))
+        .spawn((CopySeedButton, PickingInteraction::None, btn))
         .with_children(|btn| {
             btn.spawn((
                 ButtonLabel,
@@ -697,10 +697,10 @@ fn spawn_copy_seed_button(parent: &mut ChildSpawnerCommands, theme: &MaterialThe
 
 fn handle_copy_seed_button_system(
     state: Res<PaletteToolState>,
-    mut buttons: Query<&Interaction, (With<CopySeedButton>, Changed<Interaction>)>,
+    mut buttons: Query<&PickingInteraction, (With<CopySeedButton>, Changed<PickingInteraction>)>,
 ) {
     for interaction in buttons.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -760,10 +760,10 @@ fn attach_seed_channels_to_sliders_system(
 fn handle_mode_toggle_system(
     mut state: ResMut<PaletteToolState>,
     theme: Res<MaterialTheme>,
-    mut options: Query<(&ThemeModeOption, &Interaction), Changed<Interaction>>,
+    mut options: Query<(&ThemeModeOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in options.iter_mut() {
-        if *interaction == Interaction::Pressed && state.mode != opt.0 {
+        if *interaction == PickingInteraction::Pressed && state.mode != opt.0 {
             state.mode = opt.0;
         }
     }

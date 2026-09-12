@@ -14,7 +14,7 @@
 //! }
 //! ```
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     icons::{icon_by_name, MaterialIcon, ICON_CHECK, ICON_REMOVE},
@@ -50,7 +50,7 @@ impl Plugin for CheckboxPlugin {
 
 /// System to handle interactions on checkbox labels
 fn checkbox_label_interaction_system(
-    mut label_query: Query<(&Interaction, &CheckboxLabelFor), Changed<Interaction>>,
+    mut label_query: Query<(&PickingInteraction, &CheckboxLabelFor), Changed<PickingInteraction>>,
     mut checkboxes: Query<&mut MaterialCheckbox>,
     mut change_events: MessageWriter<CheckboxChangeEvent>,
 ) {
@@ -64,7 +64,7 @@ fn checkbox_label_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 checkbox.pressed = false;
                 checkbox.hovered = false;
                 let new_state = checkbox.state.toggle();
@@ -74,11 +74,11 @@ fn checkbox_label_interaction_system(
                     state: checkbox.state,
                 });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 checkbox.pressed = false;
                 checkbox.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 checkbox.pressed = false;
                 checkbox.hovered = false;
             }
@@ -366,8 +366,8 @@ pub const CHECKBOX_CORNER_RADIUS: f32 = 2.0;
 /// System to handle checkbox interactions
 fn checkbox_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialCheckbox),
-        (Changed<Interaction>, With<MaterialCheckbox>),
+        (Entity, &PickingInteraction, &mut MaterialCheckbox),
+        (Changed<PickingInteraction>, With<MaterialCheckbox>),
     >,
     mut change_events: MessageWriter<CheckboxChangeEvent>,
 ) {
@@ -377,7 +377,7 @@ fn checkbox_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 checkbox.pressed = true;
                 checkbox.hovered = false;
                 let new_state = checkbox.state.toggle();
@@ -387,11 +387,11 @@ fn checkbox_interaction_system(
                     state: checkbox.state,
                 });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 checkbox.pressed = false;
                 checkbox.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 checkbox.pressed = false;
                 checkbox.hovered = false;
             }
@@ -730,7 +730,7 @@ impl SpawnCheckbox for Commands<'_, '_> {
                 .spawn((
                     checkbox,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         width: Val::Px(CHECKBOX_TOUCH_TARGET),
@@ -794,7 +794,7 @@ impl SpawnCheckbox for Commands<'_, '_> {
             row.spawn((
                 CheckboxLabelFor(checkbox_entity),
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: FontSize::Px(14.0),
@@ -861,7 +861,7 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                 .spawn((
                     checkbox,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         width: Val::Px(CHECKBOX_TOUCH_TARGET),
@@ -925,7 +925,7 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
             row.spawn((
                 CheckboxLabelFor(checkbox_entity),
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Text::new(label_text),
                 TextFont {
                     font_size: FontSize::Px(14.0),

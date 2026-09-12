@@ -61,7 +61,7 @@ pub fn spawn_theme_section(
                         row.spawn((
                             TestId::new(test_id),
                             ThemeModeOption(mode),
-                            Interaction::None,
+                            PickingInteraction::None,
                             MaterialButtonBuilder::new(label)
                                 .variant(if selected {
                                     ButtonVariant::FilledTonal
@@ -118,7 +118,7 @@ pub fn spawn_theme_section(
                         row.spawn((
                             TestId::new(test_id),
                             ThemeSeedOption(seed),
-                            Interaction::None,
+                            PickingInteraction::None,
                             MaterialButtonBuilder::new(label)
                                 .variant(ButtonVariant::Outlined)
                                 .build(theme),

@@ -48,7 +48,7 @@ pub fn spawn_time_picker_section(parent: &mut ChildSpawnerCommands, theme: &Mate
 
                     row.spawn((
                         TimePickerOpenButton(picker_entity),
-                        Interaction::None,
+                        PickingInteraction::None,
                         MaterialButtonBuilder::new("").filled().build(theme),
                     ))
                     .with_children(|btn| {

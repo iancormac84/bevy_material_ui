@@ -5,7 +5,7 @@
 //!
 //! Reference: <https://m3.material.io/components/app-bars/overview>
 
-use bevy::ecs::relationship::Relationship;
+use bevy::{ecs::relationship::Relationship, picking::hover::PickingInteraction};
 use bevy::prelude::*;
 
 use crate::{
@@ -656,7 +656,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                             left.spawn((
                                 AppBarNavigation,
                                 Button,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 RippleHost::new(),
                                 Node {
                                     width: Val::Px(48.0),
@@ -762,7 +762,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                         id: action.id.clone(),
                                     },
                                     Button,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     RippleHost::new(),
                                     Node {
                                         width: Val::Px(48.0),
@@ -956,7 +956,7 @@ pub fn spawn_top_app_bar_with_right_content(
                         left.spawn((
                             AppBarNavigation,
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             RippleHost::new(),
                             GlobalZIndex(1002),
                             Node {
@@ -1044,7 +1044,7 @@ pub fn spawn_top_app_bar_with_right_content(
                                     id: action.id.clone(),
                                 },
                                 Button,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 RippleHost::new(),
                                 GlobalZIndex(1002),
                                 Node {
@@ -1089,8 +1089,8 @@ fn top_app_bar_scroll_system(
 /// System to handle app bar interactions
 fn app_bar_interaction_system(
     theme: Res<MaterialTheme>,
-    nav_buttons: Query<(Entity, &Interaction), (Changed<Interaction>, With<AppBarNavigation>)>,
-    action_buttons: Query<(Entity, &Interaction, &AppBarActionButton), Changed<Interaction>>,
+    nav_buttons: Query<(Entity, &PickingInteraction), (Changed<PickingInteraction>, With<AppBarNavigation>)>,
+    action_buttons: Query<(Entity, &PickingInteraction, &AppBarActionButton), Changed<PickingInteraction>>,
     parents: Query<&ChildOf>,
     app_bars: Query<Entity, With<TopAppBar>>,
     mut bgs: Query<&mut BackgroundColor>,
@@ -1115,14 +1115,14 @@ fn app_bar_interaction_system(
     for (entity, interaction) in nav_buttons.iter() {
         if let Ok(mut bg) = bgs.get_mut(entity) {
             *bg = match interaction {
-                Interaction::Hovered | Interaction::Pressed => {
+                PickingInteraction::Hovered | PickingInteraction::Pressed => {
                     BackgroundColor(theme.surface_container_highest)
                 }
-                Interaction::None => BackgroundColor(Color::NONE),
+                PickingInteraction::None => BackgroundColor(Color::NONE),
             };
         }
 
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             if let Some(app_bar) = find_app_bar_ancestor(entity) {
                 nav_events.write(AppBarNavigationEvent { app_bar });
             }
@@ -1133,14 +1133,14 @@ fn app_bar_interaction_system(
     for (entity, interaction, action) in action_buttons.iter() {
         if let Ok(mut bg) = bgs.get_mut(entity) {
             *bg = match interaction {
-                Interaction::Hovered | Interaction::Pressed => {
+                PickingInteraction::Hovered | PickingInteraction::Pressed => {
                     BackgroundColor(theme.surface_container_highest)
                 }
-                Interaction::None => BackgroundColor(Color::NONE),
+                PickingInteraction::None => BackgroundColor(Color::NONE),
             };
         }
 
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             if let Some(app_bar) = find_app_bar_ancestor(entity) {
                 action_events.write(AppBarActionEvent {
                     app_bar,

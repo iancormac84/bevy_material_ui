@@ -202,7 +202,7 @@ fn spawn_adaptive_card(
                         nav.spawn((
                             TestId::new(format!("{}_nav_{}", test_prefix, i)),
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             RippleHost::new(),
                             Node {
                                 flex_grow: 1.0,
@@ -283,7 +283,7 @@ fn spawn_bottom_nav_card(
                         nav.spawn((
                             TestId::new(format!("layout_bottom_nav_{}", i)),
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             RippleHost::new(),
                             Node {
                                 flex_grow: 1.0,
@@ -330,7 +330,7 @@ fn spawn_nav_rail_card(
                         nav.spawn((
                             TestId::new(format!("layout_rail_nav_{}", i)),
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             RippleHost::new(),
                             Node {
                                 width: Val::Percent(100.0),
@@ -396,7 +396,7 @@ fn spawn_standard_drawer_card(parent: &mut ChildSpawnerCommands, theme: &Materia
                             for label in ["Inbox", "Starred", "Archive"].iter() {
                                 list.spawn((
                                     Button,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     RippleHost::new(),
                                     Node {
                                         height: Val::Px(36.0),
@@ -464,7 +464,7 @@ fn spawn_permanent_drawer_card(parent: &mut ChildSpawnerCommands, theme: &Materi
                             for label in ["Home", "Bookmarks", "Settings"].iter() {
                                 list.spawn((
                                     Button,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     RippleHost::new(),
                                     Node {
                                         height: Val::Px(36.0),
@@ -529,7 +529,7 @@ fn spawn_modal_drawer_example(parent: &mut ChildSpawnerCommands, theme: Material
                         list.spawn((
                             TestId::new(format!("layout_drawer_item_{}", i)),
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             RippleHost::new(),
                             Node {
                                 height: Val::Px(40.0),

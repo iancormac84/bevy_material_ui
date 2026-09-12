@@ -71,7 +71,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                         row.spawn((
                             OpenPickerButton(picker_entity),
-                            Interaction::None,
+                            PickingInteraction::None,
                             MaterialButtonBuilder::new(label).filled().build(&theme),
                         ))
                         .insert_test_id("date_picker_demo/open", &telemetry)
@@ -104,7 +104,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
 #[allow(clippy::type_complexity)]
 fn date_picker_demo_system(
-    mut open_buttons: Query<(&Interaction, &OpenPickerButton), Changed<Interaction>>,
+    mut open_buttons: Query<(&PickingInteraction, &OpenPickerButton), Changed<PickingInteraction>>,
     mut pickers: ParamSet<(Query<&mut MaterialDatePicker>, Query<&MaterialDatePicker>)>,
     mut result_texts: Query<(&ResultText, &mut Text)>,
 ) {
@@ -116,7 +116,7 @@ fn date_picker_demo_system(
 
     // Open picker when button is pressed.
     for (interaction, open_button) in open_buttons.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 

@@ -3,7 +3,7 @@
 //! Select menus display a list of choices on a temporary surface and allow users to select one.
 //! Reference: <https://m3.material.io/components/menus/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
@@ -549,8 +549,8 @@ const SELECT_DROPDOWN_PADDING_TOTAL: f32 = SELECT_DROPDOWN_PADDING_Y * 2.0;
 /// System to handle select interactions
 fn select_interaction_system(
     mut interaction_query: Query<
-        (&Interaction, &mut MaterialSelect),
-        (Changed<Interaction>, With<MaterialSelect>),
+        (&PickingInteraction, &mut MaterialSelect),
+        (Changed<PickingInteraction>, With<MaterialSelect>),
     >,
 ) {
     for (interaction, mut select) in interaction_query.iter_mut() {
@@ -559,14 +559,14 @@ fn select_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 select.open = !select.open;
                 select.focused = true;
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 select.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 select.hovered = false;
             }
         }
@@ -1157,7 +1157,7 @@ fn select_dropdown_rebuild_options_system(
                                 label: label.clone(),
                             },
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             Node {
                                 height: Val::Px(SELECT_OPTION_HEIGHT),
                                 min_height: Val::Px(SELECT_OPTION_HEIGHT),
@@ -1292,7 +1292,7 @@ fn select_dropdown_rebuild_options_system(
                             label: option.label.clone(),
                         },
                         Button,
-                        Interaction::None,
+                        PickingInteraction::None,
                         Node {
                             height: Val::Px(SELECT_OPTION_HEIGHT),
                             min_height: Val::Px(SELECT_OPTION_HEIGHT),
@@ -1398,12 +1398,12 @@ fn select_dropdown_sync_system(
 
 /// Handle clicks on option items.
 fn select_option_interaction_system(
-    mut interactions: Query<(&Interaction, &SelectOptionItem, &SelectOwner), Changed<Interaction>>,
+    mut interactions: Query<(&PickingInteraction, &SelectOptionItem, &SelectOwner), Changed<PickingInteraction>>,
     mut selects: Query<(Entity, &mut MaterialSelect)>,
     mut events: MessageWriter<SelectChangeEvent>,
 ) {
     for (interaction, option_item, owner) in interactions.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -1676,7 +1676,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                         label: label.clone(),
                                     },
                                     Button,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     Node {
                                         height: Val::Px(SELECT_OPTION_HEIGHT),
                                         min_height: Val::Px(SELECT_OPTION_HEIGHT),
@@ -1748,7 +1748,7 @@ impl SpawnSelectChild for ChildSpawnerCommands<'_> {
                                             label: option.label.clone(),
                                         },
                                         Button,
-                                        Interaction::None,
+                                        PickingInteraction::None,
                                         Node {
                                             height: Val::Px(SELECT_OPTION_HEIGHT),
                                             min_height: Val::Px(SELECT_OPTION_HEIGHT),

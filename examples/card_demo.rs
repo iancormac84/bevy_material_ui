@@ -48,7 +48,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                 for (id, title, builder) in cards {
                     row.spawn((
-                        Interaction::None,
+                        PickingInteraction::None,
                         builder.width(Val::Px(160.0)).padding(16.0).build(&theme),
                     ))
                     .insert_test_id(format!("card_demo/card/{id}"), &telemetry)

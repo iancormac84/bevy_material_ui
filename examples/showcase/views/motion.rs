@@ -72,7 +72,7 @@ pub fn spawn_motion_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                 .spawn((
                     MotionDemoToggleButton,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         padding: UiRect::axes(Val::Px(24.0), Val::Px(10.0)),
@@ -245,10 +245,10 @@ pub fn motion_demo_toggle_system(
     mut state: ResMut<MotionDemoState>,
     mut animated: Query<&mut AnimatedValue, With<MotionDemoAnimatedBox>>,
     mut springs: Query<&mut SpringAnimation, With<MotionDemoSpringBox>>,
-    buttons: Query<&Interaction, (Changed<Interaction>, With<MotionDemoToggleButton>)>,
+    buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<MotionDemoToggleButton>)>,
 ) {
     for interaction in buttons.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 

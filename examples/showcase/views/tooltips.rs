@@ -71,7 +71,7 @@ pub fn spawn_tooltip_section(
 
                                 row.spawn((
                                     TooltipPositionOption(pos),
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     MaterialButtonBuilder::new(label)
                                         .variant(if selected {
                                             ButtonVariant::FilledTonal
@@ -125,7 +125,7 @@ pub fn spawn_tooltip_section(
 
                                 row.spawn((
                                     TooltipDelayOption(delay),
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     MaterialButtonBuilder::new(label)
                                         .variant(if selected {
                                             ButtonVariant::FilledTonal
@@ -168,7 +168,7 @@ pub fn spawn_tooltip_section(
                     row.spawn((
                         TooltipDemoButton,
                         TooltipTrigger::new("Hover to see tooltip!").bottom(),
-                        Interaction::None,
+                        PickingInteraction::None,
                         MaterialButtonBuilder::new(demo_label).filled().build(theme),
                     ))
                     .with_children(|btn| {

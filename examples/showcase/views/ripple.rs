@@ -91,7 +91,7 @@ fn spawn_ripple_surface(
         .spawn((
             RippleDemoSurface,
             RippleHost::new().with_color(text_color),
-            Interaction::None,
+            PickingInteraction::None,
             Node {
                 width: Val::Px(140.0),
                 height: Val::Px(80.0),
@@ -119,7 +119,7 @@ fn spawn_ripple_surface(
 pub fn ripple_demo_interaction_system(
     mut events: MessageWriter<SpawnRipple>,
     buttons: Query<
-        (Entity, &Interaction, &ComputedNode),
+        (Entity, &PickingInteraction, &ComputedNode),
         With<RippleDemoSurface>,
     >,
     surfaces: Query<
@@ -135,7 +135,7 @@ pub fn ripple_demo_interaction_system(
         .unwrap_or(1.0);
 
     for (entity, interaction, node) in buttons.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
         let size = node.size() / scale;

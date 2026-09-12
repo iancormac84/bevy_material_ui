@@ -225,7 +225,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
 
                 let mut show_btn = row.spawn((
                     ShowDialogButton,
-                    Interaction::None,
+                    PickingInteraction::None,
                     MaterialButtonBuilder::new(show_label)
                         .filled()
                         .build(theme.as_ref()),
@@ -289,7 +289,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         actions
                             .spawn((
                                 DialogCloseButton,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 MaterialButtonBuilder::new(cancel_label)
                                     .text()
                                     .build(theme.as_ref()),
@@ -315,7 +315,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         actions
                             .spawn((
                                 DialogConfirmButton,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 MaterialButtonBuilder::new(confirm_label)
                                     .filled()
                                     .build(theme.as_ref()),
@@ -366,7 +366,7 @@ fn spawn_dialog_position_option(
     parent
         .spawn((
             DialogPositionOption(position),
-            Interaction::None,
+            PickingInteraction::None,
             ChipBuilder::filter(label)
                 .selected(is_selected)
                 .build(theme),
@@ -397,7 +397,7 @@ fn spawn_dialog_modal_option(
     parent
         .spawn((
             DialogModalOption(modal),
-            Interaction::None,
+            PickingInteraction::None,
             ChipBuilder::filter(label)
                 .selected(is_selected)
                 .build(theme),
@@ -417,10 +417,10 @@ fn spawn_dialog_modal_option(
 
 fn dialog_demo_position_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut position_buttons: Query<(&DialogPositionOption, &Interaction), Changed<Interaction>>,
+    mut position_buttons: Query<(&DialogPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in position_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.position = opt.0;
         }
     }
@@ -428,10 +428,10 @@ fn dialog_demo_position_options_system(
 
 fn dialog_demo_modal_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut modal_buttons: Query<(&DialogModalOption, &Interaction), Changed<Interaction>>,
+    mut modal_buttons: Query<(&DialogModalOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in modal_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             options.modal = opt.0;
         }
     }
@@ -514,9 +514,9 @@ fn dialog_demo_apply_options_system(
 }
 
 fn dialog_demo_open_close_system(
-    mut show_buttons: Query<&Interaction, (Changed<Interaction>, With<ShowDialogButton>)>,
-    mut close_buttons: Query<&Interaction, (Changed<Interaction>, With<DialogCloseButton>)>,
-    mut confirm_buttons: Query<&Interaction, (Changed<Interaction>, With<DialogConfirmButton>)>,
+    mut show_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<ShowDialogButton>)>,
+    mut close_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogCloseButton>)>,
+    mut confirm_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogConfirmButton>)>,
     entities: Res<DialogEntities>,
     mut dialogs: Query<&mut MaterialDialog>,
     mut result_text: Query<&mut Text, With<DialogResultDisplay>>,
@@ -529,19 +529,19 @@ fn dialog_demo_open_close_system(
     let mut close_reason: Option<&'static str> = None;
 
     for interaction in show_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             open = true;
         }
     }
 
     for interaction in close_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             close_reason = Some("Cancelled");
         }
     }
 
     for interaction in confirm_buttons.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             close_reason = Some("Confirmed");
         }
     }

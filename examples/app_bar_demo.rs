@@ -156,7 +156,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                 bar.spawn((
                     fab_btn,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     RippleHost::new(),
                     Node {
                         width: Val::Px(56.0),

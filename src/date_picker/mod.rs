@@ -4,6 +4,7 @@
 //! Supports single date or date range selection with calendar and text input modes.
 
 use bevy::picking::Pickable;
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::FocusPolicy;
 use std::collections::HashMap;
@@ -599,10 +600,10 @@ fn date_picker_keyboard_dismiss_system(
 
 fn date_picker_mode_toggle_system(
     mut pickers: Query<&mut MaterialDatePicker>,
-    toggles: Query<(&Interaction, &DatePickerModeToggle), Changed<Interaction>>,
+    toggles: Query<(&PickingInteraction, &DatePickerModeToggle), Changed<PickingInteraction>>,
 ) {
     for (interaction, toggle) in toggles.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -626,10 +627,10 @@ fn date_picker_mode_toggle_system(
 
 fn date_picker_month_nav_system(
     mut pickers: Query<&mut MaterialDatePicker>,
-    nav: Query<(&Interaction, &DatePickerMonthNav), Changed<Interaction>>,
+    nav: Query<(&PickingInteraction, &DatePickerMonthNav), Changed<PickingInteraction>>,
 ) {
     for (interaction, nav) in nav.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -660,10 +661,10 @@ fn date_picker_month_nav_system(
 
 fn date_picker_year_selector_toggle_system(
     mut pickers: Query<&mut MaterialDatePicker>,
-    toggles: Query<(&Interaction, &DatePickerYearToggle), Changed<Interaction>>,
+    toggles: Query<(&PickingInteraction, &DatePickerYearToggle), Changed<PickingInteraction>>,
 ) {
     for (interaction, toggle) in toggles.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -685,10 +686,10 @@ fn date_picker_year_selector_toggle_system(
 
 fn date_picker_year_selection_system(
     mut pickers: Query<&mut MaterialDatePicker>,
-    years: Query<(&Interaction, &DatePickerYearCell), Changed<Interaction>>,
+    years: Query<(&PickingInteraction, &DatePickerYearCell), Changed<PickingInteraction>>,
 ) {
     for (interaction, cell) in years.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -703,10 +704,10 @@ fn date_picker_year_selection_system(
 
 fn date_picker_day_selection_system(
     mut pickers: Query<&mut MaterialDatePicker>,
-    days: Query<(&Interaction, &DatePickerDayCell), Changed<Interaction>>,
+    days: Query<(&PickingInteraction, &DatePickerDayCell), Changed<PickingInteraction>>,
 ) {
     for (interaction, cell) in days.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -940,7 +941,7 @@ fn date_picker_rebuild_content_system(
                                                 date: Some(date),
                                             },
                                             TestId::new(format!("date_picker_day_{}", day_number)),
-                                            Interaction::None,
+                                            PickingInteraction::None,
                                             Node {
                                                 width: Val::Px(40.0),
                                                 height: Val::Px(40.0),
@@ -1076,7 +1077,7 @@ fn date_picker_rebuild_content_system(
                                         picker: picker_entity,
                                         year,
                                     },
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     Node {
                                         width: Val::Px(90.0),
                                         height: Val::Px(40.0),
@@ -1110,15 +1111,15 @@ fn date_picker_action_system(
         Query<&mut MaterialDatePicker>,
         Query<(Entity, &MaterialDatePicker)>,
     )>,
-    actions: Query<(&Interaction, &DatePickerAction), Changed<Interaction>>,
-    scrim: Query<(&Interaction, &DatePickerScrim), Changed<Interaction>>,
+    actions: Query<(&PickingInteraction, &DatePickerAction), Changed<PickingInteraction>>,
+    scrim: Query<(&PickingInteraction, &DatePickerScrim), Changed<PickingInteraction>>,
     mut submit_events: MessageWriter<DatePickerSubmitEvent>,
     mut cancel_events: MessageWriter<DatePickerCancelEvent>,
     mut prev_open: Local<HashMap<Entity, bool>>,
 ) {
     // Handle scrim clicks
     for (interaction, scrim) in scrim.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -1140,7 +1141,7 @@ fn date_picker_action_system(
 
     // Handle action buttons
     for (interaction, action) in actions.iter() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -1857,7 +1858,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                 DatePickerScrim { picker: entity },
                 // Required for `Interaction` updates so scrim clicks can be detected.
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::Px(0.0),
@@ -1879,7 +1880,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
             root.spawn((
                 DatePickerDialog,
                 // Ensure clicks on the dialog surface don't count as scrim clicks.
-                Interaction::None,
+                PickingInteraction::None,
                 FocusPolicy::Block,
                 Node {
                     width,
@@ -1952,7 +1953,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 Button,
                                 DatePickerModeToggle { picker: entity },
                                 TestId::new("date_picker_mode_toggle"),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     width: Val::Px(40.0),
                                     height: Val::Px(40.0),
@@ -1997,7 +1998,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     delta: -1,
                                 },
                                 TestId::new("date_picker_month_prev"),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     width: Val::Px(40.0),
                                     height: Val::Px(40.0),
@@ -2024,7 +2025,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 Button,
                                 DatePickerYearToggle { picker: entity },
                                 TestId::new("date_picker_year_toggle"),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     padding: UiRect::all(Val::Px(Spacing::SMALL)),
                                     justify_content: JustifyContent::Center,
@@ -2076,7 +2077,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     delta: 1,
                                 },
                                 TestId::new("date_picker_month_next"),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 Node {
                                     width: Val::Px(40.0),
                                     height: Val::Px(40.0),
@@ -2258,7 +2259,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 year,
                                             },
                                             TestId::new(format!("date_picker_year_{}", year)),
-                                            Interaction::None,
+                                            PickingInteraction::None,
                                             Node {
                                                 width: Val::Px(90.0),
                                                 height: Val::Px(40.0),
@@ -2402,7 +2403,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                     date: Some(date),
                                                 },
                                                 TestId::new(format!("date_picker_day_{}", day_number)),
-                                                Interaction::None,
+                                                PickingInteraction::None,
                                                 Node {
                                                     width: Val::Px(40.0),
                                                     height: Val::Px(40.0),
@@ -2416,7 +2417,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
 
                                             // Only enable interaction if date is valid
                                             if !enabled {
-                                                cell_spawn.insert(Interaction::None);
+                                                cell_spawn.insert(PickingInteraction::None);
                                             }
 
                                             cell_spawn.with_children(|cell| {
@@ -2458,7 +2459,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 is_confirm: false,
                             },
                             TestId::new("date_picker_cancel"),
-                            Interaction::None,
+                            PickingInteraction::None,
                             Text::new("Cancel"),
                             TextFont {
                                 font_size: FontSize::Px(14.0),
@@ -2478,7 +2479,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                 is_confirm: true,
                             },
                             TestId::new("date_picker_confirm"),
-                            Interaction::None,
+                            PickingInteraction::None,
                             Text::new("OK"),
                             TextFont {
                                 font_size: FontSize::Px(14.0),

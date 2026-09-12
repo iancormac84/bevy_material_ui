@@ -65,7 +65,7 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                         MenuTrigger,
                         trigger_button,
                         Button,
-                        Interaction::None,
+                        PickingInteraction::None,
                         RippleHost::new(),
                         Node {
                             padding: UiRect::axes(Val::Px(16.0), Val::Px(10.0)),
@@ -168,7 +168,7 @@ fn spawn_menu_item(
     parent
         .spawn((
             MenuItemMarker(label.to_string()),
-            Interaction::None,
+            PickingInteraction::None,
             builder.build(theme),
         ))
         .insert_test_id(format!("menu_demo/item/{test_suffix}"), telemetry)
@@ -209,9 +209,9 @@ fn spawn_menu_item(
 
 #[allow(clippy::type_complexity)]
 fn menu_demo_system(
-    mut triggers: Query<(&ChildOf, &Interaction), (With<MenuTrigger>, Changed<Interaction>)>,
+    mut triggers: Query<(&ChildOf, &PickingInteraction), (With<MenuTrigger>, Changed<PickingInteraction>)>,
     mut dropdowns: Query<(&ChildOf, &mut Visibility), With<MenuDropdown>>,
-    mut items: Query<(&ChildOf, &Interaction, &MenuItemMarker), Changed<Interaction>>,
+    mut items: Query<(&ChildOf, &PickingInteraction, &MenuItemMarker), Changed<PickingInteraction>>,
     triggers_all: Query<(Entity, &ChildOf), With<MenuTrigger>>,
     mut selected_text: Query<(&ChildOf, &mut Text), With<MenuSelectedText>>,
     parents: Query<&ChildOf>,
@@ -225,7 +225,7 @@ fn menu_demo_system(
 
     // Toggle dropdown on trigger press
     for (parent, interaction) in triggers.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 
@@ -242,7 +242,7 @@ fn menu_demo_system(
 
     // Select item
     for (parent, interaction, label) in items.iter_mut() {
-        if *interaction != Interaction::Pressed {
+        if *interaction != PickingInteraction::Pressed {
             continue;
         }
 

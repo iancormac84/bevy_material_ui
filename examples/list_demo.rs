@@ -124,7 +124,7 @@ fn setup(
 
                             row.spawn((
                                 ListSelectionModeChip(mode),
-                                Interaction::None,
+                                PickingInteraction::None,
                                 ChipBuilder::filter(label)
                                     .selected(is_selected)
                                     .build(&theme),
@@ -161,7 +161,7 @@ fn setup(
                                     .build_scrollable(),
                                 BackgroundColor(theme.surface),
                                 BorderRadius::all(Val::Px(12.0)),
-                                Interaction::None,
+                                PickingInteraction::None,
                             ))
                             .insert_test_id("list_demo/list", &telemetry)
                             .with_children(|list| {
@@ -255,7 +255,7 @@ fn setup(
                                             .supporting_text(supporting)
                                             .leading_icon(ICON_EMAIL)
                                             .build(&theme),
-                                        Interaction::None,
+                                        PickingInteraction::None,
                                     ));
                                 }
                             });
@@ -297,7 +297,7 @@ fn setup(
                                     ListVirtualizeToggle,
                                     switch,
                                     Button,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     RippleHost::new(),
                                     Node {
                                         width: Val::Px(
@@ -405,7 +405,7 @@ fn setup(
                                 },
                                 BackgroundColor(theme.surface_container_low),
                                 BorderRadius::all(Val::Px(12.0)),
-                                Interaction::None,
+                                PickingInteraction::None,
                             ))
                             .with_children(|scroller| {
                                 for i in 1..=18 {
@@ -437,7 +437,7 @@ fn setup(
                                 },
                                 BackgroundColor(theme.surface_container_low),
                                 BorderRadius::all(Val::Px(12.0)),
-                                Interaction::None,
+                                PickingInteraction::None,
                             ))
                             .with_children(|scroller| {
                                 scroller
@@ -507,7 +507,7 @@ fn spawn_large_list_demo(
                 .build_scrollable(),
             BackgroundColor(theme.surface),
             BorderRadius::all(Val::Px(12.0)),
-            Interaction::None,
+            PickingInteraction::None,
         ));
         return;
     }
@@ -520,11 +520,11 @@ fn spawn_large_list_demo(
                 .build_scrollable(),
             BackgroundColor(theme.surface),
             BorderRadius::all(Val::Px(12.0)),
-            Interaction::None,
+            PickingInteraction::None,
         ))
         .with_children(|list| {
             for builder in items {
-                list.spawn((builder.build(theme), Interaction::None));
+                list.spawn((builder.build(theme), PickingInteraction::None));
             }
         });
 }
@@ -532,15 +532,15 @@ fn spawn_large_list_demo(
 fn handle_selection_mode_chips(
     mut state: ResMut<ListsDemoState>,
     mut clicks: Query<
-        (&Interaction, &ListSelectionModeChip),
-        (Changed<Interaction>, With<MaterialChip>),
+        (&PickingInteraction, &ListSelectionModeChip),
+        (Changed<PickingInteraction>, With<MaterialChip>),
     >,
     mut chips: Query<(&ListSelectionModeChip, &mut MaterialChip)>,
     mut lists: Query<&mut MaterialList, With<ListDemoRoot>>,
 ) {
     let mut new_mode = None;
     for (interaction, chip) in clicks.iter_mut() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             new_mode = Some(chip.0);
         }
     }

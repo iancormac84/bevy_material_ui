@@ -30,7 +30,7 @@ fn spawn_icon_button_demo(
             col.spawn((
                 icon_btn,
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 RippleHost::new(),
                 Node {
                     width: Val::Px(40.0),

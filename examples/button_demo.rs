@@ -212,7 +212,7 @@ fn spawn_toggle_button(
         .spawn((
             button,
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             RippleHost::new(),
             Node {
                 padding: UiRect::axes(Val::Px(24.0), Val::Px(10.0)),
@@ -257,7 +257,7 @@ fn spawn_interactive_button(
         .spawn((
             button,
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             RippleHost::new(),
             Node {
                 padding: UiRect::axes(Val::Px(24.0), Val::Px(10.0)),

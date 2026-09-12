@@ -6,7 +6,7 @@
 //!
 //! Reference: <https://m3.material.io/components/snackbar/overview>
 
-use bevy::picking::Pickable;
+use bevy::picking::{Pickable, hover::PickingInteraction};
 use bevy::prelude::*;
 
 use crate::{
@@ -565,7 +565,7 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                 .spawn((
                     SnackbarCloseButton,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     Node {
                         width: Val::Px(32.0),
                         height: Val::Px(32.0),
@@ -676,7 +676,7 @@ pub fn spawn_snackbar(
                 .spawn((
                     SnackbarCloseButton,
                     Button,
-                    Interaction::None,
+                    PickingInteraction::None,
                     Node {
                         width: Val::Px(32.0),
                         height: Val::Px(32.0),
@@ -710,17 +710,17 @@ pub fn spawn_snackbar(
 fn snackbar_close_button_style_system(
     theme: Option<Res<MaterialTheme>>,
     mut buttons: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<SnackbarCloseButton>),
+        (&PickingInteraction, &mut BackgroundColor),
+        (Changed<PickingInteraction>, With<SnackbarCloseButton>),
     >,
 ) {
     let Some(theme) = theme else { return };
 
     for (interaction, mut bg) in buttons.iter_mut() {
         let color = match *interaction {
-            Interaction::Pressed => theme.inverse_on_surface.with_alpha(0.12),
-            Interaction::Hovered => theme.inverse_on_surface.with_alpha(0.08),
-            Interaction::None => Color::NONE,
+            PickingInteraction::Pressed => theme.inverse_on_surface.with_alpha(0.12),
+            PickingInteraction::Hovered => theme.inverse_on_surface.with_alpha(0.08),
+            PickingInteraction::None => Color::NONE,
         };
         *bg = BackgroundColor(color);
     }
@@ -940,12 +940,12 @@ fn snackbar_cleanup_system(
 
 /// System to handle snackbar action clicks
 fn snackbar_action_system(
-    interactions: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<SnackbarAction>)>,
+    interactions: Query<(&PickingInteraction, &ChildOf), (Changed<PickingInteraction>, With<SnackbarAction>)>,
     mut snackbars: Query<(Entity, &mut Snackbar)>,
     mut events: MessageWriter<SnackbarActionEvent>,
 ) {
     for (interaction, parent) in interactions.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             if let Ok((entity, mut snackbar)) = snackbars.get_mut(parent.parent()) {
                 if let Some(action) = &snackbar.action {
                     events.write(SnackbarActionEvent {
@@ -962,8 +962,8 @@ fn snackbar_action_system(
 /// System to handle snackbar close button clicks
 fn snackbar_close_system(
     interactions: Query<
-        (&Interaction, &ChildOf),
-        (Changed<Interaction>, With<SnackbarCloseButton>),
+        (&PickingInteraction, &ChildOf),
+        (Changed<PickingInteraction>, With<SnackbarCloseButton>),
     >,
     mut snackbars: Query<&mut Snackbar>,
 ) {
@@ -971,7 +971,7 @@ fn snackbar_close_system(
         #[cfg(debug_assertions)]
         bevy::log::debug!("Snackbar close button interaction: {:?}", interaction);
 
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             let parent_entity = child_of.parent();
             #[cfg(debug_assertions)]
             bevy::log::debug!(

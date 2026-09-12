@@ -66,7 +66,7 @@ pub fn spawn_snackbar_section(
 
                                 row.spawn((
                                     SnackbarDurationOption(duration),
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     ChipBuilder::filter(label).selected(is_default).build(theme),
                                 ))
                                 .with_children(|chip| {
@@ -108,7 +108,7 @@ pub fn spawn_snackbar_section(
 
                             row.spawn((
                                 SnackbarActionToggle,
-                                Interaction::None,
+                                PickingInteraction::None,
                                 ChipBuilder::filter(toggle_label)
                                     .selected(false)
                                     .build(theme),
@@ -141,7 +141,7 @@ pub fn spawn_snackbar_section(
 
                     row.spawn((
                         SnackbarTrigger,
-                        Interaction::None,
+                        PickingInteraction::None,
                         MaterialButtonBuilder::new(trigger_label)
                             .filled()
                             .build(theme),
@@ -197,7 +197,7 @@ pub fn spawn_snackbar_section(
 
                     snackbar
                         .spawn((
-                            Interaction::None,
+                            PickingInteraction::None,
                             MaterialButtonBuilder::new("UNDO").text().build(theme),
                         ))
                         .with_children(|btn| {
@@ -216,7 +216,7 @@ pub fn spawn_snackbar_section(
                     snackbar
                         .spawn((
                             Button,
-                            Interaction::None,
+                            PickingInteraction::None,
                             Node {
                                 width: Val::Px(32.0),
                                 height: Val::Px(32.0),

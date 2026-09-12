@@ -7,6 +7,7 @@
 //! - Optional selection-required behavior
 //! - Applying connected corner radii to child buttons
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 
 use crate::button::MaterialButton;
@@ -219,8 +220,8 @@ fn button_group_toggle_system(
     groups: Query<&MaterialButtonGroup>,
     mut buttons: ParamSet<(
         Query<
-            (Entity, &Interaction, &ChildOf),
-            (Changed<Interaction>, With<Button>, With<MaterialButton>),
+            (Entity, &PickingInteraction, &ChildOf),
+            (Changed<PickingInteraction>, With<Button>, With<MaterialButton>),
         >,
         Query<(Entity, &ChildOf, &MaterialButton), (With<Button>, With<MaterialButton>)>,
         Query<(Entity, &ChildOf, &mut MaterialButton), (With<Button>, With<MaterialButton>)>,
@@ -243,7 +244,7 @@ fn button_group_toggle_system(
         changed
             .iter()
             .filter_map(|(entity, interaction, parent)| {
-                (*interaction == Interaction::Pressed).then_some((entity, parent.parent()))
+                (*interaction == PickingInteraction::Pressed).then_some((entity, parent.parent()))
             })
             .collect()
     };

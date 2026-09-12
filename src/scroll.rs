@@ -32,6 +32,7 @@
 
 use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
 use bevy::input::touch::{TouchInput, TouchPhase};
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
 use bevy::window::PrimaryWindow;
@@ -855,7 +856,7 @@ fn mouse_wheel_scroll_system(
     windows: Query<&Window, With<PrimaryWindow>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     parents: Query<&ChildOf>,
-    hovered: Query<(Entity, &Interaction)>,
+    hovered: Query<(Entity, &PickingInteraction)>,
     container_nodes: Query<(Entity, &ComputedNode, &UiGlobalTransform), With<ScrollContainer>>,
     mut scrollable_query: Query<(&mut ScrollPosition, &ScrollContainer), With<ScrollContainer>>,
 ) {
@@ -897,7 +898,7 @@ fn mouse_wheel_scroll_system(
         // scrolling work even if picking backends are not active.
         let mut scrolled_containers: HashSet<Entity> = HashSet::new();
         for (entity, interaction) in hovered.iter() {
-            if !matches!(*interaction, Interaction::Hovered | Interaction::Pressed) {
+            if !matches!(*interaction, PickingInteraction::Hovered | PickingInteraction::Pressed) {
                 continue;
             }
 
@@ -1097,7 +1098,7 @@ fn scrollbar_thumb_drag_system(
     windows: Query<&Window>,
     mut thumb_v: Query<
         (
-            &Interaction,
+            &PickingInteraction,
             &mut ScrollbarDragging,
             &ChildOf,
             &ComputedNode,
@@ -1109,7 +1110,7 @@ fn scrollbar_thumb_drag_system(
     >,
     mut thumb_h: Query<
         (
-            &Interaction,
+            &PickingInteraction,
             &mut ScrollbarDragging,
             &ChildOf,
             &ComputedNode,
@@ -1133,7 +1134,7 @@ fn scrollbar_thumb_drag_system(
         // Note: `Interaction::Pressed` is updated by Bevy's UI systems and may not
         // become `Pressed` until a frame after the mouse button press is registered.
         // If we also require `just_pressed`, we can miss the drag start entirely.
-        if *interaction == Interaction::Pressed && !drag_state.is_dragging {
+        if *interaction == PickingInteraction::Pressed && !drag_state.is_dragging {
             if let Some(pos) = cursor_pos {
                 // Find the container through the track's parent
                 // track_parent is the thumb's ChildOf (points to track)
@@ -1247,7 +1248,7 @@ fn scrollbar_thumb_drag_system(
     // Handle horizontal scrollbar thumb dragging
     for (interaction, mut drag_state, track_parent, thumb_node) in thumb_h.iter_mut() {
         // Start dragging on press
-        if *interaction == Interaction::Pressed && !drag_state.is_dragging {
+        if *interaction == PickingInteraction::Pressed && !drag_state.is_dragging {
             if let Some(pos) = cursor_pos {
                 // Find the container through the track's parent
                 if let Ok((_track_node, scroll_parent)) = track_h.get(track_parent.0) {
@@ -1603,7 +1604,7 @@ fn spawn_scrollbar_vertical(
                 ScrollbarThumbVertical,
                 ScrollbarDragging::default(),
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Node {
                     position_type: PositionType::Absolute,
                     width: Val::Px(scrollbar_width),
@@ -1650,7 +1651,7 @@ fn spawn_scrollbar_horizontal(
                 ScrollbarThumbHorizontal,
                 ScrollbarDragging::default(),
                 Button,
-                Interaction::None,
+                PickingInteraction::None,
                 Node {
                     position_type: PositionType::Absolute,
                     height: Val::Px(scrollbar_width),

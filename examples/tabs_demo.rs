@@ -118,7 +118,7 @@ fn spawn_tab_button(
         .spawn((
             MaterialTab::new(index, label).selected(selected),
             Button,
-            Interaction::None,
+            PickingInteraction::None,
             Node {
                 flex_grow: 1.0,
                 height: Val::Px(48.0),

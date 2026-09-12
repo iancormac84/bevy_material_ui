@@ -146,7 +146,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
 
                     row.spawn((
                         ShowDialogButton,
-                        Interaction::None,
+                        PickingInteraction::None,
                         MaterialButtonBuilder::new(show_label).filled().build(theme),
                     ))
                     .with_children(|btn| {
@@ -213,7 +213,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             actions
                                 .spawn((
                                     DialogCloseButton,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     MaterialButtonBuilder::new(cancel_label).text().build(theme),
                                 ))
                                 .with_children(|btn| {
@@ -237,7 +237,7 @@ pub fn spawn_dialogs_section(parent: &mut ChildSpawnerCommands, theme: &Material
                             actions
                                 .spawn((
                                     DialogConfirmButton,
-                                    Interaction::None,
+                                    PickingInteraction::None,
                                     MaterialButtonBuilder::new(confirm_label)
                                         .filled()
                                         .build(theme),
@@ -277,7 +277,7 @@ fn spawn_dialog_position_option(
     parent
         .spawn((
             DialogPositionOption(position),
-            Interaction::None,
+            PickingInteraction::None,
             ChipBuilder::filter(label)
                 .selected(is_selected)
                 .build(theme),
@@ -308,7 +308,7 @@ fn spawn_dialog_modal_option(
     parent
         .spawn((
             DialogModalOption(modal),
-            Interaction::None,
+            PickingInteraction::None,
             ChipBuilder::filter(label)
                 .selected(is_selected)
                 .build(theme),

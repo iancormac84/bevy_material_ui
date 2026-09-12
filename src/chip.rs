@@ -6,7 +6,7 @@
 //!
 //! Reference: <https://m3.material.io/components/chips/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
 
 use crate::{
@@ -713,8 +713,8 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
 
 /// System to handle chip interactions
 fn chip_interaction_system(
-    mut interaction_query: Query<(Entity, &Interaction, &mut MaterialChip), Changed<Interaction>>,
-    delete_buttons: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<ChipDeleteButton>)>,
+    mut interaction_query: Query<(Entity, &PickingInteraction, &mut MaterialChip), Changed<PickingInteraction>>,
+    delete_buttons: Query<(&PickingInteraction, &ChildOf), (Changed<PickingInteraction>, With<ChipDeleteButton>)>,
     mut click_events: MessageWriter<ChipClickEvent>,
     mut delete_events: MessageWriter<ChipDeleteEvent>,
 ) {
@@ -725,7 +725,7 @@ fn chip_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 chip.pressed = true;
                 chip.hovered = false;
 
@@ -739,11 +739,11 @@ fn chip_interaction_system(
                     value: chip.value.clone(),
                 });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 chip.pressed = false;
                 chip.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 chip.pressed = false;
                 chip.hovered = false;
             }
@@ -752,7 +752,7 @@ fn chip_interaction_system(
 
     // Handle delete button clicks
     for (interaction, parent) in delete_buttons.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             // For delete buttons, we emit an event with the parent chip entity
             delete_events.write(ChipDeleteEvent {
                 entity: parent.parent(),

@@ -3,7 +3,7 @@
 //! The Search Bar represents a floating search field with affordances for search and navigation.
 //! Reference: <https://m3.material.io/components/search/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
@@ -189,7 +189,7 @@ impl SearchBarBuilder {
             BackgroundColor(theme.surface_container_high),
             RippleHost::new(),
             Button,
-            Interaction::None,
+            PickingInteraction::None,
         )
     }
 }
@@ -413,11 +413,11 @@ fn search_bar_display_text_system(
 // ============================================================================
 
 fn search_bar_interaction_system(
-    search_bars: Query<(&Interaction, Entity), (Changed<Interaction>, With<MaterialSearchBar>)>,
+    search_bars: Query<(&PickingInteraction, Entity), (Changed<PickingInteraction>, With<MaterialSearchBar>)>,
     mut click_events: MessageWriter<SearchBarClickEvent>,
 ) {
     for (interaction, entity) in search_bars.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             click_events.write(SearchBarClickEvent { search_bar: entity });
         }
     }

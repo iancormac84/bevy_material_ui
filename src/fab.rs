@@ -7,7 +7,7 @@
 //!
 //! This module now leverages native `BoxShadow` for elevation shadows.
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
 
 use crate::{
@@ -224,23 +224,23 @@ pub struct FabClickEvent {
 /// System to handle FAB interactions
 fn fab_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialFab),
-        (Changed<Interaction>, With<MaterialFab>),
+        (Entity, &PickingInteraction, &mut MaterialFab),
+        (Changed<PickingInteraction>, With<MaterialFab>),
     >,
     mut click_events: MessageWriter<FabClickEvent>,
 ) {
     for (entity, interaction, mut fab) in interaction_query.iter_mut() {
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 fab.pressed = true;
                 fab.hovered = false;
                 click_events.write(FabClickEvent { entity });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 fab.pressed = false;
                 fab.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 fab.pressed = false;
                 fab.hovered = false;
             }

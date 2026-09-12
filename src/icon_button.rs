@@ -3,7 +3,7 @@
 //! Icon buttons display actions using icons.
 //! Reference: <https://m3.material.io/components/icon-buttons/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     icons::MaterialIcon,
@@ -233,8 +233,8 @@ pub struct IconButtonClickEvent {
 /// System to handle icon button interactions
 fn icon_button_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialIconButton),
-        (Changed<Interaction>, With<MaterialIconButton>),
+        (Entity, &PickingInteraction, &mut MaterialIconButton),
+        (Changed<PickingInteraction>, With<MaterialIconButton>),
     >,
     mut click_events: MessageWriter<IconButtonClickEvent>,
 ) {
@@ -244,7 +244,7 @@ fn icon_button_interaction_system(
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 button.pressed = true;
                 button.hovered = false;
 
@@ -257,11 +257,11 @@ fn icon_button_interaction_system(
                     selected: button.selected,
                 });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 button.pressed = false;
                 button.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 button.pressed = false;
                 button.hovered = false;
             }

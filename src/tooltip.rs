@@ -5,7 +5,7 @@
 //!
 //! Reference: <https://m3.material.io/components/tooltips/overview>
 
-use bevy::picking::Pickable;
+use bevy::picking::{Pickable, hover::PickingInteraction};
 use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
 
@@ -640,7 +640,7 @@ fn tooltip_hover_system(
     mut commands: Commands,
     time: Res<Time>,
     theme: Option<Res<MaterialTheme>>,
-    mut triggers: Query<(Entity, &Interaction, &mut TooltipTrigger)>,
+    mut triggers: Query<(Entity, &PickingInteraction, &mut TooltipTrigger)>,
     mut tooltips: Query<&mut Tooltip>,
     overlay_query: Query<Entity, With<TooltipOverlay>>,
 ) {
@@ -654,7 +654,7 @@ fn tooltip_hover_system(
 
     for (entity, interaction, mut trigger) in triggers.iter_mut() {
         match *interaction {
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 if !trigger.hovered {
                     trigger.hovered = true;
                     trigger.hover_time = 0.0;
@@ -671,7 +671,7 @@ fn tooltip_hover_system(
                     trigger.tooltip_entity = Some(tooltip_entity);
                 }
             }
-            Interaction::None | Interaction::Pressed => {
+            PickingInteraction::None | PickingInteraction::Pressed => {
                 if trigger.hovered {
                     trigger.hovered = false;
                     trigger.hover_time = 0.0;

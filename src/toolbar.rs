@@ -5,7 +5,7 @@
 //!
 //! Reference: <https://m3.material.io/components/top-app-bar/overview>
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     icon_button::IconButtonBuilder,
@@ -295,14 +295,14 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
 // ============================================================================
 
 fn toolbar_interaction_system(
-    nav_buttons: Query<(&Interaction, &ChildOf), (Changed<Interaction>, With<ToolbarNavigation>)>,
-    action_buttons: Query<(&Interaction, &ToolbarActionButton, &ChildOf), Changed<Interaction>>,
+    nav_buttons: Query<(&PickingInteraction, &ChildOf), (Changed<PickingInteraction>, With<ToolbarNavigation>)>,
+    action_buttons: Query<(&PickingInteraction, &ToolbarActionButton, &ChildOf), Changed<PickingInteraction>>,
     toolbars: Query<Entity, With<MaterialToolbar>>,
     mut nav_events: MessageWriter<ToolbarNavigationEvent>,
     mut action_events: MessageWriter<ToolbarActionEvent>,
 ) {
     for (interaction, parent) in nav_buttons.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             if let Ok(toolbar) = toolbars.get(parent.parent()) {
                 nav_events.write(ToolbarNavigationEvent { toolbar });
             }
@@ -310,7 +310,7 @@ fn toolbar_interaction_system(
     }
 
     for (interaction, action, parent) in action_buttons.iter() {
-        if *interaction == Interaction::Pressed {
+        if *interaction == PickingInteraction::Pressed {
             if let Ok(toolbar) = toolbars.get(parent.parent()) {
                 action_events.write(ToolbarActionEvent {
                     toolbar,

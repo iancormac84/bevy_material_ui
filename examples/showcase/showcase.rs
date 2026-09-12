@@ -834,7 +834,7 @@ fn translations_select_change_system(
 
 #[allow(clippy::type_complexity)]
 fn translations_create_file_system(
-    mut click_events: MessageReader<ButtonClickEvent>,
+    activate: On<Activate>,
     create_buttons: Query<(), With<views::TranslationsCreateFileButton>>,
     name_fields: Query<&MaterialTextField, With<views::TranslationsNewFileNameField>>,
     mut editor_fields: ParamSet<(
@@ -846,41 +846,36 @@ fn translations_create_file_system(
     mut language: ResMut<MaterialLanguage>,
     mut i18n: Option<ResMut<MaterialI18n>>,
 ) {
-    for ev in click_events.read() {
-        if create_buttons.get(ev.entity).is_err() {
-            continue;
-        }
+    let Some(name_field) = name_fields.iter().next() else {
+        return;
+    };
+    let file_name = name_field.value.trim();
+    let Some(stem) = file_name.strip_suffix(".mui_lang") else {
+        return;
+    };
+    if !is_snake_case_file_stem(stem) {
+        return;
+    }
+    let dir = translations_assets_dir();
+    let path = dir.join(file_name);
+    if path.exists() {
+        return;
+    }
 
-        let Some(name_field) = name_fields.iter().next() else {
-            continue;
-        };
-        let file_name = name_field.value.trim();
-        let Some(stem) = file_name.strip_suffix(".mui_lang") else {
-            continue;
-        };
-        if !is_snake_case_file_stem(stem) {
-            continue;
-        }
-        let dir = translations_assets_dir();
-        let path = dir.join(file_name);
-        if path.exists() {
-            continue;
-        }
-
-        let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
+    let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
+    else {
+        return;
+    };
+    let Some(placeholder_value) =
+        ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
+    else {
+        return;
+    };
+    let Some(supporting_value) =
+        ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
         else {
-            continue;
-        };
-        let Some(placeholder_value) =
-            ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
-        else {
-            continue;
-        };
-        let Some(supporting_value) =
-            ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
-        else {
-            continue;
-        };
+        return;
+    };
 
         let mut strings_map = HashMap::new();
         strings_map.insert(TRANSLATION_KEY_EMAIL_LABEL.to_string(), label_value);
@@ -914,12 +909,11 @@ fn translations_create_file_system(
             state.selected_asset_path = Some(format!("i18n/{file_name}"));
             language.tag = stem.to_string();
         }
-    }
 }
 
 #[allow(clippy::type_complexity)]
 fn translations_save_file_system(
-    mut click_events: MessageReader<ButtonClickEvent>,
+    activate: On<Activate>,
     save_buttons: Query<(), With<views::TranslationsSaveFileButton>>,
     mut editor_fields: ParamSet<(
         Query<&MaterialTextField, With<views::TranslationKeyFieldLabel>>,
@@ -929,14 +923,9 @@ fn translations_save_file_system(
     mut state: ResMut<TranslationsDemoState>,
     mut i18n: Option<ResMut<MaterialI18n>>,
 ) {
-    for ev in click_events.read() {
-        if save_buttons.get(ev.entity).is_err() {
-            continue;
-        }
-
-        let Some(asset_path) = state.selected_asset_path.clone() else {
-            continue;
-        };
+    let Some(asset_path) = state.selected_asset_path.clone() else {
+        return;
+    };
 
         let disk_path = translations_assets_dir().join(
             asset_path
@@ -948,17 +937,17 @@ fn translations_save_file_system(
 
         let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
         else {
-            continue;
+            return;
         };
         let Some(placeholder_value) =
             ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
         else {
-            continue;
+            return;
         };
         let Some(supporting_value) =
             ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
         else {
-            continue;
+            return;
         };
 
         strings.insert(TRANSLATION_KEY_EMAIL_LABEL.to_string(), label_value);
@@ -995,7 +984,7 @@ fn translations_save_file_system(
                 // Immediately apply without relying on file watching.
                 let Some(strings) = parse_translation_file_strings(&disk_path) else {
                     state.needs_rescan = true;
-                    continue;
+                    return;
                 };
                 let language_tag = parse_translation_file_language(&disk_path)
                     .unwrap_or_else(|| "en-US".to_string());
@@ -1003,7 +992,6 @@ fn translations_save_file_system(
             }
             state.needs_rescan = true;
         }
-    }
 }
 
 #[cfg(target_arch = "wasm32")]

@@ -10,8 +10,8 @@
 //! - `children!` macro for declarative child spawning
 //! - Modern bundle patterns
 
-use bevy::prelude::*;
-use bevy::ui::{BoxShadow, Val};
+use bevy::{app::{App, Plugin, Update}, color::{Alpha, Color}, ecs::{bundle::Bundle, change_detection::DetectChanges, component::Component, entity::Entity, hierarchy::{ChildSpawnerCommands, Children}, query::{Changed, With}, system::{Commands, Query, Res}}, text::{FontSize, TextColor, TextFont}, ui::{AlignItems, BackgroundColor, BorderColor, BorderRadius, BoxShadow, JustifyContent, Node, UiRect, Val, widget::Text}, ui_widgets::Button, utils::default};
+use bevy::picking::hover::PickingInteraction;
 
 use crate::{
     elevation::Elevation,
@@ -28,7 +28,7 @@ impl Plugin for ButtonPlugin {
         if !app.is_plugin_added::<crate::MaterialUiCorePlugin>() {
             app.add_plugins(crate::MaterialUiCorePlugin);
         }
-        app.add_message::<ButtonClickEvent>().add_systems(
+        app.add_systems(
             Update,
             (
                 button_interaction_system,
@@ -391,37 +391,28 @@ impl MaterialButton {
     }
 }
 
-/// Event fired when a button is clicked
-#[derive(Event, bevy::prelude::Message)]
-pub struct ButtonClickEvent {
-    /// The button entity that was clicked
-    pub entity: Entity,
-}
-
 /// System to handle button interactions
 fn button_interaction_system(
     mut interaction_query: Query<
-        (Entity, &Interaction, &mut MaterialButton),
-        (Changed<Interaction>, With<MaterialButton>),
+        (&PickingInteraction, &mut MaterialButton),
+        (Changed<PickingInteraction>, With<MaterialButton>),
     >,
-    mut click_events: MessageWriter<ButtonClickEvent>,
 ) {
-    for (entity, interaction, mut button) in interaction_query.iter_mut() {
+    for (interaction, mut button) in interaction_query.iter_mut() {
         if button.disabled {
             continue;
         }
 
         match *interaction {
-            Interaction::Pressed => {
+            PickingInteraction::Pressed => {
                 button.pressed = true;
                 button.hovered = false;
-                click_events.write(ButtonClickEvent { entity });
             }
-            Interaction::Hovered => {
+            PickingInteraction::Hovered => {
                 button.pressed = false;
                 button.hovered = true;
             }
-            Interaction::None => {
+            PickingInteraction::None => {
                 button.pressed = false;
                 button.hovered = false;
             }
@@ -456,7 +447,7 @@ fn button_label_style_system(
     for (button, children) in buttons.iter() {
         let label_color = button.text_color(&theme);
         for child in children.iter() {
-            if let Ok(mut color) = labels.get_mut(child) {
+            if let Ok(mut color) = labels.get_mut(*child) {
                 color.0 = label_color;
             }
         }
@@ -487,7 +478,7 @@ fn button_theme_refresh_system(
 
         let label_color = button.text_color(&theme);
         for child in children.iter() {
-            if let Ok(mut color) = labels.get_mut(child) {
+            if let Ok(mut color) = labels.get_mut(*child) {
                 color.0 = label_color;
             }
         }

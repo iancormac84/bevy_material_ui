@@ -223,7 +223,7 @@ pub mod prelude {
 
     // Button
     pub use crate::button::{
-        material_button_bundle, spawn_material_button, ButtonClickEvent, ButtonLabel, ButtonPlugin,
+        material_button_bundle, spawn_material_button, ButtonLabel, ButtonPlugin,
         ButtonVariant, MaterialButton, MaterialButtonBuilder, SpawnButtonChild,
     };
 

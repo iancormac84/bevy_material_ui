@@ -223,7 +223,7 @@ fn spawn_toggle_button(
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            BorderRadius::all(Val::Px(corner_radius::FULL)),
         ))
         .insert_test_id(test_id, telemetry)
         .with_children(|btn| {
@@ -268,7 +268,7 @@ fn spawn_interactive_button(
             },
             BackgroundColor(bg_color),
             BorderColor::all(border_color),
-            BorderRadius::all(Val::Px(CornerRadius::FULL)),
+            BorderRadius::all(Val::Px(corner_radius::FULL)),
             elevation.to_box_shadow(),
         ))
         .insert_test_id(test_id, telemetry)

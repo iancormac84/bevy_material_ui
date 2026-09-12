@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use bevy_material_ui::app_bar::spawn_top_app_bar_with_right_content;
 use bevy_material_ui::icons::{ICON_ADD, ICON_CHECK, ICON_CLOSE, ICON_MENU, ICON_SEARCH};
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::text_field::{spawn_text_field_control, InputType};
+use bevy_material_ui::text_field::{InputType, spawn_text_field_control};
 
 fn spawn_standard_icon_button(
     parent: &mut ChildSpawnerCommands,

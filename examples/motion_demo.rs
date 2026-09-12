@@ -103,14 +103,12 @@ fn spawn_motion_track<T: Component>(
     let end = TRACK_WIDTH - BOX_SIZE - TRACK_PADDING;
 
     parent
-        .spawn((
-            Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(8.0),
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            ))
+        .spawn((Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(8.0),
+            align_items: AlignItems::Center,
+            ..default()
+        },))
         .with_children(|column| {
             column.spawn((
                 Text::new(label),

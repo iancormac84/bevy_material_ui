@@ -295,8 +295,14 @@ impl SpawnToolbarChild for ChildSpawnerCommands<'_> {
 // ============================================================================
 
 fn toolbar_interaction_system(
-    nav_buttons: Query<(&PickingInteraction, &ChildOf), (Changed<PickingInteraction>, With<ToolbarNavigation>)>,
-    action_buttons: Query<(&PickingInteraction, &ToolbarActionButton, &ChildOf), Changed<PickingInteraction>>,
+    nav_buttons: Query<
+        (&PickingInteraction, &ChildOf),
+        (Changed<PickingInteraction>, With<ToolbarNavigation>),
+    >,
+    action_buttons: Query<
+        (&PickingInteraction, &ToolbarActionButton, &ChildOf),
+        Changed<PickingInteraction>,
+    >,
     toolbars: Query<Entity, With<MaterialToolbar>>,
     mut nav_events: MessageWriter<ToolbarNavigationEvent>,
     mut action_events: MessageWriter<ToolbarActionEvent>,

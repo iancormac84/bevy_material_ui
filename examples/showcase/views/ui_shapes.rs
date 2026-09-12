@@ -55,11 +55,7 @@ pub fn spawn_ui_shapes_section(parent: &mut ChildSpawnerCommands, theme: &Materi
         });
 }
 
-fn spawn_shape_placeholder(
-    parent: &mut ChildSpawnerCommands,
-    theme: &MaterialTheme,
-    label: &str,
-) {
+fn spawn_shape_placeholder(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, label: &str) {
     parent
         .spawn((
             Node {

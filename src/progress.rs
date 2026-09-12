@@ -8,7 +8,7 @@ use bevy::prelude::*;
 use crate::{
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Duration},
+    tokens::{Duration, corner_radius},
 };
 
 /// Plugin for progress indicator components
@@ -356,7 +356,7 @@ fn ensure_linear_progress_indicator_system(
             top: Val::Px(0.0),
             bottom: Val::Px(0.0),
             width: Val::Percent(progress.progress.clamp(0.0, 1.0) * 100.0),
-            border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
             ..default()
         };
 
@@ -458,15 +458,11 @@ impl LinearProgressBuilder {
             min_height: Val::Px(self.height_px),
             overflow: Overflow::clip(),
             position_type: PositionType::Relative,
-            border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+            border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
             ..default()
         };
 
-        (
-            self.progress,
-            node,
-            BackgroundColor(bg_color),
-        )
+        (self.progress, node, BackgroundColor(bg_color))
     }
 }
 
@@ -625,7 +621,7 @@ impl SpawnProgressChild for ChildSpawnerCommands<'_> {
                 bottom: Val::Px(0.0),
                 width: Val::Percent(progress_value * 100.0),
                 height: Val::Percent(100.0),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
                 ..default()
             };
 

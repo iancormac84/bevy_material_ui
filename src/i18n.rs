@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use bevy::asset::{io::Reader, AssetLoader, LoadContext};
+use bevy::asset::{AssetLoader, LoadContext, io::Reader};
 use bevy::ecs::system::Command;
 use bevy::prelude::*;
 

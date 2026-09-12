@@ -7,12 +7,19 @@
 //! - Optional selection-required behavior
 //! - Applying connected corner radii to child buttons
 
+use bevy::app::{App, Plugin, Update};
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::hierarchy::{ChildOf, Children};
+use bevy::ecs::query::{Added, Changed, Or, With};
+use bevy::ecs::system::{Commands, ParamSet, Query, Res};
 use bevy::picking::hover::PickingInteraction;
-use bevy::prelude::*;
+use bevy::ui::{BorderRadius, FlexDirection, Node, Val};
+use bevy::ui_widgets::Button;
 
 use crate::button::MaterialButton;
 use crate::telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId};
-use crate::tokens::CornerRadius;
+use crate::tokens::corner_radius;
 
 /// Plugin for button groups.
 pub struct ButtonGroupPlugin;
@@ -53,12 +60,12 @@ fn button_group_telemetry_system(
         let mut index = 0usize;
 
         for child in children.iter() {
-            if buttons.get(child).is_err() {
+            if buttons.get(*child).is_err() {
                 continue;
             }
 
             commands.queue(InsertTestIdIfExists {
-                entity: child,
+                entity: *child,
                 id: format!("{group_id}/button/{index}"),
             });
             index += 1;
@@ -221,7 +228,11 @@ fn button_group_toggle_system(
     mut buttons: ParamSet<(
         Query<
             (Entity, &PickingInteraction, &ChildOf),
-            (Changed<PickingInteraction>, With<Button>, With<MaterialButton>),
+            (
+                Changed<PickingInteraction>,
+                With<Button>,
+                With<MaterialButton>,
+            ),
         >,
         Query<(Entity, &ChildOf, &MaterialButton), (With<Button>, With<MaterialButton>)>,
         Query<(Entity, &ChildOf, &mut MaterialButton), (With<Button>, With<MaterialButton>)>,
@@ -363,10 +374,10 @@ fn button_group_corner_radius_system(
     for (group, children) in groups.iter() {
         let mut button_children: Vec<(Entity, f32)> = Vec::new();
         for child in children.iter() {
-            if let Ok(button) = buttons.get(child) {
+            if let Ok(button) = buttons.get(*child) {
                 if button.checkable {
-                    let radius = button.corner_radius.unwrap_or(CornerRadius::FULL);
-                    button_children.push((child, radius));
+                    let radius = button.corner_radius.unwrap_or(corner_radius::FULL);
+                    button_children.push((*child, radius));
                 }
             }
         }
@@ -402,17 +413,17 @@ fn segment_border_radius(
         ButtonGroupOrientation::Horizontal => {
             if index == 0 {
                 BorderRadius {
-                    top_left: r,
-                    bottom_left: r,
-                    top_right: z,
-                    bottom_right: z,
+                    top_left: r.into(),
+                    bottom_left: r.into(),
+                    top_right: z.into(),
+                    bottom_right: z.into(),
                 }
             } else if index + 1 == count {
                 BorderRadius {
-                    top_left: z,
-                    bottom_left: z,
-                    top_right: r,
-                    bottom_right: r,
+                    top_left: z.into(),
+                    bottom_left: z.into(),
+                    top_right: r.into(),
+                    bottom_right: r.into(),
                 }
             } else {
                 BorderRadius::all(z)
@@ -421,17 +432,17 @@ fn segment_border_radius(
         ButtonGroupOrientation::Vertical => {
             if index == 0 {
                 BorderRadius {
-                    top_left: r,
-                    top_right: r,
-                    bottom_left: z,
-                    bottom_right: z,
+                    top_left: r.into(),
+                    top_right: r.into(),
+                    bottom_left: z.into(),
+                    bottom_right: z.into(),
                 }
             } else if index + 1 == count {
                 BorderRadius {
-                    top_left: z,
-                    top_right: z,
-                    bottom_left: r,
-                    bottom_right: r,
+                    top_left: z.into(),
+                    top_right: z.into(),
+                    bottom_left: r.into(),
+                    bottom_right: r.into(),
                 }
             } else {
                 BorderRadius::all(z)

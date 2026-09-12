@@ -7,15 +7,15 @@
 //!
 //! This module now leverages native `BoxShadow` for elevation shadows.
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     elevation::Elevation,
     icons::IconStyle,
     ripple::RippleHost,
-    theme::{blend_state_layer, MaterialTheme},
-    tokens::{CornerRadius, Spacing},
+    theme::{MaterialTheme, blend_state_layer},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Plugin for the FAB component
@@ -73,9 +73,9 @@ impl FabSize {
     /// Get the corner radius for this FAB size
     pub fn corner_radius(&self) -> f32 {
         match self {
-            FabSize::Small => CornerRadius::MEDIUM,
-            FabSize::Regular => CornerRadius::LARGE,
-            FabSize::Large => CornerRadius::EXTRA_LARGE,
+            FabSize::Small => corner_radius::MEDIUM,
+            FabSize::Regular => corner_radius::LARGE,
+            FabSize::Large => corner_radius::EXTRA_LARGE,
         }
     }
 }

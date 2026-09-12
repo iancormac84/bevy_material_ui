@@ -3,13 +3,13 @@
 //! Icon buttons display actions using icons.
 //! Reference: <https://m3.material.io/components/icon-buttons/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     icons::MaterialIcon,
     ripple::RippleHost,
-    theme::{blend_state_layer, MaterialTheme},
-    tokens::CornerRadius,
+    theme::{MaterialTheme, blend_state_layer},
+    tokens::corner_radius,
 };
 
 /// Plugin for the icon button component
@@ -422,7 +422,7 @@ impl IconButtonBuilder {
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 border: UiRect::all(Val::Px(border_width)),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),

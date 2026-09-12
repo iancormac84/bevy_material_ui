@@ -5,15 +5,17 @@
 //!
 //! Reference: <https://m3.material.io/components/app-bars/overview>
 
-use bevy::{ecs::relationship::Relationship, picking::hover::PickingInteraction};
 use bevy::prelude::*;
+use bevy::{
+    ecs::relationship::Relationship, picking::hover::PickingInteraction, ui_widgets::Button,
+};
 
 use crate::{
     i18n::LocalizedText,
     icons::{IconStyle, MaterialIcon},
     ripple::RippleHost,
     theme::MaterialTheme,
-    tokens::{CornerRadius, Spacing},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Conventional maximum depth to traverse when searching for ancestor entities.
@@ -663,7 +665,7 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                     height: Val::Px(48.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -769,7 +771,9 @@ impl SpawnTopAppBarWithRightContentChild for ChildSpawnerCommands<'_> {
                                         height: Val::Px(48.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
-                                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            corner_radius::FULL,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(Color::NONE),
@@ -830,7 +834,7 @@ pub fn spawn_top_app_bar(
                                 height: Val::Px(48.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
-                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                 ..default()
                             },
                             BackgroundColor(Color::NONE),
@@ -901,7 +905,7 @@ pub fn spawn_top_app_bar(
                                     height: Val::Px(48.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -965,7 +969,7 @@ pub fn spawn_top_app_bar_with_right_content(
                                 align_items: AlignItems::Center,
                                 padding: UiRect::horizontal(Val::Px(8.0)),
                                 column_gap: Val::Px(Spacing::EXTRA_SMALL),
-                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                 ..default()
                             },
                             BackgroundColor(Color::NONE),
@@ -1052,7 +1056,7 @@ pub fn spawn_top_app_bar_with_right_content(
                                     height: Val::Px(48.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -1089,8 +1093,14 @@ fn top_app_bar_scroll_system(
 /// System to handle app bar interactions
 fn app_bar_interaction_system(
     theme: Res<MaterialTheme>,
-    nav_buttons: Query<(Entity, &PickingInteraction), (Changed<PickingInteraction>, With<AppBarNavigation>)>,
-    action_buttons: Query<(Entity, &PickingInteraction, &AppBarActionButton), Changed<PickingInteraction>>,
+    nav_buttons: Query<
+        (Entity, &PickingInteraction),
+        (Changed<PickingInteraction>, With<AppBarNavigation>),
+    >,
+    action_buttons: Query<
+        (Entity, &PickingInteraction, &AppBarActionButton),
+        Changed<PickingInteraction>,
+    >,
     parents: Query<&ChildOf>,
     app_bars: Query<Entity, With<TopAppBar>>,
     mut bgs: Query<&mut BackgroundColor>,

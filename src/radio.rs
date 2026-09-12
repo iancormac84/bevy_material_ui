@@ -20,14 +20,14 @@
 //! }
 //! ```
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     motion::StateLayer,
     ripple::RippleHost,
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
-    tokens::CornerRadius,
+    tokens::corner_radius,
 };
 
 /// Marker component for the radio outer circle
@@ -475,7 +475,7 @@ impl RadioBuilder {
                 height: Val::Px(RADIO_TOUCH_TARGET),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                 ..default()
             },
             BackgroundColor(Color::NONE),
@@ -556,7 +556,7 @@ impl SpawnRadio for Commands<'_, '_> {
                     height: Val::Px(RADIO_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
@@ -602,7 +602,9 @@ impl SpawnRadio for Commands<'_, '_> {
                                     Node {
                                         width: Val::Px(RADIO_DOT_SIZE),
                                         height: Val::Px(RADIO_DOT_SIZE),
-                                        border_radius: BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            RADIO_DOT_SIZE / 2.0,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(inner_color),
@@ -682,7 +684,7 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                     height: Val::Px(RADIO_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
@@ -728,7 +730,9 @@ impl SpawnRadioChild for ChildSpawnerCommands<'_> {
                                     Node {
                                         width: Val::Px(RADIO_DOT_SIZE),
                                         height: Val::Px(RADIO_DOT_SIZE),
-                                        border_radius: BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            RADIO_DOT_SIZE / 2.0,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(inner_color),

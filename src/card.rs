@@ -9,13 +9,13 @@
 //! - Native `BoxShadow` for elevation shadows
 //! - Modern bundle patterns
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 
 use crate::{
     elevation::Elevation,
-    theme::{blend_state_layer, MaterialTheme},
-    tokens::{CornerRadius, Spacing},
+    theme::{MaterialTheme, blend_state_layer},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Plugin for the card component
@@ -340,7 +340,7 @@ impl CardBuilder {
             padding: UiRect::all(Val::Px(self.padding)),
             border: UiRect::all(Val::Px(border_width)),
             flex_direction: FlexDirection::Column,
-            border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+            border_radius: BorderRadius::all(Val::Px(corner_radius::MEDIUM)),
             ..default()
         };
 
@@ -375,7 +375,7 @@ impl CardBuilder {
             padding: UiRect::all(Val::Px(self.padding)),
             border: UiRect::all(Val::Px(border_width)),
             flex_direction: FlexDirection::Column,
-            border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+            border_radius: BorderRadius::all(Val::Px(corner_radius::MEDIUM)),
             ..default()
         };
 

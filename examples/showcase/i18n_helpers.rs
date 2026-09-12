@@ -4,10 +4,12 @@
 //! to labels for internationalization support.
 
 use crate::showcase::common::NeedsInternationalFont;
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::checkbox::{CheckboxBox, CheckboxIcon, CheckboxStateLayer};
 use bevy_material_ui::chip::ChipLabel;
-use bevy_material_ui::icons::{icon_by_name, MaterialIcon, ICON_CHECK};
+use bevy_material_ui::icons::{ICON_CHECK, MaterialIcon, icon_by_name};
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::radio::{RadioInner, RadioOuter, RadioStateLayer};
 use bevy_material_ui::switch::SwitchHandle;
@@ -100,7 +102,9 @@ pub fn spawn_checkbox_i18n(
                                     border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                                    border_radius: BorderRadius::all(Val::Px(
+                                        CHECKBOX_CORNER_RADIUS,
+                                    )),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
@@ -289,7 +293,9 @@ pub fn spawn_radio_i18n(
                                     Node {
                                         width: Val::Px(RADIO_DOT_SIZE),
                                         height: Val::Px(RADIO_DOT_SIZE),
-                                        border_radius: BorderRadius::all(Val::Px(RADIO_DOT_SIZE / 2.0)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            RADIO_DOT_SIZE / 2.0,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(inner_color),

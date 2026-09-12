@@ -3,15 +3,15 @@
 //! Text fields let users enter and edit text.
 //! Reference: <https://m3.material.io/components/text-fields/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
-    icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
+    icons::{ICON_CLOSE, IconStyle, MaterialIcon, icon_by_name},
     locale::{DateFieldOrder, DateInputPattern},
     ripple::RippleHost,
     theme::MaterialTheme,
-    tokens::{CornerRadius, Spacing},
+    tokens::{Spacing, corner_radius},
 };
 
 #[derive(Component, Debug, Default, Clone, PartialEq, Eq)]
@@ -814,7 +814,10 @@ fn text_field_focus_system(
     mut keyboard_inputs: MessageReader<bevy::input::keyboard::KeyboardInput>,
     mut active: ResMut<ActiveTextField>,
     mut fields: ParamSet<(
-        Query<(Entity, &PickingInteraction), (Changed<PickingInteraction>, With<MaterialTextField>)>,
+        Query<
+            (Entity, &PickingInteraction),
+            (Changed<PickingInteraction>, With<MaterialTextField>),
+        >,
         Query<(Entity, &mut MaterialTextField), With<MaterialTextField>>,
     )>,
 ) {
@@ -1474,7 +1477,7 @@ impl TextFieldBuilder {
                 },
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
-                border_radius: BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::top(Val::Px(corner_radius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -1685,7 +1688,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                             } else {
                                 Display::None
                             },
-                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
@@ -1827,7 +1830,7 @@ impl SpawnTextFieldChild for ChildSpawnerCommands<'_> {
                             } else {
                                 Display::None
                             },
-                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
@@ -1946,7 +1949,7 @@ pub fn spawn_text_field_control(
                             } else {
                                 Display::None
                             },
-                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
@@ -2088,7 +2091,7 @@ pub fn spawn_text_field_control(
                             } else {
                                 Display::None
                             },
-                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
@@ -2205,7 +2208,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                             } else {
                                 Display::None
                             },
-                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),
@@ -2347,7 +2350,7 @@ pub fn spawn_text_field_control_with<M: Component>(
                             } else {
                                 Display::None
                             },
-                            border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                            border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                             ..default()
                         },
                         BackgroundColor(Color::NONE),

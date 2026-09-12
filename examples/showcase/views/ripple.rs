@@ -1,5 +1,6 @@
 //! Ripple view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_material_ui::prelude::*;
@@ -46,13 +47,7 @@ pub fn spawn_ripple_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                     ..default()
                 })
                 .with_children(|row| {
-                    spawn_ripple_surface(
-                        row,
-                        theme,
-                        "Primary",
-                        theme.primary,
-                        theme.on_primary,
-                    );
+                    spawn_ripple_surface(row, theme, "Primary", theme.primary, theme.on_primary);
                     spawn_ripple_surface(
                         row,
                         theme,
@@ -60,13 +55,7 @@ pub fn spawn_ripple_section(parent: &mut ChildSpawnerCommands, theme: &MaterialT
                         theme.secondary,
                         theme.on_secondary,
                     );
-                    spawn_ripple_surface(
-                        row,
-                        theme,
-                        "Tertiary",
-                        theme.tertiary,
-                        theme.on_tertiary,
-                    );
+                    spawn_ripple_surface(row, theme, "Tertiary", theme.tertiary, theme.on_tertiary);
                     spawn_ripple_surface(
                         row,
                         theme,
@@ -118,14 +107,8 @@ fn spawn_ripple_surface(
 /// System to handle ripple interactions in the showcase
 pub fn ripple_demo_interaction_system(
     mut events: MessageWriter<SpawnRipple>,
-    buttons: Query<
-        (Entity, &PickingInteraction, &ComputedNode),
-        With<RippleDemoSurface>,
-    >,
-    surfaces: Query<
-        (Entity, &ComputedNode, &UiGlobalTransform),
-        With<RippleDemoSurface>,
-    >,
+    buttons: Query<(Entity, &PickingInteraction, &ComputedNode), With<RippleDemoSurface>>,
+    surfaces: Query<(Entity, &ComputedNode, &UiGlobalTransform), With<RippleDemoSurface>>,
     mouse: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -143,7 +126,10 @@ pub fn ripple_demo_interaction_system(
             continue;
         }
         let position = Vec2::new(size.x * 0.5, size.y * 0.5);
-        events.write(SpawnRipple { host: entity, position });
+        events.write(SpawnRipple {
+            host: entity,
+            position,
+        });
     }
 
     let Ok(window) = windows.single() else {
@@ -183,7 +169,10 @@ pub fn ripple_demo_interaction_system(
         );
         let position = position_physical / scale;
 
-        events.write(SpawnRipple { host: entity, position });
+        events.write(SpawnRipple {
+            host: entity,
+            position,
+        });
         break;
     }
 }

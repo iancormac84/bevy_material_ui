@@ -35,6 +35,7 @@ use bevy::input::touch::{TouchInput, TouchPhase};
 use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::UiGlobalTransform;
+use bevy::ui_widgets::Button;
 use bevy::window::PrimaryWindow;
 
 /// Maximum depth to traverse when searching for ancestor entities.
@@ -232,8 +233,7 @@ fn touch_drag_scroll_system(
                     ) && max_offset.y > 0.0
                         && delta.y != 0.0
                     {
-                        scroll_position.y =
-                            (scroll_position.y + delta.y).clamp(0.0, max_offset.y);
+                        scroll_position.y = (scroll_position.y + delta.y).clamp(0.0, max_offset.y);
                     }
 
                     if matches!(
@@ -242,8 +242,7 @@ fn touch_drag_scroll_system(
                     ) && max_offset.x > 0.0
                         && delta.x != 0.0
                     {
-                        scroll_position.x =
-                            (scroll_position.x + delta.x).clamp(0.0, max_offset.x);
+                        scroll_position.x = (scroll_position.x + delta.x).clamp(0.0, max_offset.x);
                     }
                 }
             }
@@ -898,7 +897,10 @@ fn mouse_wheel_scroll_system(
         // scrolling work even if picking backends are not active.
         let mut scrolled_containers: HashSet<Entity> = HashSet::new();
         for (entity, interaction) in hovered.iter() {
-            if !matches!(*interaction, PickingInteraction::Hovered | PickingInteraction::Pressed) {
+            if !matches!(
+                *interaction,
+                PickingInteraction::Hovered | PickingInteraction::Pressed
+            ) {
                 continue;
             }
 
@@ -1021,11 +1023,7 @@ fn sync_scroll_state_system(
     content_nodes: Query<(&ComputedNode, &Node, &ScrollPosition), With<ScrollContent>>,
 ) {
     fn snap_overflow(v: f32) -> f32 {
-        if v <= OVERFLOW_EPSILON {
-            0.0
-        } else {
-            v
-        }
+        if v <= OVERFLOW_EPSILON { 0.0 } else { v }
     }
 
     for (mut container, scroll_pos, computed, children) in containers.iter_mut() {

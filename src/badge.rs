@@ -385,14 +385,7 @@ pub fn spawn_badge_on(
 /// System to update badge styles
 fn badge_style_system(
     theme: Option<Res<MaterialTheme>>,
-    mut badges: Query<
-        (
-            &MaterialBadge,
-            &mut Node,
-            &mut BackgroundColor,
-        ),
-        Changed<MaterialBadge>,
-    >,
+    mut badges: Query<(&MaterialBadge, &mut Node, &mut BackgroundColor), Changed<MaterialBadge>>,
     mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
 ) {
     let Some(theme) = theme else { return };
@@ -429,11 +422,7 @@ fn badge_style_system(
 /// Refresh badge visuals when the theme changes.
 fn badge_theme_refresh_system(
     theme: Option<Res<MaterialTheme>>,
-    mut badges: Query<(
-        &MaterialBadge,
-        &mut Node,
-        &mut BackgroundColor,
-    )>,
+    mut badges: Query<(&MaterialBadge, &mut Node, &mut BackgroundColor)>,
     mut badge_texts: Query<(&ChildOf, &mut Text, &mut TextColor), With<BadgeContent>>,
 ) {
     let Some(theme) = theme else { return };

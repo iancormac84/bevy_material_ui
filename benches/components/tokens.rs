@@ -1,6 +1,6 @@
 use bevy_material_ui::{
     elevation::Elevation,
-    tokens::{CornerRadius, Duration, Easing, Spacing},
+    tokens::{Duration, Easing, Spacing, corner_radius},
 };
 use criterion::Criterion;
 use std::hint::black_box;
@@ -24,13 +24,13 @@ pub fn bench_tokens(c: &mut Criterion) {
     group.bench_function("corner_radius_values", |b| {
         b.iter(|| {
             black_box((
-                CornerRadius::NONE,
-                CornerRadius::EXTRA_SMALL,
-                CornerRadius::SMALL,
-                CornerRadius::MEDIUM,
-                CornerRadius::LARGE,
-                CornerRadius::EXTRA_LARGE,
-                CornerRadius::FULL,
+                corner_radius::NONE,
+                corner_radius::EXTRA_SMALL,
+                corner_radius::SMALL,
+                corner_radius::MEDIUM,
+                corner_radius::LARGE,
+                corner_radius::EXTRA_LARGE,
+                corner_radius::FULL,
             ))
         })
     });

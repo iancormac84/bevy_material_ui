@@ -1,6 +1,8 @@
 //! Snackbar view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
 use bevy_material_ui::icons::ICON_CLOSE;
 use bevy_material_ui::prelude::*;

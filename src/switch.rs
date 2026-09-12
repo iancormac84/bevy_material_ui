@@ -20,9 +20,9 @@
 //! }
 //! ```
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
-use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::CornerRadius};
+use crate::{ripple::RippleHost, theme::MaterialTheme, tokens::corner_radius};
 
 /// Marker component for switch state layer
 #[derive(Component)]
@@ -314,8 +314,7 @@ fn switch_style_system(
         let handle_size = switch.handle_size();
 
         for child in children.iter() {
-            if let Ok((mut handle_bg, mut handle_node)) = handles.get_mut(child)
-            {
+            if let Ok((mut handle_bg, mut handle_node)) = handles.get_mut(child) {
                 *handle_bg = BackgroundColor(handle_color);
                 handle_node.width = Val::Px(handle_size);
                 handle_node.height = Val::Px(handle_size);
@@ -360,8 +359,7 @@ fn switch_theme_refresh_system(
         let handle_size = switch.handle_size();
 
         for child in children.iter() {
-            if let Ok((mut handle_bg, mut handle_node)) = handles.get_mut(child)
-            {
+            if let Ok((mut handle_bg, mut handle_node)) = handles.get_mut(child) {
                 *handle_bg = BackgroundColor(handle_color);
                 handle_node.width = Val::Px(handle_size);
                 handle_node.height = Val::Px(handle_size);
@@ -420,7 +418,7 @@ impl SwitchBuilder {
                 align_items: AlignItems::Center,
                 padding: UiRect::horizontal(Val::Px(2.0)),
                 border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -500,7 +498,7 @@ impl SpawnSwitch for Commands<'_, '_> {
                         align_items: AlignItems::Center,
                         padding: UiRect::horizontal(Val::Px(2.0)),
                         border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(bg_color),
@@ -589,7 +587,7 @@ impl SpawnSwitchChild for ChildSpawnerCommands<'_> {
                         align_items: AlignItems::Center,
                         padding: UiRect::horizontal(Val::Px(2.0)),
                         border: UiRect::all(Val::Px(if has_border { 2.0 } else { 0.0 })),
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(bg_color),

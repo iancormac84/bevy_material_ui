@@ -14,15 +14,15 @@
 //! }
 //! ```
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
-    icons::{icon_by_name, MaterialIcon, ICON_CHECK, ICON_REMOVE},
-    motion::{ease_emphasized_decelerate, StateLayer},
+    icons::{ICON_CHECK, ICON_REMOVE, MaterialIcon, icon_by_name},
+    motion::{StateLayer, ease_emphasized_decelerate},
     ripple::RippleHost,
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Duration},
+    tokens::{Duration, corner_radius},
 };
 
 /// Plugin for the checkbox component
@@ -622,7 +622,7 @@ impl CheckboxBuilder {
                     height: Val::Px(CHECKBOX_TOUCH_TARGET),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
@@ -655,7 +655,9 @@ impl CheckboxBuilder {
                                     border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                                    border_radius: BorderRadius::all(Val::Px(
+                                        CHECKBOX_CORNER_RADIUS,
+                                    )),
                                     ..default()
                                 },
                                 BackgroundColor(bg_color),
@@ -737,7 +739,7 @@ impl SpawnCheckbox for Commands<'_, '_> {
                         height: Val::Px(CHECKBOX_TOUCH_TARGET),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
@@ -770,7 +772,9 @@ impl SpawnCheckbox for Commands<'_, '_> {
                                         border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
-                                        border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            CHECKBOX_CORNER_RADIUS,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),
@@ -868,7 +872,7 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                         height: Val::Px(CHECKBOX_TOUCH_TARGET),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
@@ -901,7 +905,9 @@ impl SpawnCheckboxChild for ChildSpawnerCommands<'_> {
                                         border: UiRect::all(Val::Px(CHECKBOX_BORDER_WIDTH)),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
-                                        border_radius: BorderRadius::all(Val::Px(CHECKBOX_CORNER_RADIUS)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            CHECKBOX_CORNER_RADIUS,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),

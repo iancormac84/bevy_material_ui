@@ -1,6 +1,8 @@
 //! Layout scaffolds showcase demonstrating navigation and pane patterns.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::icons::icon_by_name;
 use bevy_material_ui::layout::{self, PaneEntities};
 use bevy_material_ui::prelude::*;
@@ -138,42 +140,47 @@ fn spawn_adaptive_examples(
     theme: MaterialTheme,
     _icon_font: Handle<Font>,
 ) {
-    spawn_layout_section(parent, &theme, "Adaptive navigation (by window class)", |section| {
-        let phone = WindowSizeClass::new(480.0, 800.0);
-        let tablet = WindowSizeClass::new(900.0, 900.0);
-        let desktop = WindowSizeClass::new(1400.0, 900.0);
+    spawn_layout_section(
+        parent,
+        &theme,
+        "Adaptive navigation (by window class)",
+        |section| {
+            let phone = WindowSizeClass::new(480.0, 800.0);
+            let tablet = WindowSizeClass::new(900.0, 900.0);
+            let desktop = WindowSizeClass::new(1400.0, 900.0);
 
-        spawn_layout_entry(section, &theme, "Adaptive: Phone (Compact)", |root| {
-            spawn_adaptive_card(
-                root,
-                &theme,
-                _icon_font.clone(),
-                phone,
-                "layout_adaptive_phone",
-                spawn_primary_actions,
-            );
-        });
-        spawn_layout_entry(section, &theme, "Adaptive: Tablet (Rail)", |root| {
-            spawn_adaptive_card(
-                root,
-                &theme,
-                _icon_font.clone(),
-                tablet,
-                "layout_adaptive_tablet",
-                spawn_toggle_stack,
-            );
-        });
-        spawn_layout_entry(section, &theme, "Adaptive: Desktop (Drawer)", |root| {
-            spawn_adaptive_card(
-                root,
-                &theme,
-                _icon_font.clone(),
-                desktop,
-                "layout_adaptive_desktop",
-                spawn_navigation_stack,
-            );
-        });
-    });
+            spawn_layout_entry(section, &theme, "Adaptive: Phone (Compact)", |root| {
+                spawn_adaptive_card(
+                    root,
+                    &theme,
+                    _icon_font.clone(),
+                    phone,
+                    "layout_adaptive_phone",
+                    spawn_primary_actions,
+                );
+            });
+            spawn_layout_entry(section, &theme, "Adaptive: Tablet (Rail)", |root| {
+                spawn_adaptive_card(
+                    root,
+                    &theme,
+                    _icon_font.clone(),
+                    tablet,
+                    "layout_adaptive_tablet",
+                    spawn_toggle_stack,
+                );
+            });
+            spawn_layout_entry(section, &theme, "Adaptive: Desktop (Drawer)", |root| {
+                spawn_adaptive_card(
+                    root,
+                    &theme,
+                    _icon_font.clone(),
+                    desktop,
+                    "layout_adaptive_desktop",
+                    spawn_navigation_stack,
+                );
+            });
+        },
+    );
 }
 
 fn spawn_adaptive_card(

@@ -1,5 +1,6 @@
 //! Common types, resources, and helper functions shared across the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::text::{Justify, LineBreak, TextLayout};
 use bevy::ui::{OverflowAxis, ScrollPosition};
@@ -7,12 +8,12 @@ use bevy_material_ui::icon_button::IconButtonClickEvent;
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::theme::ThemeMode;
 use std::collections::HashMap;
-#[cfg(target_arch = "wasm32")]
-use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::File;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
+#[cfg(target_arch = "wasm32")]
+use std::sync::atomic::{AtomicU64, Ordering};
 
 // ============================================================================
 // TELEMETRY SYSTEM - Reports component state for automated testing

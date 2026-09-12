@@ -13,16 +13,34 @@ pub mod views;
 #[path = "tab_state.rs"]
 pub mod tab_state;
 
-use bevy::asset::AssetPlugin;
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::asset::AssetServer;
 #[cfg(feature = "bevy_full")]
 use bevy::asset::RenderAssetUsages;
+use bevy::asset::{AssetPlugin, Assets, Handle};
 use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin};
-use bevy::ecs::system::SystemParam;
-use bevy::input::{keyboard::KeyCode, ButtonInput};
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::ecs::message::MessageReader;
+use bevy::ecs::observer::On;
+use bevy::ecs::query::{Added, With, Without};
+use bevy::ecs::resource::Resource;
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::ecs::system::ParamSet;
+use bevy::ecs::system::{Command, Commands, Local, Query, Res, ResMut, SystemParam};
+use bevy::ecs::world::World;
+use bevy::input::{ButtonInput, keyboard::KeyCode};
+use bevy::log::info;
 #[cfg(feature = "bevy_full")]
-use bevy::mesh::{Indices, PrimitiveTopology};
+use bevy::mesh::{Indices, Mesh, PrimitiveTopology};
+use bevy::picking::hover::PickingInteraction;
+#[cfg(feature = "bevy_full")]
 use bevy::prelude::*;
-use bevy::ui::{ComputedNode, OverflowAxis, ScrollPosition, UiGlobalTransform, UiSystems};
+use bevy::text::{Font, FontSize, FontSource, TextColor, TextFont};
+#[cfg(not(target_arch = "wasm32"))]
+use bevy::time::{Time, Timer, TimerMode};
+use bevy::ui::UiSystems;
+use bevy::ui_widgets::Activate;
+use bevy::ui_widgets::Button;
 use bevy::window::{PresentMode, PrimaryWindow};
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::text_field::InputType;
@@ -264,10 +282,10 @@ pub fn run() {
                 translations_populate_select_options_system,
                 translations_validate_new_filename_system,
                 translations_select_change_system,
-                translations_create_file_system,
-                translations_save_file_system,
             ),
         )
+        .add_observer(translations_create_file_system)
+        .add_observer(translations_save_file_system)
         .add_systems(
             Update,
             (
@@ -368,13 +386,34 @@ fn parse_translation_bytes(bytes: &[u8]) -> Option<(String, HashMap<String, Stri
 
 #[cfg(target_arch = "wasm32")]
 const EMBEDDED_TRANSLATIONS: &[(&str, &[u8])] = &[
-    ("i18n/en-US.mui_lang", include_bytes!("../../assets/i18n/en-US.mui_lang")),
-    ("i18n/es-ES.mui_lang", include_bytes!("../../assets/i18n/es-ES.mui_lang")),
-    ("i18n/fr-FR.mui_lang", include_bytes!("../../assets/i18n/fr-FR.mui_lang")),
-    ("i18n/de-DE.mui_lang", include_bytes!("../../assets/i18n/de-DE.mui_lang")),
-    ("i18n/ja-JP.mui_lang", include_bytes!("../../assets/i18n/ja-JP.mui_lang")),
-    ("i18n/zh-CN.mui_lang", include_bytes!("../../assets/i18n/zh-CN.mui_lang")),
-    ("i18n/he-IL.mui_lang", include_bytes!("../../assets/i18n/he-IL.mui_lang")),
+    (
+        "i18n/en-US.mui_lang",
+        include_bytes!("../../assets/i18n/en-US.mui_lang"),
+    ),
+    (
+        "i18n/es-ES.mui_lang",
+        include_bytes!("../../assets/i18n/es-ES.mui_lang"),
+    ),
+    (
+        "i18n/fr-FR.mui_lang",
+        include_bytes!("../../assets/i18n/fr-FR.mui_lang"),
+    ),
+    (
+        "i18n/de-DE.mui_lang",
+        include_bytes!("../../assets/i18n/de-DE.mui_lang"),
+    ),
+    (
+        "i18n/ja-JP.mui_lang",
+        include_bytes!("../../assets/i18n/ja-JP.mui_lang"),
+    ),
+    (
+        "i18n/zh-CN.mui_lang",
+        include_bytes!("../../assets/i18n/zh-CN.mui_lang"),
+    ),
+    (
+        "i18n/he-IL.mui_lang",
+        include_bytes!("../../assets/i18n/he-IL.mui_lang"),
+    ),
 ];
 
 #[cfg(target_arch = "wasm32")]
@@ -834,8 +873,8 @@ fn translations_select_change_system(
 
 #[allow(clippy::type_complexity)]
 fn translations_create_file_system(
-    activate: On<Activate>,
-    create_buttons: Query<(), With<views::TranslationsCreateFileButton>>,
+    _activate: On<Activate>,
+    //create_buttons: Query<(), With<views::TranslationsCreateFileButton>>,
     name_fields: Query<&MaterialTextField, With<views::TranslationsNewFileNameField>>,
     mut editor_fields: ParamSet<(
         Query<&MaterialTextField, With<views::TranslationKeyFieldLabel>>,
@@ -862,59 +901,56 @@ fn translations_create_file_system(
         return;
     }
 
-    let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
+    let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) }) else {
+        return;
+    };
+    let Some(placeholder_value) = ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
     else {
         return;
     };
-    let Some(placeholder_value) =
-        ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
+    let Some(supporting_value) = ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
     else {
         return;
     };
-    let Some(supporting_value) =
-        ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
-        else {
-        return;
-    };
 
-        let mut strings_map = HashMap::new();
-        strings_map.insert(TRANSLATION_KEY_EMAIL_LABEL.to_string(), label_value);
-        strings_map.insert(
-            TRANSLATION_KEY_EMAIL_PLACEHOLDER.to_string(),
-            placeholder_value,
-        );
-        strings_map.insert(
-            TRANSLATION_KEY_EMAIL_SUPPORTING.to_string(),
-            supporting_value,
-        );
+    let mut strings_map = HashMap::new();
+    strings_map.insert(TRANSLATION_KEY_EMAIL_LABEL.to_string(), label_value);
+    strings_map.insert(
+        TRANSLATION_KEY_EMAIL_PLACEHOLDER.to_string(),
+        placeholder_value,
+    );
+    strings_map.insert(
+        TRANSLATION_KEY_EMAIL_SUPPORTING.to_string(),
+        supporting_value,
+    );
 
-        if let Some(i18n) = i18n.as_deref_mut() {
-            // Immediately apply without relying on file watching.
-            i18n.insert_bundle(stem.to_string(), strings_map.clone());
-        }
+    if let Some(i18n) = i18n.as_deref_mut() {
+        // Immediately apply without relying on file watching.
+        i18n.insert_bundle(stem.to_string(), strings_map.clone());
+    }
 
-        let mut strings = serde_json::Map::new();
-        for (k, v) in strings_map.iter() {
-            strings.insert(k.clone(), serde_json::Value::String(v.clone()));
-        }
+    let mut strings = serde_json::Map::new();
+    for (k, v) in strings_map.iter() {
+        strings.insert(k.clone(), serde_json::Value::String(v.clone()));
+    }
 
-        let json = serde_json::json!({
-            "language": stem,
-            "strings": strings,
-        });
+    let json = serde_json::json!({
+        "language": stem,
+        "strings": strings,
+    });
 
-        let _ = fs::create_dir_all(&dir);
-        if fs::write(&path, serde_json::to_vec_pretty(&json).unwrap_or_default()).is_ok() {
-            state.needs_rescan = true;
-            state.selected_asset_path = Some(format!("i18n/{file_name}"));
-            language.tag = stem.to_string();
-        }
+    let _ = fs::create_dir_all(&dir);
+    if fs::write(&path, serde_json::to_vec_pretty(&json).unwrap_or_default()).is_ok() {
+        state.needs_rescan = true;
+        state.selected_asset_path = Some(format!("i18n/{file_name}"));
+        language.tag = stem.to_string();
+    }
 }
 
 #[allow(clippy::type_complexity)]
 fn translations_save_file_system(
-    activate: On<Activate>,
-    save_buttons: Query<(), With<views::TranslationsSaveFileButton>>,
+    _activate: On<Activate>,
+    //save_buttons: Query<(), With<views::TranslationsSaveFileButton>>,
     mut editor_fields: ParamSet<(
         Query<&MaterialTextField, With<views::TranslationKeyFieldLabel>>,
         Query<&MaterialTextField, With<views::TranslationKeyFieldPlaceholder>>,
@@ -927,71 +963,68 @@ fn translations_save_file_system(
         return;
     };
 
-        let disk_path = translations_assets_dir().join(
-            asset_path
-                .strip_prefix("i18n/")
-                .unwrap_or(asset_path.as_str()),
-        );
+    let disk_path = translations_assets_dir().join(
+        asset_path
+            .strip_prefix("i18n/")
+            .unwrap_or(asset_path.as_str()),
+    );
 
-        let mut strings = parse_translation_file_strings(&disk_path).unwrap_or_default();
+    let mut strings = parse_translation_file_strings(&disk_path).unwrap_or_default();
 
-        let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) })
-        else {
-            return;
-        };
-        let Some(placeholder_value) =
-            ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
-        else {
-            return;
-        };
-        let Some(supporting_value) =
-            ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
-        else {
-            return;
-        };
+    let Some(label_value) = ({ editor_fields.p0().iter().next().map(|f| f.value.clone()) }) else {
+        return;
+    };
+    let Some(placeholder_value) = ({ editor_fields.p1().iter().next().map(|f| f.value.clone()) })
+    else {
+        return;
+    };
+    let Some(supporting_value) = ({ editor_fields.p2().iter().next().map(|f| f.value.clone()) })
+    else {
+        return;
+    };
 
-        strings.insert(TRANSLATION_KEY_EMAIL_LABEL.to_string(), label_value);
-        strings.insert(
-            TRANSLATION_KEY_EMAIL_PLACEHOLDER.to_string(),
-            placeholder_value,
-        );
-        strings.insert(
-            TRANSLATION_KEY_EMAIL_SUPPORTING.to_string(),
-            supporting_value,
-        );
+    strings.insert(TRANSLATION_KEY_EMAIL_LABEL.to_string(), label_value);
+    strings.insert(
+        TRANSLATION_KEY_EMAIL_PLACEHOLDER.to_string(),
+        placeholder_value,
+    );
+    strings.insert(
+        TRANSLATION_KEY_EMAIL_SUPPORTING.to_string(),
+        supporting_value,
+    );
 
-        let language_tag = parse_translation_file_language(&disk_path)
-            .or_else(|| {
-                disk_path
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .map(|s| s.to_string())
-            })
-            .unwrap_or_else(|| "en-US".to_string());
+    let language_tag = parse_translation_file_language(&disk_path)
+        .or_else(|| {
+            disk_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .map(|s| s.to_string())
+        })
+        .unwrap_or_else(|| "en-US".to_string());
 
-        let json = serde_json::json!({
-            "language": language_tag,
-            "strings": strings,
-        });
+    let json = serde_json::json!({
+        "language": language_tag,
+        "strings": strings,
+    });
 
-        if fs::write(
-            &disk_path,
-            serde_json::to_vec_pretty(&json).unwrap_or_default(),
-        )
-        .is_ok()
-        {
-            if let Some(i18n) = i18n.as_deref_mut() {
-                // Immediately apply without relying on file watching.
-                let Some(strings) = parse_translation_file_strings(&disk_path) else {
-                    state.needs_rescan = true;
-                    return;
-                };
-                let language_tag = parse_translation_file_language(&disk_path)
-                    .unwrap_or_else(|| "en-US".to_string());
-                i18n.insert_bundle(language_tag, strings);
-            }
-            state.needs_rescan = true;
+    if fs::write(
+        &disk_path,
+        serde_json::to_vec_pretty(&json).unwrap_or_default(),
+    )
+    .is_ok()
+    {
+        if let Some(i18n) = i18n.as_deref_mut() {
+            // Immediately apply without relying on file watching.
+            let Some(strings) = parse_translation_file_strings(&disk_path) else {
+                state.needs_rescan = true;
+                return;
+            };
+            let language_tag =
+                parse_translation_file_language(&disk_path).unwrap_or_else(|| "en-US".to_string());
+            i18n.insert_bundle(language_tag, strings);
         }
+        state.needs_rescan = true;
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -1009,26 +1042,22 @@ fn load_showcase_i18n_assets_system(
         }
     }
 
-    commands.insert_resource(ShowcaseI18nAssets { handles: Vec::new() });
+    commands.insert_resource(ShowcaseI18nAssets {
+        handles: Vec::new(),
+    });
 
     // Load embedded fonts into the asset store.
-    let latin_font = Font::try_from_bytes(
-        include_bytes!("../../assets/fonts/NotoSans-Regular.ttf").to_vec(),
-    );
-    let cjk_font = Font::try_from_bytes(
-        include_bytes!("../../assets/fonts/NotoSansSC-Regular.ttf").to_vec(),
-    );
+    let latin_font =
+        Font::try_from_bytes(include_bytes!("../../assets/fonts/NotoSans-Regular.ttf").to_vec());
+    let cjk_font =
+        Font::try_from_bytes(include_bytes!("../../assets/fonts/NotoSansSC-Regular.ttf").to_vec());
     let hebrew_font = Font::try_from_bytes(
         include_bytes!("../../assets/fonts/NotoSerifHebrew-Regular.ttf").to_vec(),
     );
 
-    let latin_handle = latin_font
-        .map(|f| fonts.add(f))
-        .unwrap_or_default();
+    let latin_handle = latin_font.map(|f| fonts.add(f)).unwrap_or_default();
     let cjk_handle = cjk_font.map(|f| fonts.add(f)).unwrap_or_default();
-    let hebrew_handle = hebrew_font
-        .map(|f| fonts.add(f))
-        .unwrap_or_default();
+    let hebrew_handle = hebrew_font.map(|f| fonts.add(f)).unwrap_or_default();
 
     commands.insert_resource(ShowcaseFont {
         latin: latin_handle,
@@ -1044,6 +1073,8 @@ fn load_showcase_i18n_assets_system(
     _i18n: ResMut<MaterialI18n>,
     _fonts: ResMut<Assets<Font>>,
 ) {
+    use bevy::log::info;
+
     let handles = vec![
         asset_server.load::<MaterialTranslations>("i18n/en-US.mui_lang"),
         asset_server.load::<MaterialTranslations>("i18n/es-ES.mui_lang"),
@@ -2204,7 +2235,10 @@ fn demo_click_log_system(
 
 fn list_demo_mode_options_system(
     mut options: ResMut<ListDemoOptions>,
-    mut mode_buttons: Query<(&ListSelectionModeOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut mode_buttons: Query<
+        (&ListSelectionModeOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
     mut telemetry: ResMut<ComponentTelemetry>,
 ) {
     for (opt, interaction) in mode_buttons.iter_mut() {
@@ -2369,7 +2403,7 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                         } else {
                             1.0
                         })),
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(bg_color),
@@ -2472,7 +2506,9 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                         } else {
                                             0.0
                                         })),
-                                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            corner_radius::FULL,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),
@@ -2484,7 +2520,9 @@ fn setup_ui(mut commands: Commands, params: SetupUiParams) {
                                         Node {
                                             width: Val::Px(handle_size),
                                             height: Val::Px(handle_size),
-                                            border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
+                                            border_radius: BorderRadius::all(Val::Px(
+                                                handle_size / 2.0,
+                                            )),
                                             ..default()
                                         },
                                         BackgroundColor(handle_color),
@@ -2616,14 +2654,19 @@ fn settings_vsync_toggle_system(
 fn settings_dialog_ok_close_system(
     ui: Option<Res<SettingsUiEntities>>,
     mut dialogs: Query<&mut MaterialDialog, With<SettingsDialog>>,
-    mut interactions: Query<&PickingInteraction, (Changed<PickingInteraction>, With<SettingsDialogOkButton>)>,
+    mut interactions: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<SettingsDialogOkButton>),
+    >,
 ) {
     let Some(ui) = ui else { return };
     let Ok(mut dialog) = dialogs.get_mut(ui.dialog) else {
         return;
     };
 
-    let should_close = interactions.iter_mut().any(|i| *i == PickingInteraction::Pressed);
+    let should_close = interactions
+        .iter_mut()
+        .any(|i| *i == PickingInteraction::Pressed);
     if should_close {
         dialog.open = false;
     }
@@ -2848,7 +2891,10 @@ fn email_validation_system(
 
 #[allow(clippy::type_complexity)]
 fn menu_demo_system(
-    mut triggers: Query<(&ChildOf, &PickingInteraction), (With<MenuTrigger>, Changed<PickingInteraction>)>,
+    mut triggers: Query<
+        (&ChildOf, &PickingInteraction),
+        (With<MenuTrigger>, Changed<PickingInteraction>),
+    >,
     mut dropdowns: Query<(&ChildOf, &mut Visibility), With<MenuDropdown>>,
     mut items: Query<(&ChildOf, &PickingInteraction, &MenuItemMarker), Changed<PickingInteraction>>,
     triggers_all: Query<(Entity, &ChildOf), With<MenuTrigger>>,
@@ -2915,7 +2961,10 @@ fn menu_demo_system(
 
 #[allow(clippy::type_complexity)]
 fn date_picker_demo_system(
-    mut open_buttons: Query<(&PickingInteraction, &DatePickerOpenButton), Changed<PickingInteraction>>,
+    mut open_buttons: Query<
+        (&PickingInteraction, &DatePickerOpenButton),
+        Changed<PickingInteraction>,
+    >,
     mut pickers: ParamSet<(Query<&mut MaterialDatePicker>, Query<&MaterialDatePicker>)>,
     mut submit: MessageReader<DatePickerSubmitEvent>,
     mut cancel: MessageReader<DatePickerCancelEvent>,
@@ -2994,7 +3043,10 @@ fn date_picker_demo_system(
 }
 
 fn time_picker_demo_system(
-    mut open_buttons: Query<(&PickingInteraction, &TimePickerOpenButton), Changed<PickingInteraction>>,
+    mut open_buttons: Query<
+        (&PickingInteraction, &TimePickerOpenButton),
+        Changed<PickingInteraction>,
+    >,
     mut pickers: ParamSet<(Query<&mut MaterialTimePicker>, Query<&MaterialTimePicker>)>,
     mut submit: MessageReader<TimePickerSubmitEvent>,
     mut cancel: MessageReader<TimePickerCancelEvent>,
@@ -3085,8 +3137,14 @@ fn rebuild_ui_on_theme_change_system(
 
 fn snackbar_demo_options_system(
     mut options: ResMut<SnackbarDemoOptions>,
-    mut duration_buttons: Query<(&SnackbarDurationOption, &PickingInteraction), Changed<PickingInteraction>>,
-    mut action_toggle: Query<&PickingInteraction, (Changed<PickingInteraction>, With<SnackbarActionToggle>)>,
+    mut duration_buttons: Query<
+        (&SnackbarDurationOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
+    mut action_toggle: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<SnackbarActionToggle>),
+    >,
 ) {
     for (opt, interaction) in duration_buttons.iter_mut() {
         if *interaction == PickingInteraction::Pressed {
@@ -3160,8 +3218,14 @@ fn snackbar_demo_action_log_system(
 
 fn tooltip_demo_options_system(
     mut options: ResMut<TooltipDemoOptions>,
-    mut position_buttons: Query<(&TooltipPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
-    mut delay_buttons: Query<(&TooltipDelayOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut position_buttons: Query<
+        (&TooltipPositionOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
+    mut delay_buttons: Query<
+        (&TooltipDelayOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
 ) {
     for (opt, interaction) in position_buttons.iter_mut() {
         if *interaction == PickingInteraction::Pressed {
@@ -3258,7 +3322,10 @@ fn tooltip_demo_style_system(
 
 fn dialog_demo_position_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut position_buttons: Query<(&DialogPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut position_buttons: Query<
+        (&DialogPositionOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
 ) {
     for (opt, interaction) in position_buttons.iter_mut() {
         if *interaction == PickingInteraction::Pressed {
@@ -3269,7 +3336,10 @@ fn dialog_demo_position_options_system(
 
 fn dialog_demo_modal_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut modal_buttons: Query<(&DialogModalOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut modal_buttons: Query<
+        (&DialogModalOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
 ) {
     for (opt, interaction) in modal_buttons.iter_mut() {
         if *interaction == PickingInteraction::Pressed {
@@ -3352,9 +3422,18 @@ fn dialog_demo_apply_position_system(
 }
 
 fn dialog_demo_open_close_system(
-    mut show_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<ShowDialogButton>)>,
-    mut close_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogCloseButton>)>,
-    mut confirm_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogConfirmButton>)>,
+    mut show_buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<ShowDialogButton>),
+    >,
+    mut close_buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<DialogCloseButton>),
+    >,
+    mut confirm_buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<DialogConfirmButton>),
+    >,
     mut dialogs: Query<(&mut MaterialDialog, Option<&mut Visibility>), With<DialogContainer>>,
     mut result_text: Query<&mut Text, With<DialogResultDisplay>>,
     i18n: Option<Res<MaterialI18n>>,
@@ -3362,16 +3441,13 @@ fn dialog_demo_open_close_system(
 ) {
     let (prefix, cancelled, confirmed) = match (i18n, language) {
         (Some(i18n), Some(language)) => (
-            i18n
-                .translate(&language.tag, "showcase.common.result_prefix")
+            i18n.translate(&language.tag, "showcase.common.result_prefix")
                 .unwrap_or("Result:")
                 .to_string(),
-            i18n
-                .translate(&language.tag, "showcase.dialogs.result.cancelled")
+            i18n.translate(&language.tag, "showcase.dialogs.result.cancelled")
                 .unwrap_or("Cancelled")
                 .to_string(),
-            i18n
-                .translate(&language.tag, "showcase.dialogs.result.confirmed")
+            i18n.translate(&language.tag, "showcase.dialogs.result.confirmed")
                 .unwrap_or("Confirmed")
                 .to_string(),
         ),

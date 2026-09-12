@@ -3,14 +3,14 @@
 //! The Search Bar represents a floating search field with affordances for search and navigation.
 //! Reference: <https://m3.material.io/components/search/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
     icons::{IconStyle, MaterialIcon},
     ripple::RippleHost,
     theme::MaterialTheme,
-    tokens::{CornerRadius, Spacing},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Plugin for search components
@@ -183,7 +183,7 @@ impl SearchBarBuilder {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                 ..default()
             },
             BackgroundColor(theme.surface_container_high),
@@ -230,7 +230,7 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
                         height: Val::Px(48.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
@@ -285,7 +285,7 @@ impl SpawnSearchBarChild for ChildSpawnerCommands<'_> {
                     height: Val::Px(48.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                     ..default()
                 },
                 BackgroundColor(Color::NONE),
@@ -413,7 +413,10 @@ fn search_bar_display_text_system(
 // ============================================================================
 
 fn search_bar_interaction_system(
-    search_bars: Query<(&PickingInteraction, Entity), (Changed<PickingInteraction>, With<MaterialSearchBar>)>,
+    search_bars: Query<
+        (&PickingInteraction, Entity),
+        (Changed<PickingInteraction>, With<MaterialSearchBar>),
+    >,
     mut click_events: MessageWriter<SearchBarClickEvent>,
 ) {
     for (interaction, entity) in search_bars.iter() {

@@ -1,6 +1,6 @@
 //! Tests for the embedded Material icon system.
 
-use bevy_material_ui::icons::{icon_by_name, material_icons, MaterialIcon, ICON_HOME};
+use bevy_material_ui::icons::{ICON_HOME, MaterialIcon, icon_by_name, material_icons};
 
 #[test]
 fn test_icon_table_nonempty() {

@@ -1,6 +1,6 @@
 //! Icon buttons view for the showcase application.
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;

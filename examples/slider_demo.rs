@@ -4,7 +4,7 @@
 
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::slider::{spawn_slider_control_with, TickVisibility};
+use bevy_material_ui::slider::{TickVisibility, spawn_slider_control_with};
 
 fn main() {
     App::new()

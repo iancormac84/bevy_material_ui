@@ -1,6 +1,8 @@
 //! Navigation sidebar component for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::list::{ListItemClickEvent, ListItemHeadline, MaterialListItem};
 use bevy_material_ui::prelude::*;
 

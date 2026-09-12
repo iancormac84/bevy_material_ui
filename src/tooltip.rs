@@ -13,7 +13,7 @@ use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
     motion::{ease_standard_accelerate, ease_standard_decelerate},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Duration, Spacing},
+    tokens::{Duration, Spacing, corner_radius},
 };
 
 /// Marker component for the tooltip overlay container
@@ -521,7 +521,7 @@ fn spawn_tooltip_on_overlay(
                 padding: UiRect::axes(Val::Px(TOOLTIP_PADDING_PLAIN), Val::Px(4.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
                 // Start offscreen - position system will update
                 top: Val::Px(-1000.0),
                 left: Val::Px(-1000.0),
@@ -565,7 +565,7 @@ pub fn spawn_tooltip(commands: &mut Commands, theme: &MaterialTheme, tooltip: To
                 padding: UiRect::axes(Val::Px(TOOLTIP_PADDING_PLAIN), Val::Px(4.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
                 // Start offscreen - position system will update
                 top: Val::Px(-1000.0),
                 left: Val::Px(-1000.0),
@@ -609,7 +609,7 @@ pub fn spawn_rich_tooltip(
                 padding: UiRect::all(Val::Px(TOOLTIP_PADDING_RICH)),
                 flex_direction: FlexDirection::Column,
                 row_gap: Val::Px(Spacing::EXTRA_SMALL),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::MEDIUM)),
                 ..default()
             },
             BackgroundColor(bg_color),

@@ -3,14 +3,14 @@
 //! Select menus display a list of choices on a temporary surface and allow users to select one.
 //! Reference: <https://m3.material.io/components/menus/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride},
-    icons::{icon_by_name, MaterialIcon, ICON_EXPAND_MORE},
+    icons::{ICON_EXPAND_MORE, MaterialIcon, icon_by_name},
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Spacing},
+    tokens::{Spacing, corner_radius},
 };
 
 use crate::scroll::ScrollContainer;
@@ -917,7 +917,7 @@ impl SelectBuilder {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::SpaceBetween,
-                border_radius: BorderRadius::top(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::top(Val::Px(corner_radius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -1398,7 +1398,10 @@ fn select_dropdown_sync_system(
 
 /// Handle clicks on option items.
 fn select_option_interaction_system(
-    mut interactions: Query<(&PickingInteraction, &SelectOptionItem, &SelectOwner), Changed<PickingInteraction>>,
+    mut interactions: Query<
+        (&PickingInteraction, &SelectOptionItem, &SelectOwner),
+        Changed<PickingInteraction>,
+    >,
     mut selects: Query<(Entity, &mut MaterialSelect)>,
     mut events: MessageWriter<SelectChangeEvent>,
 ) {

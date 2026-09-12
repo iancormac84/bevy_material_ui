@@ -1,5 +1,6 @@
 //! Theme colors view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy_material_ui::prelude::*;
 use bevy_material_ui::text_field::spawn_text_field_control_with;

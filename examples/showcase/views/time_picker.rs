@@ -1,6 +1,6 @@
 //! Time Picker view for the showcase application.
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;

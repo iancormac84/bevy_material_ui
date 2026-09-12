@@ -11,13 +11,14 @@ use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::BoxShadow;
 use bevy::ui::FocusPolicy;
+use bevy::ui_widgets::Button;
 
 use crate::{
     elevation::Elevation,
     i18n::LocalizedText,
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Spacing},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Plugin for the dialog component
@@ -524,8 +525,7 @@ fn dialog_position_system(
                                         let gap_physical = gap_px * scale;
                                         (
                                             anchor_top_left_physical.x
-                                                + (anchor_size_physical.x
-                                                    - dialog_size_physical.x)
+                                                + (anchor_size_physical.x - dialog_size_physical.x)
                                                     / 2.0,
                                             anchor_top_left_physical.y
                                                 + anchor_size_physical.y
@@ -536,8 +536,7 @@ fn dialog_position_system(
                                         let gap_physical = gap_px * scale;
                                         (
                                             anchor_top_left_physical.x
-                                                + (anchor_size_physical.x
-                                                    - dialog_size_physical.x)
+                                                + (anchor_size_physical.x - dialog_size_physical.x)
                                                     / 2.0,
                                             anchor_top_left_physical.y
                                                 - dialog_size_physical.y
@@ -551,8 +550,7 @@ fn dialog_position_system(
                                                 + anchor_size_physical.x
                                                 + gap_physical,
                                             anchor_top_left_physical.y
-                                                + (anchor_size_physical.y
-                                                    - dialog_size_physical.y)
+                                                + (anchor_size_physical.y - dialog_size_physical.y)
                                                     / 2.0,
                                         )
                                     }
@@ -563,8 +561,7 @@ fn dialog_position_system(
                                                 - dialog_size_physical.x
                                                 - gap_physical,
                                             anchor_top_left_physical.y
-                                                + (anchor_size_physical.y
-                                                    - dialog_size_physical.y)
+                                                + (anchor_size_physical.y - dialog_size_physical.y)
                                                     / 2.0,
                                         )
                                     }
@@ -593,7 +590,10 @@ fn dialog_dismiss_on_scrim_click_system(
     mut close_events: MessageWriter<DialogCloseEvent>,
     mut dialogs: Query<&mut MaterialDialog>,
     just_opened: Query<(), With<DialogJustOpened>>,
-    mut scrims: Query<(&DialogScrimFor, &PickingInteraction), (With<DialogScrim>, Changed<PickingInteraction>)>,
+    mut scrims: Query<
+        (&DialogScrimFor, &PickingInteraction),
+        (With<DialogScrim>, Changed<PickingInteraction>),
+    >,
 ) {
     for (for_dialog, interaction) in scrims.iter_mut() {
         if *interaction != PickingInteraction::Pressed {
@@ -1115,7 +1115,7 @@ impl DialogBuilder {
                 border_radius: BorderRadius::all(Val::Px(if is_full_screen {
                     0.0
                 } else {
-                    CornerRadius::EXTRA_LARGE
+                    corner_radius::EXTRA_LARGE
                 })),
                 ..default()
             },

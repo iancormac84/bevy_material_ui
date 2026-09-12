@@ -1,6 +1,8 @@
 //! Lists view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
 use bevy_material_ui::icons::ICON_EMAIL;
 use bevy_material_ui::list::ListItemBuilder;
@@ -343,7 +345,9 @@ pub fn spawn_list_section(
                                     Node {
                                         width: Val::Px(handle_size),
                                         height: Val::Px(handle_size),
-                                        border_radius: BorderRadius::all(Val::Px(handle_size / 2.0)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            handle_size / 2.0,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(switch_handle_color),
@@ -545,7 +549,11 @@ fn spawn_large_list_demo(
         ))
         .with_children(|list| {
             for builder in items {
-                list.spawn((SelectableListItem, builder.build(theme), PickingInteraction::None));
+                list.spawn((
+                    SelectableListItem,
+                    builder.build(theme),
+                    PickingInteraction::None,
+                ));
             }
         });
 }

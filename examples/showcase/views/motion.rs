@@ -4,7 +4,9 @@
 //! additional runtime state. Run `cargo run --example motion_demo`
 //! for the full interactive experience.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::motion::{AnimatedValue, SpringAnimation, SpringConfig};
 use bevy_material_ui::prelude::*;
 
@@ -245,7 +247,10 @@ pub fn motion_demo_toggle_system(
     mut state: ResMut<MotionDemoState>,
     mut animated: Query<&mut AnimatedValue, With<MotionDemoAnimatedBox>>,
     mut springs: Query<&mut SpringAnimation, With<MotionDemoSpringBox>>,
-    buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<MotionDemoToggleButton>)>,
+    buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<MotionDemoToggleButton>),
+    >,
 ) {
     for interaction in buttons.iter() {
         if *interaction != PickingInteraction::Pressed {

@@ -16,11 +16,7 @@ pub fn hour_24_to_12(hour_24: u8) -> (u8, bool) {
 /// Convert 12H hour to 24H format
 pub fn hour_12_to_24(hour_12: u8, is_pm: bool) -> u8 {
     if hour_12 == 12 {
-        if is_pm {
-            12
-        } else {
-            0
-        }
+        if is_pm { 12 } else { 0 }
     } else if is_pm {
         hour_12 + 12
     } else {

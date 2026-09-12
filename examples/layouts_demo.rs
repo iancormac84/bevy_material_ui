@@ -66,39 +66,44 @@ fn setup(mut commands: Commands, theme: Res<MaterialTheme>, telemetry: Res<Telem
                     });
                 });
 
-                spawn_layout_section(page, &theme, "Adaptive navigation (by window class)", |section| {
-                    let phone = WindowSizeClass::new(480.0, 800.0);
-                    let tablet = WindowSizeClass::new(900.0, 900.0);
-                    let desktop = WindowSizeClass::new(1400.0, 900.0);
+                spawn_layout_section(
+                    page,
+                    &theme,
+                    "Adaptive navigation (by window class)",
+                    |section| {
+                        let phone = WindowSizeClass::new(480.0, 800.0);
+                        let tablet = WindowSizeClass::new(900.0, 900.0);
+                        let desktop = WindowSizeClass::new(1400.0, 900.0);
 
-                    spawn_layout_entry(section, &theme, "Adaptive: Phone (Compact)", |root| {
-                        spawn_navigation_suite_scaffold(
-                            root,
-                            &theme,
-                            &phone,
-                            "layout_adaptive_phone",
-                            spawn_primary_actions,
-                        )
-                    });
-                    spawn_layout_entry(section, &theme, "Adaptive: Tablet (Rail)", |root| {
-                        spawn_navigation_suite_scaffold(
-                            root,
-                            &theme,
-                            &tablet,
-                            "layout_adaptive_tablet",
-                            spawn_toggle_stack,
-                        )
-                    });
-                    spawn_layout_entry(section, &theme, "Adaptive: Desktop (Drawer)", |root| {
-                        spawn_navigation_suite_scaffold(
-                            root,
-                            &theme,
-                            &desktop,
-                            "layout_adaptive_desktop",
-                            spawn_navigation_stack,
-                        )
-                    });
-                });
+                        spawn_layout_entry(section, &theme, "Adaptive: Phone (Compact)", |root| {
+                            spawn_navigation_suite_scaffold(
+                                root,
+                                &theme,
+                                &phone,
+                                "layout_adaptive_phone",
+                                spawn_primary_actions,
+                            )
+                        });
+                        spawn_layout_entry(section, &theme, "Adaptive: Tablet (Rail)", |root| {
+                            spawn_navigation_suite_scaffold(
+                                root,
+                                &theme,
+                                &tablet,
+                                "layout_adaptive_tablet",
+                                spawn_toggle_stack,
+                            )
+                        });
+                        spawn_layout_entry(section, &theme, "Adaptive: Desktop (Drawer)", |root| {
+                            spawn_navigation_suite_scaffold(
+                                root,
+                                &theme,
+                                &desktop,
+                                "layout_adaptive_desktop",
+                                spawn_navigation_stack,
+                            )
+                        });
+                    },
+                );
 
                 spawn_layout_section(page, &theme, "Pane scaffolds", |section| {
                     spawn_layout_entry(section, &theme, "List Detail (2 panes)", |root| {
@@ -280,18 +285,22 @@ impl LayoutDemoButtonExt for ChildSpawnerCommands<'_> {
         let button = MaterialButton::new(label).with_variant(variant);
         let text_color = button.text_color(theme);
 
-        self.spawn(MaterialButtonBuilder::new(label).with_variant(variant).build(theme))
-            .with_children(|btn| {
-                btn.spawn((
-                    ButtonLabel,
-                    Text::new(label),
-                    TextFont {
-                        font_size: FontSize::Px(13.0),
-                        ..default()
-                    },
-                    TextColor(text_color),
-                ));
-            });
+        self.spawn(
+            MaterialButtonBuilder::new(label)
+                .with_variant(variant)
+                .build(theme),
+        )
+        .with_children(|btn| {
+            btn.spawn((
+                ButtonLabel,
+                Text::new(label),
+                TextFont {
+                    font_size: FontSize::Px(13.0),
+                    ..default()
+                },
+                TextColor(text_color),
+            ));
+        });
     }
 }
 
@@ -632,11 +641,7 @@ fn spawn_supporting_panes_scaffold(parent: &mut ChildSpawnerCommands, theme: &Ma
     );
 }
 
-fn spawn_drawer_list(
-    parent: &mut ChildSpawnerCommands,
-    theme: &MaterialTheme,
-    test_prefix: &str,
-) {
+fn spawn_drawer_list(parent: &mut ChildSpawnerCommands, theme: &MaterialTheme, test_prefix: &str) {
     parent
         .spawn((
             Node {

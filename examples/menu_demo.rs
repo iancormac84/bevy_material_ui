@@ -209,7 +209,10 @@ fn spawn_menu_item(
 
 #[allow(clippy::type_complexity)]
 fn menu_demo_system(
-    mut triggers: Query<(&ChildOf, &PickingInteraction), (With<MenuTrigger>, Changed<PickingInteraction>)>,
+    mut triggers: Query<
+        (&ChildOf, &PickingInteraction),
+        (With<MenuTrigger>, Changed<PickingInteraction>),
+    >,
     mut dropdowns: Query<(&ChildOf, &mut Visibility), With<MenuDropdown>>,
     mut items: Query<(&ChildOf, &PickingInteraction, &MenuItemMarker), Changed<PickingInteraction>>,
     triggers_all: Query<(Entity, &ChildOf), With<MenuTrigger>>,

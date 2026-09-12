@@ -1,6 +1,6 @@
 //! Buttons view for the showcase application.
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
@@ -190,7 +190,7 @@ fn spawn_toggle_button(
                 border: UiRect::all(Val::Px(1.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -227,7 +227,7 @@ fn spawn_interactive_button(
     parent
         .spawn((
             button,
-            Button,            // This is key - Bevy's Button component enables interaction
+            Button, // This is key - Bevy's Button component enables interaction
             PickingInteraction::None, // Ensure interaction is initialized
             RippleHost::new(),
             Node {
@@ -235,7 +235,7 @@ fn spawn_interactive_button(
                 border: UiRect::all(Val::Px(if has_border { 1.0 } else { 0.0 })),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                 ..default()
             },
             BackgroundColor(bg_color),

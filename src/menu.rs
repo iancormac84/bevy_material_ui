@@ -5,8 +5,8 @@
 //!
 //! Reference: <https://m3.material.io/components/menus/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use std::collections::HashMap;
 
@@ -15,7 +15,7 @@ use crate::{
     ripple::RippleHost,
     telemetry::{InsertTestIdIfExists, TelemetryConfig, TestId},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Spacing},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Plugin for the menu component
@@ -434,7 +434,7 @@ impl MenuBuilder {
                 max_width: Val::Px(MENU_MAX_WIDTH),
                 flex_direction: FlexDirection::Column,
                 padding: UiRect::vertical(Val::Px(Spacing::SMALL)),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),

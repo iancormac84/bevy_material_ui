@@ -24,12 +24,9 @@ impl Spacing {
     pub const XXXL: f32 = 48.0;
 }
 
-/// Corner radius tokens for consistent shapes
-///
-/// Reference: <https://m3.material.io/styles/shape/overview>
-pub struct CornerRadius;
+pub mod corner_radius {
+    /// Corner radius tokens for consistent UI elements
 
-impl CornerRadius {
     /// No corner radius (sharp corners)
     pub const NONE: f32 = 0.0;
     /// Extra small radius: 4dp

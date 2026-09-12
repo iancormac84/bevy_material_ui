@@ -417,7 +417,10 @@ fn spawn_dialog_modal_option(
 
 fn dialog_demo_position_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut position_buttons: Query<(&DialogPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut position_buttons: Query<
+        (&DialogPositionOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
 ) {
     for (opt, interaction) in position_buttons.iter_mut() {
         if *interaction == PickingInteraction::Pressed {
@@ -428,7 +431,10 @@ fn dialog_demo_position_options_system(
 
 fn dialog_demo_modal_options_system(
     mut options: ResMut<DialogDemoOptions>,
-    mut modal_buttons: Query<(&DialogModalOption, &PickingInteraction), Changed<PickingInteraction>>,
+    mut modal_buttons: Query<
+        (&DialogModalOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
 ) {
     for (opt, interaction) in modal_buttons.iter_mut() {
         if *interaction == PickingInteraction::Pressed {
@@ -514,9 +520,18 @@ fn dialog_demo_apply_options_system(
 }
 
 fn dialog_demo_open_close_system(
-    mut show_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<ShowDialogButton>)>,
-    mut close_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogCloseButton>)>,
-    mut confirm_buttons: Query<&PickingInteraction, (Changed<PickingInteraction>, With<DialogConfirmButton>)>,
+    mut show_buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<ShowDialogButton>),
+    >,
+    mut close_buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<DialogCloseButton>),
+    >,
+    mut confirm_buttons: Query<
+        &PickingInteraction,
+        (Changed<PickingInteraction>, With<DialogConfirmButton>),
+    >,
     entities: Res<DialogEntities>,
     mut dialogs: Query<&mut MaterialDialog>,
     mut result_text: Query<&mut Text, With<DialogResultDisplay>>,

@@ -34,7 +34,7 @@ pub struct NoWeekendsValidator;
 
 impl DateValidator for NoWeekendsValidator {
     fn is_valid(&self, date: Date) -> bool {
-        use super::types::{weekday_for_date, Weekday};
+        use super::types::{Weekday, weekday_for_date};
         let wd = weekday_for_date(date);
         wd != Weekday::Sat && wd != Weekday::Sun
     }

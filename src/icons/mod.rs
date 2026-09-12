@@ -150,7 +150,7 @@ impl IconStyle {
 ///
 /// This does *not* load SVGs; it simply maps a name to an embedded bitmap icon.
 pub mod svg {
-    use super::{icon_by_name, MaterialIcon};
+    use super::{MaterialIcon, icon_by_name};
     use bevy::prelude::*;
 
     #[derive(Component, Clone, Debug)]

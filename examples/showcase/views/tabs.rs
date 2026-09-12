@@ -1,6 +1,8 @@
 //! Tabs view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;

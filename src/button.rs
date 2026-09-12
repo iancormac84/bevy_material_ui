@@ -10,14 +10,33 @@
 //! - `children!` macro for declarative child spawning
 //! - Modern bundle patterns
 
-use bevy::{app::{App, Plugin, Update}, color::{Alpha, Color}, ecs::{bundle::Bundle, change_detection::DetectChanges, component::Component, entity::Entity, hierarchy::{ChildSpawnerCommands, Children}, query::{Changed, With}, system::{Commands, Query, Res}}, text::{FontSize, TextColor, TextFont}, ui::{AlignItems, BackgroundColor, BorderColor, BorderRadius, BoxShadow, JustifyContent, Node, UiRect, Val, widget::Text}, ui_widgets::Button, utils::default};
 use bevy::picking::hover::PickingInteraction;
+use bevy::{
+    app::{App, Plugin, Update},
+    color::{Alpha, Color},
+    ecs::{
+        bundle::Bundle,
+        change_detection::DetectChanges,
+        component::Component,
+        entity::Entity,
+        hierarchy::{ChildSpawnerCommands, Children},
+        query::{Changed, With},
+        system::{Commands, Query, Res},
+    },
+    text::{FontSize, TextColor, TextFont},
+    ui::{
+        AlignItems, BackgroundColor, BorderColor, BorderRadius, BoxShadow, JustifyContent, Node,
+        UiRect, Val, widget::Text,
+    },
+    ui_widgets::Button,
+    utils::default,
+};
 
 use crate::{
     elevation::Elevation,
     ripple::RippleHost,
-    theme::{blend_state_layer, MaterialTheme},
-    tokens::{CornerRadius, Spacing},
+    theme::{MaterialTheme, blend_state_layer},
+    tokens::{Spacing, corner_radius},
 };
 
 /// Plugin for the button component
@@ -263,7 +282,7 @@ impl MaterialButton {
 
     /// Get the effective corner radius
     pub fn effective_corner_radius(&self) -> f32 {
-        self.corner_radius.unwrap_or(CornerRadius::FULL)
+        self.corner_radius.unwrap_or(corner_radius::FULL)
     }
 
     /// Get the background color based on state and theme
@@ -1035,7 +1054,7 @@ mod tests {
     #[test]
     fn test_button_effective_corner_radius_default() {
         let button = MaterialButton::new("Test");
-        assert_eq!(button.effective_corner_radius(), CornerRadius::FULL);
+        assert_eq!(button.effective_corner_radius(), corner_radius::FULL);
     }
 
     #[test]

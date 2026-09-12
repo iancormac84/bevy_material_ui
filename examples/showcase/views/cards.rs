@@ -1,6 +1,6 @@
 //! Cards view for the showcase application.
 
-use bevy::prelude::*;
+use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy_material_ui::prelude::*;
 
 use crate::showcase::common::*;
@@ -63,7 +63,7 @@ fn spawn_card(
     .padding(16.0);
 
     parent
-        .spawn((Interaction::None, builder.build(theme)))
+        .spawn((PickingInteraction::None, builder.build(theme)))
         .with_children(|card| {
             card.spawn((
                 Text::new(""),

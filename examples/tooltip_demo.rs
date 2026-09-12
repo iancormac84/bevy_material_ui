@@ -239,7 +239,10 @@ struct TooltipDemoButton;
 
 fn tooltip_demo_options_system(
     mut options: ResMut<TooltipDemoOptions>,
-    position_buttons: Query<(&TooltipPositionOption, &PickingInteraction), Changed<PickingInteraction>>,
+    position_buttons: Query<
+        (&TooltipPositionOption, &PickingInteraction),
+        Changed<PickingInteraction>,
+    >,
     delay_buttons: Query<(&TooltipDelayOption, &PickingInteraction), Changed<PickingInteraction>>,
 ) {
     for (opt, interaction) in position_buttons.iter() {

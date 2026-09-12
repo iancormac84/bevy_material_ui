@@ -3,10 +3,11 @@
 //! Sliders allow users to select a value from a range.
 //! Reference: <https://m3.material.io/components/sliders/overview>
 
+use bevy::input::touch::{TouchInput, TouchPhase, Touches};
 use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
-use bevy::input::touch::{TouchInput, TouchPhase, Touches};
 use bevy::ui::UiGlobalTransform;
+use bevy::ui_widgets::Button;
 
 use std::collections::HashMap;
 
@@ -734,7 +735,11 @@ fn touch_slider_interaction_system(
     if let (Some(active_id), Some(entity)) = (state.active_id, state.active_slider) {
         if let Some(touch) = touches.get_pressed(active_id) {
             let scaled = touch.position() * scale;
-            let drag_pos = if state.use_scaled { scaled } else { touch.position() };
+            let drag_pos = if state.use_scaled {
+                scaled
+            } else {
+                touch.position()
+            };
             if let Ok((_entity, mut slider, parts, computed_node, transform)) =
                 sliders.get_mut(entity)
             {
@@ -804,11 +809,7 @@ fn apply_slider_drag(
     let physical_per_logical = 1.0 / logical_per_physical;
 
     // Layout may not be computed yet (or may be zero during first-frame interactions).
-    if slider_size.x <= 0.0
-        || slider_size.y <= 0.0
-        || track_size.x <= 0.0
-        || track_size.y <= 0.0
-    {
+    if slider_size.x <= 0.0 || slider_size.y <= 0.0 || track_size.x <= 0.0 || track_size.y <= 0.0 {
         return;
     }
 
@@ -833,8 +834,7 @@ fn apply_slider_drag(
         (track_left + handle_radius_physical).max(slider_left + handle_radius_physical);
     let usable_right =
         (track_right - handle_radius_physical).min(slider_right - handle_radius_physical);
-    let usable_top =
-        (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
+    let usable_top = (track_top + handle_radius_physical).max(slider_top + handle_radius_physical);
     let usable_bottom =
         (track_bottom - handle_radius_physical).min(slider_bottom - handle_radius_physical);
 
@@ -1416,11 +1416,7 @@ pub fn spawn_slider_control_with<E: Bundle>(
             },
         };
         let track_entity = slider_area
-            .spawn((
-                SliderTrack,
-                track_node,
-                BackgroundColor(track_color),
-            ))
+            .spawn((SliderTrack, track_node, BackgroundColor(track_color)))
             .id();
         parts_track = Some(track_entity);
 

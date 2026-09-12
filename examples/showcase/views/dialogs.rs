@@ -1,5 +1,6 @@
 //! Dialogs view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy_material_ui::chip::{ChipBuilder, ChipLabel};
 use bevy_material_ui::dialog::create_dialog_scrim_for;

@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use crate::{adaptive::WindowSizeClass, theme::MaterialTheme};
 
 use super::{
+    BottomNavigationScaffold, NavigationRailScaffold, PermanentDrawerScaffold, ScaffoldEntities,
     spawn_bottom_navigation_scaffold, spawn_navigation_rail_scaffold,
-    spawn_permanent_drawer_scaffold, BottomNavigationScaffold, NavigationRailScaffold,
-    PermanentDrawerScaffold, ScaffoldEntities,
+    spawn_permanent_drawer_scaffold,
 };
 
 /// Material 3 **navigation suite scaffold**.

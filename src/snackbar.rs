@@ -8,13 +8,14 @@
 
 use bevy::picking::{Pickable, hover::PickingInteraction};
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 
 use crate::{
     elevation::Elevation,
-    icons::{icon_by_name, IconStyle, MaterialIcon, ICON_CLOSE},
+    icons::{ICON_CLOSE, IconStyle, MaterialIcon, icon_by_name},
     motion::{ease_standard_accelerate, ease_standard_decelerate},
     theme::MaterialTheme,
-    tokens::{CornerRadius, Duration, Spacing},
+    tokens::{Duration, Spacing, corner_radius},
 };
 
 /// Plugin for the snackbar component
@@ -455,7 +456,7 @@ impl SnackbarBuilder {
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
                 ..default()
             },
             BackgroundColor(bg_color),
@@ -572,7 +573,7 @@ impl SpawnSnackbarChild for ChildSpawnerCommands<'_> {
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         margin: UiRect::left(Val::Px(Spacing::SMALL)),
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
@@ -618,7 +619,7 @@ pub fn spawn_snackbar(
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 column_gap: Val::Px(Spacing::SMALL),
-                border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_SMALL)),
+                border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_SMALL)),
                 ..default()
             },
             Transform::default(), // Required for animation system
@@ -683,7 +684,7 @@ pub fn spawn_snackbar(
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         margin: UiRect::left(Val::Px(Spacing::SMALL)),
-                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                        border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                         ..default()
                     },
                     BackgroundColor(Color::NONE),
@@ -940,7 +941,10 @@ fn snackbar_cleanup_system(
 
 /// System to handle snackbar action clicks
 fn snackbar_action_system(
-    interactions: Query<(&PickingInteraction, &ChildOf), (Changed<PickingInteraction>, With<SnackbarAction>)>,
+    interactions: Query<
+        (&PickingInteraction, &ChildOf),
+        (Changed<PickingInteraction>, With<SnackbarAction>),
+    >,
     mut snackbars: Query<(Entity, &mut Snackbar)>,
     mut events: MessageWriter<SnackbarActionEvent>,
 ) {

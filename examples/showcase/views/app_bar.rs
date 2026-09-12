@@ -1,10 +1,12 @@
 //! App Bar view for the showcase application.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
+use bevy::ui_widgets::Button;
 use bevy_material_ui::app_bar::SpawnTopAppBarWithRightContentChild;
 use bevy_material_ui::icons::{ICON_ADD, ICON_CHECK, ICON_CLOSE, ICON_MENU, ICON_SEARCH};
 use bevy_material_ui::prelude::*;
-use bevy_material_ui::text_field::{spawn_text_field_control, InputType};
+use bevy_material_ui::text_field::{InputType, spawn_text_field_control};
 
 use crate::showcase::common::*;
 

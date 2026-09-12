@@ -6,13 +6,13 @@
 //!
 //! Reference: <https://m3.material.io/components/chips/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
 use bevy::ui::BoxShadow;
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     elevation::Elevation,
     ripple::RippleHost,
-    theme::{blend_state_layer, MaterialTheme},
+    theme::{MaterialTheme, blend_state_layer},
     tokens::Spacing,
 };
 
@@ -713,8 +713,14 @@ impl SpawnChipChild for ChildSpawnerCommands<'_> {
 
 /// System to handle chip interactions
 fn chip_interaction_system(
-    mut interaction_query: Query<(Entity, &PickingInteraction, &mut MaterialChip), Changed<PickingInteraction>>,
-    delete_buttons: Query<(&PickingInteraction, &ChildOf), (Changed<PickingInteraction>, With<ChipDeleteButton>)>,
+    mut interaction_query: Query<
+        (Entity, &PickingInteraction, &mut MaterialChip),
+        Changed<PickingInteraction>,
+    >,
+    delete_buttons: Query<
+        (&PickingInteraction, &ChildOf),
+        (Changed<PickingInteraction>, With<ChipDeleteButton>),
+    >,
     mut click_events: MessageWriter<ChipClickEvent>,
     mut delete_events: MessageWriter<ChipDeleteEvent>,
 ) {

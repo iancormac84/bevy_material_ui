@@ -274,14 +274,14 @@ fn loading_indicator_material_update_system(
     }
 }
 
-/// Interpolate between two border radii
+/*/// Interpolate between two border radii
 #[allow(dead_code)]
 fn interpolate_border_radius(from: BorderRadius, to: BorderRadius, t: f32) -> BorderRadius {
     BorderRadius {
-        top_left: interpolate_val(from.top_left, to.top_left, t),
-        top_right: interpolate_val(from.top_right, to.top_right, t),
-        bottom_left: interpolate_val(from.bottom_left, to.bottom_left, t),
-        bottom_right: interpolate_val(from.bottom_right, to.bottom_right, t),
+        top_left: interpolate_val(from.top_left, to.top_left, t).into(),
+        top_right: interpolate_val(from.top_right, to.top_right, t).into(),
+        bottom_left: interpolate_val(from.bottom_left, to.bottom_left, t).into(),
+        bottom_right: interpolate_val(from.bottom_right, to.bottom_right, t).into(),
     }
 }
 
@@ -291,7 +291,7 @@ fn interpolate_val(from: Val, to: Val, t: f32) -> Val {
         (Val::Px(a), Val::Px(b)) => Val::Px(a + (b - a) * t),
         _ => from,
     }
-}
+}*/
 
 /// System to refresh loading indicator colors when theme changes
 fn loading_indicator_theme_refresh_system(

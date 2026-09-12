@@ -2,6 +2,7 @@
 //!
 //! Demonstrates the ripple interaction effect.
 
+use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_material_ui::prelude::*;
@@ -118,7 +119,10 @@ fn spawn_ripple_surface(
 
 fn ripple_input_system(
     mut events: MessageWriter<SpawnRipple>,
-    buttons: Query<(Entity, &PickingInteraction, &ComputedNode), (Changed<PickingInteraction>, With<RippleDemoButton>)>,
+    buttons: Query<
+        (Entity, &PickingInteraction, &ComputedNode),
+        (Changed<PickingInteraction>, With<RippleDemoButton>),
+    >,
     windows: Query<&Window, With<PrimaryWindow>>,
 ) {
     let scale = windows
@@ -133,6 +137,9 @@ fn ripple_input_system(
 
         let size = node.size() / scale;
         let position = Vec2::new(size.x * 0.5, size.y * 0.5);
-        events.write(SpawnRipple { host: entity, position });
+        events.write(SpawnRipple {
+            host: entity,
+            position,
+        });
     }
 }

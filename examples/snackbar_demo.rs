@@ -325,7 +325,10 @@ fn snackbar_options_system(
 
 fn snackbar_trigger_system(
     state: Res<SnackbarDemoState>,
-    mut clicks: Query<(&PickingInteraction, Entity), (Changed<PickingInteraction>, With<SnackbarTrigger>)>,
+    mut clicks: Query<
+        (&PickingInteraction, Entity),
+        (Changed<PickingInteraction>, With<SnackbarTrigger>),
+    >,
     mut show: MessageWriter<ShowSnackbar>,
 ) {
     for (interaction, _entity) in clicks.iter_mut() {

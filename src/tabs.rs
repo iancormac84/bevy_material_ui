@@ -3,7 +3,7 @@
 //! Tabs organize content across different screens, data sets, and other interactions.
 //! Reference: <https://m3.material.io/components/tabs/overview>
 
-use bevy::{picking::hover::PickingInteraction, prelude::*};
+use bevy::{picking::hover::PickingInteraction, prelude::*, ui_widgets::Button};
 
 use crate::{
     ripple::RippleHost,

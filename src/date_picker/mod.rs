@@ -7,21 +7,22 @@ use bevy::picking::Pickable;
 use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::FocusPolicy;
+use bevy::ui_widgets::Button;
 use std::collections::HashMap;
 
 use crate::i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride};
 use crate::icons::material_icon_names;
 use crate::locale::{
-    date_input_pattern_for_locale, DateFieldOrder, DateInputPattern, MaterialLocale,
-    MaterialLocaleOverride,
-};
-use crate::text_field::{
-    spawn_text_field_control_with, MaterialTextField, TextFieldBuilder, TextFieldChangeEvent,
-    TextFieldFormatter,
+    DateFieldOrder, DateInputPattern, MaterialLocale, MaterialLocaleOverride,
+    date_input_pattern_for_locale,
 };
 use crate::telemetry::TestId;
+use crate::text_field::{
+    MaterialTextField, TextFieldBuilder, TextFieldChangeEvent, TextFieldFormatter,
+    spawn_text_field_control_with,
+};
 use crate::theme::MaterialTheme;
-use crate::tokens::{CornerRadius, Spacing};
+use crate::tokens::{Spacing, corner_radius};
 
 mod calendar;
 mod constraints;
@@ -947,7 +948,9 @@ fn date_picker_rebuild_content_system(
                                                 height: Val::Px(40.0),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(bg_color),
@@ -1083,7 +1086,9 @@ fn date_picker_rebuild_content_system(
                                         height: Val::Px(40.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
-                                        border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                        border_radius: BorderRadius::all(Val::Px(
+                                            corner_radius::FULL,
+                                        )),
                                         ..default()
                                     },
                                     BackgroundColor(bg_color),
@@ -1887,7 +1892,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(Spacing::LARGE)),
                     row_gap: Val::Px(Spacing::MEDIUM),
-                    border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
+                    border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_LARGE)),
                     ..default()
                 },
                 BackgroundColor(bg_color),
@@ -1959,7 +1964,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     height: Val::Px(40.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -2004,7 +2009,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     height: Val::Px(40.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -2030,7 +2035,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::all(Val::Px(Spacing::SMALL)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+                                    border_radius: BorderRadius::all(Val::Px(
+                                        corner_radius::MEDIUM,
+                                    )),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -2083,7 +2090,7 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                     height: Val::Px(40.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -2265,7 +2272,9 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(40.0),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(bg_color),
@@ -2402,14 +2411,19 @@ impl SpawnDatePicker for ChildSpawnerCommands<'_> {
                                                     picker: entity,
                                                     date: Some(date),
                                                 },
-                                                TestId::new(format!("date_picker_day_{}", day_number)),
+                                                TestId::new(format!(
+                                                    "date_picker_day_{}",
+                                                    day_number
+                                                )),
                                                 PickingInteraction::None,
                                                 Node {
                                                     width: Val::Px(40.0),
                                                     height: Val::Px(40.0),
                                                     justify_content: JustifyContent::Center,
                                                     align_items: AlignItems::Center,
-                                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                    border_radius: BorderRadius::all(Val::Px(
+                                                        corner_radius::FULL,
+                                                    )),
                                                     ..default()
                                                 },
                                                 BackgroundColor(bg_color),

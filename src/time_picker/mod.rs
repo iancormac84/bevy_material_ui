@@ -6,17 +6,18 @@ use bevy::picking::Pickable;
 use bevy::picking::hover::PickingInteraction;
 use bevy::prelude::*;
 use bevy::ui::{ComputedNode, FocusPolicy, UiGlobalTransform};
+use bevy::ui_widgets::Button;
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
 use crate::i18n::{MaterialI18n, MaterialLanguage, MaterialLanguageOverride};
 use crate::icons::material_icon_names;
-use crate::text_field::{
-    spawn_text_field_control_with, InputType, MaterialTextField, TextFieldBuilder,
-};
 use crate::telemetry::TestId;
+use crate::text_field::{
+    InputType, MaterialTextField, TextFieldBuilder, spawn_text_field_control_with,
+};
 use crate::theme::MaterialTheme;
-use crate::tokens::{CornerRadius, Spacing};
+use crate::tokens::{Spacing, corner_radius};
 use bevy::ui::UiTransform;
 use std::f32::consts::TAU;
 
@@ -371,11 +372,7 @@ impl MaterialTimePicker {
     /// Get hour in 12H format (1-12)
     pub fn hour_12h(&self) -> u8 {
         let h = self.hour % 12;
-        if h == 0 {
-            12
-        } else {
-            h
-        }
+        if h == 0 { 12 } else { h }
     }
 
     /// Set time from 12H format
@@ -771,7 +768,10 @@ fn time_picker_clock_interaction_system(
         let over_number_button = clock_numbers.iter().any(|(n, interaction, number_node)| {
             n.picker == clock.picker
                 && number_node.display != Display::None
-                && matches!(*interaction, PickingInteraction::Hovered | PickingInteraction::Pressed)
+                && matches!(
+                    *interaction,
+                    PickingInteraction::Hovered | PickingInteraction::Pressed
+                )
         });
         if over_number_button {
             continue;
@@ -1303,7 +1303,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(Spacing::LARGE)),
                     row_gap: Val::Px(Spacing::MEDIUM),
-                    border_radius: BorderRadius::all(Val::Px(CornerRadius::EXTRA_LARGE)),
+                    border_radius: BorderRadius::all(Val::Px(corner_radius::EXTRA_LARGE)),
                     ..default()
                 },
                 Transform::default(),
@@ -1346,7 +1346,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                 height: Val::Px(40.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
-                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                 ..default()
                             },
                             BackgroundColor(Color::NONE),
@@ -1399,7 +1399,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+                                    border_radius: BorderRadius::all(Val::Px(
+                                        corner_radius::MEDIUM,
+                                    )),
                                     ..default()
                                 },
                                 BackgroundColor(theme.primary_container),
@@ -1438,7 +1440,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+                                    border_radius: BorderRadius::all(Val::Px(
+                                        corner_radius::MEDIUM,
+                                    )),
                                     ..default()
                                 },
                                 BackgroundColor(Color::NONE),
@@ -1490,7 +1494,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     padding: UiRect::axes(Val::Px(12.0), Val::Px(8.0)),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::MEDIUM)),
+                                    border_radius: BorderRadius::all(Val::Px(
+                                        corner_radius::MEDIUM,
+                                    )),
                                     ..default()
                                 },
                                 BackgroundColor(bg),
@@ -1545,7 +1551,7 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
                                     margin: UiRect::all(Val::Px(Spacing::MEDIUM)),
-                                    border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                    border_radius: BorderRadius::all(Val::Px(corner_radius::FULL)),
                                     ..default()
                                 },
                                 Transform::default(),
@@ -1596,7 +1602,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(bg),
@@ -1638,7 +1646,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: inner_hour,
                                                 format: Some(TimeFormat::H24),
                                             },
-                                            TestId::new(format!("time_picker_clock_hour_{}", inner_hour)),
+                                            TestId::new(format!(
+                                                "time_picker_clock_hour_{}",
+                                                inner_hour
+                                            )),
                                             PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
@@ -1653,7 +1664,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_INNER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(Color::NONE),
@@ -1680,7 +1693,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: outer_hour,
                                                 format: Some(TimeFormat::H24),
                                             },
-                                            TestId::new(format!("time_picker_clock_hour_{}", outer_hour)),
+                                            TestId::new(format!(
+                                                "time_picker_clock_hour_{}",
+                                                outer_hour
+                                            )),
                                             PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
@@ -1695,7 +1711,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(Color::NONE),
@@ -1727,7 +1745,10 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 value: minute,
                                                 format: None,
                                             },
-                                            TestId::new(format!("time_picker_clock_minute_{}", minute)),
+                                            TestId::new(format!(
+                                                "time_picker_clock_minute_{}",
+                                                minute
+                                            )),
                                             PickingInteraction::None,
                                             Node {
                                                 position_type: PositionType::Absolute,
@@ -1742,7 +1763,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 height: Val::Px(CLOCK_NUMBER_OUTER_SIZE),
                                                 justify_content: JustifyContent::Center,
                                                 align_items: AlignItems::Center,
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(Color::NONE),
@@ -1794,7 +1817,9 @@ impl SpawnTimePicker for ChildSpawnerCommands<'_> {
                                                 top: Val::Px(-6.0),
                                                 width: Val::Px(12.0),
                                                 height: Val::Px(12.0),
-                                                border_radius: BorderRadius::all(Val::Px(CornerRadius::FULL)),
+                                                border_radius: BorderRadius::all(Val::Px(
+                                                    corner_radius::FULL,
+                                                )),
                                                 ..default()
                                             },
                                             BackgroundColor(primary),

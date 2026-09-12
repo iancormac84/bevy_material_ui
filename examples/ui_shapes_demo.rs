@@ -137,10 +137,12 @@ fn spawn_shape_card(
         ))
         .insert_test_id(test_id, telemetry)
         .with_children(|card| {
-            card.spawn(UiShapeBuilder::new(shape)
-                .with_color(color)
-                .with_offset(Vec2::new(0.0, -18.0))
-                .build(meshes, materials));
+            card.spawn(
+                UiShapeBuilder::new(shape)
+                    .with_color(color)
+                    .with_offset(Vec2::new(0.0, -18.0))
+                    .build(meshes, materials),
+            );
 
             card.spawn((
                 Text::new(label),
